@@ -415,7 +415,7 @@ export default function App() {
       });
 
       // create order on your server
-      const createRes = await fetch("http://localhost:5000/api/paypal/create-order", {
+      const createRes = await fetch(`${API_BASE}/api/paypal/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listingId, amount: priceMap[plan], action: "create_listing" }),
@@ -441,7 +441,7 @@ export default function App() {
   /* Capture create flow */
   async function handleServerCapture(orderID, listingId) {
     try {
-      const resp = await fetch("http://localhost:5000/api/paypal/capture", {
+      const resp = await fetch(`${API_BASE}/api/paypal/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderID, listingId, action: "create_listing" }),
@@ -528,7 +528,7 @@ export default function App() {
 
   async function handleServerCaptureForExtend(orderID, listingId, planKeyFromUI) {
     try {
-      const resp = await fetch("http://localhost:5000/api/paypal/capture", {
+      const resp = await fetch(`${API_BASE}/api/paypal/capture`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderID, listingId, action: "extend" }),
