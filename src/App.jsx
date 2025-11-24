@@ -1,5 +1,5 @@
 // src/App.jsx
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE = "https://lsm-wozo.onrender.com" || "http://localhost:5000";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { auth, db, createRecaptcha } from "./firebase";
