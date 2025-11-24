@@ -4,7 +4,7 @@ import { getAuth, RecaptchaVerifier } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyChkz92LImyEty7Zd_KwC_tW5IjuzZTA0A",
   authDomain: "tetovo-lms.firebaseapp.com",
   databaseURL: "https://tetovo-lms-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "tetovo-lms",
