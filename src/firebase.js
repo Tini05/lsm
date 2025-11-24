@@ -5,12 +5,13 @@ import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  authDomain: "tetovo-lms.firebaseapp.com",
+  databaseURL: "https://tetovo-lms-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tetovo-lms",
+  storageBucket: "tetovo-lms.firebasestorage.app",
+  messagingSenderId: "301649840807",
+  appId: "1:301649840807:web:2bd2ff2fd1eb0a489b2982",
+  measurementId: "G-4W1Y361WMT"
 };
 
 const app = initializeApp(firebaseConfig);
