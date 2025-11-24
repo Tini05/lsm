@@ -44,7 +44,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://yourfrontenddomain.com",
+      "https://lsm-bojr3c63z-artins-projects-8d0a28db.vercel.app",
       "https://lsm-wozo.onrender.com", // replace with your real frontend URL
     ],
     credentials: true,
