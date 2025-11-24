@@ -4,18 +4,29 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 import admin from "firebase-admin";
 import cors from "cors";
-import fs from "fs";
 
 dotenv.config();
 
-// --- Firebase setup ---
-const serviceAccountPath = "./serviceAccountKey.json";
-if (!fs.existsSync(serviceAccountPath)) {
-  console.error("Firebase service account file not found!");
+/* -------------------- FIREBASE SETUP (Render-friendly) -------------------- */
+
+// We now load the full service account JSON from an environment variable
+if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  console.error("FIREBASE_SERVICE_ACCOUNT_JSON is not set in env!");
   process.exit(1);
 }
 
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf-8"));
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+} catch (err) {
+  console.error("Invalid FIREBASE_SERVICE_ACCOUNT_JSON:", err);
+  process.exit(1);
+}
+
+if (!process.env.FIREBASE_DATABASE_URL) {
+  console.error("FIREBASE_DATABASE_URL is not set in env!");
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -24,21 +35,26 @@ admin.initializeApp({
 
 const db = admin.database();
 
-// --- Express setup ---
+/* --------------------------- EXPRESS SETUP --------------------------- */
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://yourfrontenddomain.com", "https://lsm-wozo.onrender.com"],
+    origin: [
+      "http://localhost:5173",
+      "https://yourfrontenddomain.com",
+      "https://lsm-wozo.onrender.com", // replace with your real frontend URL
+    ],
     credentials: true,
   })
 );
 
-
 app.use(bodyParser.json());
 
-// --- PayPal helper ---
+/* --------------------------- PAYPAL HELPER --------------------------- */
+
 async function generateAccessToken() {
   const auth = Buffer.from(
     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
@@ -67,10 +83,12 @@ async function generateAccessToken() {
   return data.access_token;
 }
 
-// --- Create PayPal order ---
+/* ----------------------- CREATE PAYPAL ORDER ------------------------ */
+
 app.post("/api/paypal/create-order", async (req, res) => {
-  const { listingId, amount } = req.body;
+  const { listingId, amount, action } = req.body;
   console.log("Creating order for", listingId, "action:", action, "amount:", amount);
+
   if (!listingId || !amount) {
     return res.status(400).json({ error: "listingId and amount required" });
   }
@@ -104,7 +122,7 @@ app.post("/api/paypal/create-order", async (req, res) => {
             brand_name: "Local Support Market",
             landing_page: "NO_PREFERENCE",
             user_action: "PAY_NOW",
-            shipping_preference: "NO_SHIPPING", // ✅ disables address
+            shipping_preference: "NO_SHIPPING",
           },
         }),
       }
@@ -122,7 +140,6 @@ app.post("/api/paypal/create-order", async (req, res) => {
     res.json({ orderID: order.id });
   } catch (err) {
     console.error("Create order error:", err);
-    // only safe reference of listingId here
     try {
       await db.ref(`listings/${req.body.listingId}`).update({
         status: "expired",
@@ -134,10 +151,12 @@ app.post("/api/paypal/create-order", async (req, res) => {
   }
 });
 
-// --- Capture PayPal order (fixed for card + PayPal checkout) ---
+/* ----------------------- CAPTURE PAYPAL ORDER ----------------------- */
+
 app.post("/api/paypal/capture", async (req, res) => {
-  const { orderID, listingId } = req.body;
+  const { orderID, listingId, action } = req.body;
   console.log("Capturing order", orderID, "for", listingId, "action:", action);
+
   if (!orderID || !listingId) {
     return res.status(400).json({ error: "orderID and listingId required" });
   }
@@ -147,9 +166,11 @@ app.post("/api/paypal/capture", async (req, res) => {
 
     // Step 1: Check order status first (important for card flow)
     const orderCheck = await fetch(
-      `${process.env.PAYPAL_ENVIRONMENT === "sandbox"
-        ? "https://api-m.sandbox.paypal.com"
-        : "https://api-m.paypal.com"}/v2/checkout/orders/${orderID}`,
+      `${
+        process.env.PAYPAL_ENVIRONMENT === "sandbox"
+          ? "https://api-m.sandbox.paypal.com"
+          : "https://api-m.paypal.com"
+      }/v2/checkout/orders/${orderID}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -171,9 +192,11 @@ app.post("/api/paypal/capture", async (req, res) => {
 
     // Step 2: Capture manually for popup (PayPal login flow)
     const captureResponse = await fetch(
-      `${process.env.PAYPAL_ENVIRONMENT === "sandbox"
-        ? "https://api-m.sandbox.paypal.com"
-        : "https://api-m.paypal.com"}/v2/checkout/orders/${orderID}/capture`,
+      `${
+        process.env.PAYPAL_ENVIRONMENT === "sandbox"
+          ? "https://api-m.sandbox.paypal.com"
+          : "https://api-m.paypal.com"
+      }/v2/checkout/orders/${orderID}/capture`,
       {
         method: "POST",
         headers: {
@@ -220,14 +243,18 @@ app.post("/api/paypal/capture", async (req, res) => {
   }
 });
 
+/* ----------------------- VERIFY ORDER (OPTIONAL) ----------------------- */
+
 app.get("/api/paypal/verify-order/:orderId/:listingId", async (req, res) => {
   const { orderId, listingId } = req.params;
   try {
     const accessToken = await generateAccessToken();
     const response = await fetch(
-      `${process.env.PAYPAL_ENVIRONMENT === "sandbox"
-        ? "https://api-m.sandbox.paypal.com"
-        : "https://api-m.paypal.com"}/v2/checkout/orders/${orderId}`,
+      `${
+        process.env.PAYPAL_ENVIRONMENT === "sandbox"
+          ? "https://api-m.sandbox.paypal.com"
+          : "https://api-m.paypal.com"
+      }/v2/checkout/orders/${orderId}`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -245,7 +272,8 @@ app.get("/api/paypal/verify-order/:orderId/:listingId", async (req, res) => {
   }
 });
 
-// --- Start server ---
+/* -------------------------- START SERVER -------------------------- */
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
