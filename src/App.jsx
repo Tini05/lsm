@@ -1,4 +1,6 @@
 // src/App.jsx
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { auth, db, createRecaptcha } from "./firebase";
 import { ref as dbRef, set, update, onValue, remove } from "firebase/database";
