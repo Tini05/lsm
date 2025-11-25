@@ -1174,7 +1174,7 @@ export default function App() {
                         </div>
 
                         {/* Listings grid */}
-                        <div className="listing-grid listing-grid-dashboard" style={{display: block}}>
+                        <div className="listing-grid listing-grid-dashboard" style={{display: "block"}}>
                           {filtered.map((l) => (
                             <article
                               key={l.id}
