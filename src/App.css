@@ -1388,3 +1388,67 @@ body {
     justify-content: space-between;
   }
 }
+
+/* ========== AUTH MODAL POLISH ========== */
+
+.auth-modal {
+  max-width: 480px;
+  width: 100%;
+}
+
+.auth-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.auth-field-group .field-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn.full-width,
+.btn.btn-ghost.full-width,
+.btn.small.full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Tabs better spaced */
+.auth-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.auth-tabs .tab {
+  flex: 1;
+  text-align: center;
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+}
+
+.auth-tabs .tab.active {
+  background: #4f46e5;
+  color: #fff;
+}
+
+/* Recaptcha spacing */
+.recaptcha {
+  margin-top: 0.75rem;
+}
