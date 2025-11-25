@@ -1293,3 +1293,92 @@ body {
     justify-self: flex-start;
   }
 }
+
+/* ============================
+   EXPLORE / LISTINGS FILTERS
+   ============================ */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Search bar row */
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.searchbar .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.searchbar .btn {
+  white-space: nowrap;
+}
+
+/* Filter row (category, location, sort) */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Category & location selects */
+.filter-row .select,
+.filter-row .category-dropdown {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+/* Sort block */
+.filter-row .sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.filter-row .sort-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* Make the sort select not huge */
+.filter-row .sort .select {
+  flex: 0 0 150px;
+}
+
+/* ===== Mobile tweaks ===== */
+@media (max-width: 768px) {
+  .filters {
+    gap: 8px;
+  }
+
+  .searchbar {
+    flex-direction: row;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-row .select,
+  .filter-row .category-dropdown,
+  .filter-row .sort .select {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .filter-row .sort {
+    justify-content: space-between;
+  }
+}
