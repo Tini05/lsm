@@ -2001,94 +2001,260 @@ export default function App() {
         {/* ===== AUTH MODAL (email + phone preserved) ===== */}
         <AnimatePresence>
           {showAuthModal && (
-            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAuthModal(false)}>
-              <motion.div className="modal auth-modal" onClick={(e) => e.stopPropagation()} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}>
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAuthModal(false)}
+            >
+              <motion.div
+                className="modal auth-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+              >
                 <div className="modal-header">
-                  <h3 className="modal-title">{authTab === "email" ? t("emailLoginSignup") : t("verifyPhone")}</h3>
-                  <button className="icon-btn" onClick={() => setShowAuthModal(false)}>✕</button>
+                  <h3 className="modal-title">
+                    {authTab === "email" ? t("emailLoginSignup") : t("verifyPhone")}
+                  </h3>
+                  <button className="icon-btn" onClick={() => setShowAuthModal(false)}>
+                    ✕
+                  </button>
                 </div>
-
+        
+                {/* Tabs */}
                 <div className="auth-tabs">
-                  <button className={`tab ${authTab === "email" ? "active" : ""}`} onClick={() => setAuthTab("email")}>{t("emailTab")}</button>
-                  <button className={`tab ${authTab === "phone" ? "active" : ""}`} onClick={() => setAuthTab("phone")}>{t("signInWithPhone")}</button>
+                  <button
+                    className={`tab ${authTab === "email" ? "active" : ""}`}
+                    onClick={() => setAuthTab("email")}
+                  >
+                    {t("emailTab")}
+                  </button>
+                  <button
+                    className={`tab ${authTab === "phone" ? "active" : ""}`}
+                    onClick={() => setAuthTab("phone")}
+                  >
+                    {t("signInWithPhone")}
+                  </button>
                 </div>
-
+        
+                {/* EMAIL TAB */}
                 {authTab === "email" ? (
-                  <div className="modal-body">
-                    <input className="input" type="email" placeholder={t("email")} value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <input className="input" type="password" placeholder={t("password")} value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <div className="modal-actions">
-                      <button className="btn" onClick={async () => {
-                        if (!validateEmail(email)) return showMessage(t("enterValidEmail"), "error");
-                        await signInWithEmailAndPassword(auth, email, password).then(() => { showMessage(t("signedIn"), "success"); setShowAuthModal(false); setEmail(""); setPassword(""); }).catch(e => showMessage(e.message, "error"));
-                      }}>{t("login")}</button>
-                      <button className="btn btn-ghost" onClick={async () => {
-                        if (!validateEmail(email)) return showMessage(t("enterValidEmail"), "error");
-                        if (password.length < 6) return showMessage("Password must be at least 6 characters", "error");
-                        try {
-                          const cred = await createUserWithEmailAndPassword(auth, email, password);
-                          if (cred?.user) await sendEmailVerification(cred.user);
-                          showMessage("Signed up! Verification email sent — please verify before posting.", "success");
-                          setShowAuthModal(false); setEmail(""); setPassword("");
-                        } catch (err) { showMessage(err.message, "error"); }
-                      }}>{t("signup")}</button>
-                      <button className="btn small" onClick={async () => {
-                        if (!validateEmail(email)) return showMessage(t("enterValidEmail"), "error");
-                        const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
-                        try {
-                          await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-                          window.localStorage.setItem("emailForSignIn", email);
-                          showMessage(t("emailLinkSent"), "success");
-                          setEmail("");
-                        } catch (err) { showMessage(err.message, "error"); }
-                      }}>{t("sendLink")}</button>
+                  <div className="modal-body auth-body">
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("email")}</span>
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder={t("email")}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+        
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("password")}</span>
+                      <input
+                        className="input"
+                        type="password"
+                        placeholder={t("password")}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+        
+                    <div className="auth-actions">
+                      <button
+                        className="btn full-width"
+                        onClick={async () => {
+                          if (!validateEmail(email))
+                            return showMessage(t("enterValidEmail"), "error");
+                          await signInWithEmailAndPassword(auth, email, password)
+                            .then(() => {
+                              showMessage(t("signedIn"), "success");
+                              setShowAuthModal(false);
+                              setEmail("");
+                              setPassword("");
+                            })
+                            .catch((e) => showMessage(e.message, "error"));
+                        }}
+                      >
+                        {t("login")}
+                      </button>
+        
+                      <button
+                        className="btn btn-ghost full-width"
+                        onClick={async () => {
+                          if (!validateEmail(email))
+                            return showMessage(t("enterValidEmail"), "error");
+                          if (password.length < 6)
+                            return showMessage(
+                              "Password must be at least 6 characters",
+                              "error"
+                            );
+                          try {
+                            const cred = await createUserWithEmailAndPassword(
+                              auth,
+                              email,
+                              password
+                            );
+                            if (cred?.user) await sendEmailVerification(cred.user);
+                            showMessage(
+                              "Signed up! Verification email sent — please verify before posting.",
+                              "success"
+                            );
+                            setShowAuthModal(false);
+                            setEmail("");
+                            setPassword("");
+                          } catch (err) {
+                            showMessage(err.message, "error");
+                          }
+                        }}
+                      >
+                        {t("signup")}
+                      </button>
+        
+                      <button
+                        className="btn small full-width"
+                        onClick={async () => {
+                          if (!validateEmail(email))
+                            return showMessage(t("enterValidEmail"), "error");
+                          const actionCodeSettings = {
+                            url: window.location.href,
+                            handleCodeInApp: true,
+                          };
+                          try {
+                            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+                            window.localStorage.setItem("emailForSignIn", email);
+                            showMessage(t("emailLinkSent"), "success");
+                            setEmail("");
+                          } catch (err) {
+                            showMessage(err.message, "error");
+                          }
+                        }}
+                      >
+                        {t("sendLink")}
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="modal-body">
-                    <select className="select" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
-                      {countryCodes.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
-                    </select>
-                    <input className="input" type="tel" placeholder={t("phoneNumber")} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))} maxLength="12" inputMode="numeric" />
+                  /* PHONE TAB */
+                  <div className="modal-body auth-body">
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("phoneNumber")}</span>
+                      <div className="phone-input-group">
+                        <select
+                          className="select phone-country"
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                        >
+                          {countryCodes.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.name} ({c.code})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="input phone-number"
+                          type="tel"
+                          placeholder={t("phoneNumber")}
+                          value={phoneNumber}
+                          onChange={(e) =>
+                            setPhoneNumber(e.target.value.replace(/\D/g, ""))
+                          }
+                          maxLength="12"
+                          inputMode="numeric"
+                        />
+                      </div>
+                    </div>
+        
                     {!confirmationResult ? (
-                      <button className="btn" onClick={async () => {
-                        const rest = (phoneNumber || "").replace(/\D/g, "");
-                        if (!rest || rest.length < 5 || rest.length > 12) return showMessage(t("enterValidPhone"), "error");
-                        const fullPhone = countryCode + rest;
-                        if (!validatePhone(fullPhone)) return showMessage(t("enterValidPhone"), "error");
-                        setPhoneLoading(true);
-                        try {
-                          if (!window.recaptchaVerifier) createRecaptcha("recaptcha-container");
-                          const result = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
-                          setConfirmationResult(result);
-                          showMessage(t("codeSent"), "success");
-                        } catch (err) {
-                          console.error(err);
-                          showMessage(err.message, "error");
-                          if (window.recaptchaVerifier) { window.recaptchaVerifier.clear(); window.recaptchaVerifier = null; }
-                        } finally { setPhoneLoading(false); }
-                      }} disabled={phoneLoading}>
-                        {phoneLoading ? "Sending..." : t("sendLink")}
-                      </button>
+                      <div className="auth-actions">
+                        <button
+                          className="btn full-width"
+                          onClick={async () => {
+                            const rest = (phoneNumber || "").replace(/\D/g, "");
+                            if (!rest || rest.length < 5 || rest.length > 12)
+                              return showMessage(t("enterValidPhone"), "error");
+                            const fullPhone = countryCode + rest;
+                            if (!validatePhone(fullPhone))
+                              return showMessage(t("enterValidPhone"), "error");
+        
+                            setPhoneLoading(true);
+                            try {
+                              if (!window.recaptchaVerifier)
+                                createRecaptcha("recaptcha-container");
+                              const result = await signInWithPhoneNumber(
+                                auth,
+                                fullPhone,
+                                window.recaptchaVerifier
+                              );
+                              setConfirmationResult(result);
+                              showMessage(t("codeSent"), "success");
+                            } catch (err) {
+                              console.error(err);
+                              showMessage(err.message, "error");
+                              if (window.recaptchaVerifier) {
+                                window.recaptchaVerifier.clear();
+                                window.recaptchaVerifier = null;
+                              }
+                            } finally {
+                              setPhoneLoading(false);
+                            }
+                          }}
+                          disabled={phoneLoading}
+                        >
+                          {phoneLoading ? "Sending..." : t("sendLink")}
+                        </button>
+                    </div>
                     ) : (
-                      <>
-                        <input className="input" type="text" placeholder={t("enterCode")} value={verificationCode} onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))} maxLength="6" inputMode="numeric" />
-                        <button className="btn" onClick={async () => {
-                          if (!confirmationResult || !verificationCode.trim()) return showMessage(t("enterCode"), "error");
-                          if (!/^\d{6}$/.test(verificationCode.trim())) return showMessage(t("invalidCode"), "error");
-                          setPhoneLoading(true);
-                          try {
-                            await confirmationResult.confirm(verificationCode);
-                            showMessage(t("signedIn"), "success");
-                            setShowAuthModal(false);
-                            setPhoneNumber(""); setVerificationCode(""); setConfirmationResult(null);
-                          } catch (err) { showMessage(err.message, "error"); }
-                          finally { setPhoneLoading(false); }
-                        }} disabled={phoneLoading}>
+                      <div className="auth-actions">
+                        <div className="auth-field-group">
+                          <span className="field-label">{t("enterCode")}</span>
+                          <input
+                            className="input"
+                            type="text"
+                            placeholder={t("enterCode")}
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value.replace(/\D/g, ""))
+                            }
+                            maxLength="6"
+                            inputMode="numeric"
+                          />
+                        </div>
+        
+                        <button
+                          className="btn full-width"
+                          onClick={async () => {
+                            if (!confirmationResult || !verificationCode.trim())
+                              return showMessage(t("enterCode"), "error");
+                            if (!/^\d{6}$/.test(verificationCode.trim()))
+                              return showMessage(t("invalidCode"), "error");
+        
+                            setPhoneLoading(true);
+                            try {
+                              await confirmationResult.confirm(verificationCode);
+                              showMessage(t("signedIn"), "success");
+                              setShowAuthModal(false);
+                              setPhoneNumber("");
+                              setVerificationCode("");
+                              setConfirmationResult(null);
+                            } catch (err) {
+                              showMessage(err.message, "error");
+                            } finally {
+                              setPhoneLoading(false);
+                            }
+                          }}
+                          disabled={phoneLoading}
+                        >
                           {phoneLoading ? "Verifying..." : t("verifyPhone")}
                         </button>
-                      </>
+                      </div>
                     )}
+        
                     <div id="recaptcha-container" className="recaptcha"></div>
                   </div>
                 )}
