@@ -1525,7 +1525,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      <button type="submit" className="btn submit" disabled={loading}>
+                      <button type="submit" className="btn submit" disabled={loading || paymentModalOpen}>
                         {loading ? "⏳ " + t("loading") : `${t("createAndPay")} (${priceMap[plan]} ${t("eur")})`}
                       </button>
                     </form>
