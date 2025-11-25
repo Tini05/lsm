@@ -45,7 +45,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://lsm-bojr3c63z-artins-projects-8d0a28db.vercel.app",
-      "https://lsmtetovo.vercel.app/",
+      "https://lsmtetovo.vercel.app",
       "https://lsm-wozo.onrender.com", // replace with your real frontend URL
     ],
     credentials: true,
