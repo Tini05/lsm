@@ -17,14 +17,25 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 
-export function createRecaptcha(containerId = 'recaptcha-container') {
-  // For phone auth; render invisible reCAPTCHA
-  if (!window.recaptchaRendered) {
-    const verifier = new RecaptchaVerifier(containerId, { size: 'invisible' }, auth);
-    verifier.render().then(() => { window.recaptchaRendered = true; });
-    return verifier;
+export function createRecaptcha(containerId = "recaptcha-container") {
+  if (typeof window === "undefined") return null; // safety for SSR/build
+
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,                 // ✅ FIRST: auth
+      containerId,          // ✅ SECOND: container ID
+      {
+        size: "invisible",
+        callback: () => {
+          // optional: called when solved
+        },
+      }
+    );
+    // Optional: render it immediately
+    window.recaptchaVerifier.render();
   }
-  return null;
+
+  return window.recaptchaVerifier;
 }
 
 export default app;
