@@ -1178,7 +1178,7 @@ export default function App() {
                           {filtered.map((l) => (
                             <article
                               key={l.id}
-                              className="listing-card listing-card-dashboard"
+                              className="listing-card"
                               onClick={() => setSelectedListing(l)}
                             >
                               <header className="listing-header">
