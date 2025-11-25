@@ -1975,7 +1975,7 @@ export default function App() {
                             await handleServerCapture(orderId, pendingOrder.listingId);
                           }
                     
-                          showMessage("✅ Payment successful!", "success");
+                          showMessage(t("thankYou"), "success");
                         } catch (err) {
                           console.error("PayPal approval error:", err);
                           showMessage((t("paypalError") || "PayPal error:") + " " + String(err), "error");
