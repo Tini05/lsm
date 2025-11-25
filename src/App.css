@@ -324,70 +324,107 @@ body {
   font-size: 0.9rem;
 }
 
-/* =============== EXPLORE SECTION =============== */
+/* =========================
+   FIXED EXPLORE SECTION UI
+   ========================= */
 
 .explore-section {
-  background: #fff;
+  background: #ffffff;
   border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  padding: 24px 24px 22px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  margin-top: 10px;
 }
 
-.section-title {
-  font-size: 1.4rem;
+/* Title + subtitle */
+.explore-section .section-title {
+  font-size: 1.3rem;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.section-subtitle {
-  font-size: 0.95rem;
+.explore-section .section-subtitle {
+  font-size: 0.9rem;
   color: #6b7280;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
+/* Grid of highlight cards */
 .explore-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
 }
 
+/* Each explore card */
 .explore-card {
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
   border-radius: 14px;
-  padding: 20px;
-  transition: all 0.25s ease;
-  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease,
+    background 0.15s ease;
+  cursor: default;
 }
 
 .explore-card:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(148, 163, 184, 0.35);
   border-color: #667eea;
+  background: #ffffff;
 }
 
+/* Header row inside card */
 .explore-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .explore-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .explore-meta {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: #6b7280;
-  margin-bottom: 10px;
+  white-space: nowrap;
 }
 
+/* Description text */
 .explore-desc {
+  font-size: 0.86rem;
   color: #4b5563;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+/* Optional small icon look if you use emojis */
+.explore-icon {
+  font-size: 1.2rem;
+}
+
+/* Mobile adjustments – keep it clean and stacked */
+@media (max-width: 768px) {
+  .explore-section {
+    padding: 18px 14px 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  .explore-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .explore-card {
+    padding: 12px 12px 10px;
+  }
 }
 
 /* =============== DASHBOARD =============== */
