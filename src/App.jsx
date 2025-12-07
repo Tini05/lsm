@@ -902,7 +902,7 @@ export default function App() {
                                       className="btn small"
                                       onClick={() =>
                                         window.open(
-                                          `mailto:${l.userEmail || ""}?subject=Regarding%20your%20listing%20${encodeURIComponent(
+                                          `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
                                             l.name || ""
                                           )}`
                                         )
@@ -918,6 +918,20 @@ export default function App() {
                                       }}
                                     >
                                       📋 {t("copy")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      type="button"
+                                      onClick={() => handleShareListing(l)}
+                                    >
+                                      🔗 {t("share")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      type="button"
+                                      onClick={() => toggleFav(l.id)}
+                                    >
+                                      {favorites.includes(l.id) ? "★" : "☆"}
                                     </button>
                                   </div>
                                 </div>
@@ -1618,47 +1632,72 @@ export default function App() {
                           {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
                         </header>
                         <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
-                        <p className="listing-description">{l.description}</p>
-                        <div className="listing-actions" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            className="btn small"
-                            onClick={() => window.open(`tel:${l.contact}`)}
-                          >
-                            📞 {t("call")}
-                          </button>
-                          <button
-                            className="btn small"
-                            onClick={() =>
-                              window.open(
-                                `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
-                                  l.name || ""
-                                )}`
-                              )
-                            }
-                          >
-                            ✉️ {t("emailAction")}
-                          </button>
-                          <button
-                            className="btn btn-ghost small"
-                            onClick={() => {
-                              navigator.clipboard?.writeText(l.contact || "");
-                              showMessage(t("copied"), "success");
-                            }}
-                          >
-                            📋 {t("copy")}
-                          </button>
-                          <button
-                            className="btn btn-ghost small"
-                            onClick={() => handleShareListing(l)}
-                          >
-                            🔗 {t("share") || "Shpërndaj"}
-                          </button>
-                          <button
-                            className="btn btn-ghost small"
-                            onClick={() => toggleFav(l.id)}
-                          >
-                            {favorites.includes(l.id) ? "★" : "☆"} {t("favorite")}
-                          </button>
+                       <p className="listing-description listing-description-clamp">
+                          {l.description}
+                        </p>
+                        
+                        <div
+                          className="listing-footer-row"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="listing-footer-left">
+                            {l.offerprice && (
+                              <span className="pill pill-price">{l.offerprice}</span>
+                            )}
+                            {l.tags && (
+                              <span className="pill pill-tags">
+                                {l.tags.split(",")[0]?.trim()}
+                                {l.tags.split(",").length > 1 ? " +" : ""}
+                              </span>
+                            )}
+                          </div>
+                        
+                          <div className="listing-actions compact">
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => window.open(`tel:${l.contact}`)}
+                            >
+                              📞
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                    l.name || ""
+                                  )}`
+                                )
+                              }
+                            >
+                              ✉️
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(l.contact || "");
+                                showMessage(t("copied"), "success");
+                              }}
+                            >
+                              📋
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => handleShareListing(l)}
+                            >
+                              🔗
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => toggleFav(l.id)}
+                            >
+                              {favorites.includes(l.id) ? "★" : "☆"}
+                            </button>
+                          </div>
                         </div>
                       </article>
                     ))
