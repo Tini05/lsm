@@ -1254,6 +1254,7 @@ export default function App() {
                                     </span>
                                   )}
                                 </div>
+
                                 <div className="listing-actions compact">
                                   <button
                                     className="icon-btn"
@@ -1300,6 +1301,7 @@ export default function App() {
                                     {favorites.includes(l.id) ? "★" : "☆"}
                                   </button>
                                 </div>
+                              </div>
                             </article>
                           ))}
 
