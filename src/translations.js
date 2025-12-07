@@ -194,8 +194,6 @@ const translations = {
 
     manageListings: "Manage Listings",
 
-    emailLabel: "Email",
-    verifiedLabel: "Verified",
     pendingVerification: "Pending verification",
     accountSince: "Account created",
 
@@ -244,6 +242,20 @@ const translations = {
     websiteFieldLabel: "Website / Social link",
     websitePlaceholder: "Paste a link (optional)",
     coverImage: "Cover image",
+
+    // NEW: Sharing & trust
+    share: "Share",
+    shareText: "Shared from Local Support Market",
+    shareCopied: "Listing link copied to clipboard ✅",
+    shareNotSupported: "This device does not support sharing.",
+    whyTrustUs: "Why Local Support Market?",
+    trustPoint1: "All listings are manually reviewed before they are verified.",
+    trustPoint2:
+      "Direct contact with businesses, with no hidden commissions or fees.",
+    trustPoint3:
+      "Built for cities across North Macedonia, with a focus on local businesses.",
+    trustPoint4:
+      "Option to report suspicious or abusive listings.",
   },
 
   sq: {
@@ -439,8 +451,6 @@ const translations = {
 
     manageListings: "Menaxho listimet",
 
-    emailLabel: "Email",
-    verifiedLabel: "E verifikuar",
     pendingVerification: "Në pritje të verifikimit",
     accountSince: "Llogaria krijuar",
 
@@ -448,7 +458,8 @@ const translations = {
     accountSubtitle: "Menaxho hyrjen, verifikimin dhe cilësimet e sigurisë.",
 
     securitySettings: "Siguria & hyrja",
-    securitySettingsText: "Përditëso email-in dhe fjalëkalimin për ta mbajtur llogarinë të sigurt.",
+    securitySettingsText:
+      "Përditëso email-in dhe fjalëkalimin për ta mbajtur llogarinë të sigurt.",
 
     changeEmail: "Ndrysho email-in",
     newEmail: "Email i ri",
@@ -470,13 +481,15 @@ const translations = {
     verificationSent: "Email-i i verifikimit u dërgua — kontrollo inbox-in.",
     verificationError: "Gabim gjatë dërgimit të email-it të verifikimit.",
 
-    emailChangeNotAvailable: "Ndryshimi i email-it nuk është i disponueshëm për këtë llogari.",
+    emailChangeNotAvailable:
+      "Ndryshimi i email-it nuk është i disponueshëm për këtë llogari.",
     emailUpdateSuccess: "Email-i u përditësua me sukses.",
     emailUpdateError: "Nuk u arrit të përditësohet email-i.",
 
     passwordTooShort: "Fjalëkalimi duhet të ketë të paktën 6 karaktere.",
     passwordsDontMatch: "Fjalëkalimet e reja nuk përputhen.",
-    passwordChangeNotAvailable: "Ndryshimi i fjalëkalimit nuk është i disponueshëm për këtë llogari.",
+    passwordChangeNotAvailable:
+      "Ndryshimi i fjalëkalimit nuk është i disponueshëm për këtë llogari.",
     passwordUpdateSuccess: "Fjalëkalimi u përditësua me sukses.",
     passwordUpdateError: "Nuk u arrit të përditësohet fjalëkalimi.",
     enterCurrentPassword: "Shkruaj fjalëkalimin aktual.",
@@ -489,6 +502,21 @@ const translations = {
     websiteFieldLabel: "Website / Link social",
     websitePlaceholder: "Ngjit një link (opsionale)",
     coverImage: "Foto kryesore",
+
+    // NEW: Sharing & trust
+    share: "Shpërndaj",
+    shareText: "Ndaj nga Tregu Lokal i Ndihmës",
+    shareCopied: "Linku i listimit u kopjua në kujtesë ✅",
+    shareNotSupported: "Ky pajisje nuk e përkrah ndarjen direkt.",
+    whyTrustUs: "Pse Tregu Lokal i Ndihmës?",
+    trustPoint1:
+      "Të gjitha listimet kontrollohen manualisht para verifikimit.",
+    trustPoint2:
+      "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta.",
+    trustPoint3:
+      "Ndërtuar për qytetet e Maqedonisë, me fokus te bizneset lokale.",
+    trustPoint4:
+      "Mundësi raportimi për listime të dyshimta dhe abuzime.",
   },
 
   mk: {
@@ -625,7 +653,8 @@ const translations = {
     copied: "Копирано",
     expires: "Истекува",
     months: "месец/и",
-    allListingsHint: "Прегледај и филтрирај ги сите верификувани огласи на платформата.",
+    allListingsHint:
+      "Прегледај и филтрирај ги сите верификувани огласи на платформата.",
     resultsLabel: "резултати",
 
     food: "Храна и пијалоци",
@@ -655,7 +684,8 @@ const translations = {
     maxPrice: "Макс.",
 
     tagsPlaceholder: "Тагови, одделени со запирка (незадолжително)",
-    socialPlaceholder: "Социјални мрежи / веб-страна (незадолжително)",
+    socialPlaceholder:
+      "Социјални мрежи / веб-страна (незадолжително)",
 
     previewTitlePlaceholder: "Името на вашиот бизнис",
     previewDescriptionPlaceholder: "Краток опис се појавува тука...",
@@ -670,7 +700,8 @@ const translations = {
     yes: "Да",
     no: "Не",
     resendVerificationEmail: "Испрати повторно е-пошта за верификација",
-    verificationSent: "Е-поштата за верификација е испратена — проверете го сандачето.",
+    verificationSent:
+      "Е-поштата за верификација е испратена — проверете го сандачето.",
     verificationError: "Грешка при испраќање на верификација:",
 
     emailLoginSignup: "Најава / регистрација со е-пошта",
@@ -684,16 +715,16 @@ const translations = {
 
     manageListings: "Управувај со огласите",
 
-    emailLabel: "Е-пошта",
-    verifiedLabel: "Верифицирано",
     pendingVerification: "Во чекор за верификација",
     accountSince: "Сметка креирана",
 
     accountTitle: "Сметка",
-    accountSubtitle: "Управувај со најава, верификација и безбедносни поставки.",
+    accountSubtitle:
+      "Управувај со најава, верификација и безбедносни поставки.",
 
     securitySettings: "Безбедност и најава",
-    securitySettingsText: "Ажурирај ја е-поштата и лозинката за да ја задржиш сметката безбедна.",
+    securitySettingsText:
+      "Ажурирај ја е-поштата и лозинката за да ја задржиш сметката безбедна.",
 
     changeEmail: "Промени е-пошта",
     newEmail: "Нова е-пошта",
@@ -712,28 +743,46 @@ const translations = {
     saving: "Се зачувува...",
     favorite: "Омилено",
 
-    verificationSent: "Пратен е верификациски е-пошта — провери го сандачето.",
+    verificationSent:
+      "Пратен е верификациски е-пошта — провери го сандачето.",
     verificationError: "Грешка при праќање на верификациски е-пошта.",
 
-    emailChangeNotAvailable: "Промена на е-пошта не е достапна за оваа сметка.",
+    emailChangeNotAvailable:
+      "Промена на е-пошта не е достапна за оваа сметка.",
     emailUpdateSuccess: "Е-поштата е успешно ажурирана.",
     emailUpdateError: "Не успеавме да ја ажурираме е-поштата.",
 
     passwordTooShort: "Лозинката мора да има најмалку 6 знаци.",
     passwordsDontMatch: "Новите лозинки не се совпаѓаат.",
-    passwordChangeNotAvailable: "Промена на лозинка не е достапна за оваа сметка.",
+    passwordChangeNotAvailable:
+      "Промена на лозинка не е достапна за оваа сметка.",
     passwordUpdateSuccess: "Лозинката е успешно ажурирана.",
     passwordUpdateError: "Не успеавме да ја ажурираме лозинката.",
     enterCurrentPassword: "Внеси ја тековната лозинка.",
 
     myListingsHint: "Управувај, уреди и продолжи ги твоите огласи.",
-    listingsLabel: "огласu",
+    listingsLabel: "огласи",
 
     priceRangeLabel: "Ценовен опсег",
     tagsFieldLabel: "Тагови",
     websiteFieldLabel: "Веб-страница / Социјален линк",
     websitePlaceholder: "Внеси линк (опционално)",
     coverImage: "Насловна слика",
+
+    // NEW: Sharing & trust
+    share: "Сподели",
+    shareText: "Споделено од Локален пазар за поддршка",
+    shareCopied: "Линкот од огласот е копиран ✅",
+    shareNotSupported: "Овој уред не поддржува директно споделување.",
+    whyTrustUs: "Зошто Локален пазар за поддршка?",
+    trustPoint1:
+      "Сите огласи се рачно проверени пред да бидат верификувани.",
+    trustPoint2:
+      "Директен контакт со бизнисите, без скриени провизии или такси.",
+    trustPoint3:
+      "Изграден за градовите низ Македонија, со фокус на локални бизниси.",
+    trustPoint4:
+      "Можност за пријавување сомнителни или злоупотребени огласи.",
   },
 };
 
