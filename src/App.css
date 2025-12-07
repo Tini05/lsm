@@ -1452,3 +1452,37 @@ body {
 .recaptcha {
   margin-top: 0.75rem;
 }
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.chip-active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.trust-section .trust-list {
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
