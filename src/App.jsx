@@ -1118,7 +1118,8 @@ export default function App() {
                           <div className="listings-header-text">
                             <h2 className="section-title">🏪 {t("browse")}</h2>
                             <p className="section-subtitle">
-                              {t("allListingsHint") || "View and filter all verified listings from the platform."}
+                              {t("allListingsHint") ||
+                                "View and filter all verified listings from the platform."}
                             </p>
                           </div>
                           <div className="listings-count">
@@ -1126,11 +1127,12 @@ export default function App() {
                               {filtered.length} {t("resultsLabel") || "results"}
                             </span>
                             <span className="badge soft">
-                              {verifiedListings.length} {t("verified")?.toLowerCase?.() || "verified"}
+                              {verifiedListings.length}{" "}
+                              {t("verified")?.toLowerCase?.() || "verified"}
                             </span>
                           </div>
                         </div>
-
+                    
                         {/* Filters */}
                         <div className="filters filters-dashboard">
                           <div className="searchbar">
@@ -1139,7 +1141,7 @@ export default function App() {
                               placeholder={t("searchPlaceholder") || "Search by name or description"}
                               value={q}
                               onChange={(e) => setQ(e.target.value)}
-                              style={{width: "90%"}}
+                              style={{ width: "90%" }}
                             />
                             {q && (
                               <button
@@ -1154,7 +1156,7 @@ export default function App() {
                               {t("search")}
                             </button>
                           </div>
-
+                    
                           <div className="filter-row">
                             <div className="filter-group">
                               <label className="filter-label">{t("category")}</label>
@@ -1171,7 +1173,7 @@ export default function App() {
                                 ))}
                               </select>
                             </div>
-
+                    
                             <div className="filter-group">
                               <label className="filter-label">{t("location")}</label>
                               <select
@@ -1187,7 +1189,7 @@ export default function App() {
                                 ))}
                               </select>
                             </div>
-
+                    
                             <div className="filter-group">
                               <label className="filter-label">{t("sortBy")}</label>
                               <select
@@ -1202,9 +1204,12 @@ export default function App() {
                             </div>
                           </div>
                         </div>
-
+                    
                         {/* Listings grid */}
-                        <div className="listing-grid listing-grid-dashboard" style={{display: "block"}}>
+                        <div
+                          className="listing-grid listing-grid-dashboard"
+                          style={{ display: "block" }}
+                        >
                           {filtered.map((l) => (
                             <article
                               key={l.id}
@@ -1223,22 +1228,16 @@ export default function App() {
                                     {t(l.category) || l.category} • {l.location}
                                   </div>
                                 </div>
-
+                    
                                 <div className="listing-badges">
                                   <span className="badge verified">✓ {t("verified")}</span>
-                                  {/* {l.expiresAt && (
-                                    <span className="badge expires">
-                                      {t("expires")}:{" "}
-                                      {new Date(l.expiresAt).toLocaleDateString()}
-                                    </span>
-                                  )} */}
                                 </div>
                               </header>
-
+                    
                               <p className="listing-description listing-description-clamp">
                                 {l.description}
                               </p>
-
+                    
                               <div
                                 className="listing-footer-row"
                                 onClick={(e) => e.stopPropagation()}
@@ -1254,7 +1253,7 @@ export default function App() {
                                     </span>
                                   )}
                                 </div>
-
+                    
                                 <div className="listing-actions compact">
                                   <button
                                     className="icon-btn"
@@ -1304,7 +1303,7 @@ export default function App() {
                               </div>
                             </article>
                           ))}
-
+                    
                           {filtered.length === 0 && (
                             <div className="empty">
                               <div className="empty-icon">📭</div>
