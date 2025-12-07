@@ -648,6 +648,36 @@ export default function App() {
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const handleShareListing = (listing) => {
+  const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
+  const text = `${listing.name || ""} • ${listing.location || ""} – ${
+    t("shareText") || t("title") || "Tregu Lokal i Ndihmës"
+  }`;
+
+  if (navigator.share) {
+    navigator
+      .share({
+        title: listing.name || t("appName") || "Listing",
+        text,
+        url,
+      })
+      .catch(() => {
+        // user canceled or share failed silently; no need to spam them
+      });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url);
+    showMessage(
+      t("shareCopied") || "Linku i listimit u kopjua në clipboard ✅",
+      "success"
+    );
+  } else {
+    showMessage(
+      t("shareNotSupported") || "Ky pajisje nuk e përkrah ndarjen direkt.",
+      "error"
+    );
+  }
+};
+  
   /* Header */
   const Header = () => (
     <header className="header">
@@ -1224,7 +1254,6 @@ export default function App() {
                                     </span>
                                   )}
                                 </div>
-
                                 <div className="listing-actions compact">
                                   <button
                                     className="icon-btn"
@@ -1259,12 +1288,18 @@ export default function App() {
                                   <button
                                     className="icon-btn"
                                     type="button"
+                                    onClick={() => handleShareListing(l)}
+                                  >
+                                    🔗
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
                                     onClick={() => toggleFav(l.id)}
                                   >
                                     {favorites.includes(l.id) ? "★" : "☆"}
                                   </button>
                                 </div>
-                              </div>
                             </article>
                           ))}
 
@@ -1542,6 +1577,24 @@ export default function App() {
                   </span>
                 </div>
 
+                <div className="category-chips">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`chip ${catFilter === t(cat) ? "chip-active" : ""}`}
+                      onClick={() =>
+                        setCatFilter((prev) => (prev === t(cat) ? "" : t(cat)))
+                      }
+                    >
+                      <span className="chip-icon">
+                        {categoryIcons[cat] || "🏷️"}
+                      </span>
+                      <span className="chip-label">{t(cat)}</span>
+                    </button>
+                  ))}
+                </div>
+                
                 <div className="quick-filters" style={{marginBottom: ".5rem"}}>
                   <input className="input" placeholder={t("searchPlaceholder") || "Search"} value={q} onChange={(e) => setQ(e.target.value)} style={{width: "59%"}}/>
                   <select className="select category-dropdown" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
@@ -1566,15 +1619,78 @@ export default function App() {
                         <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
                         <p className="listing-description">{l.description}</p>
                         <div className="listing-actions" onClick={(e) => e.stopPropagation()}>
-                          <button className="btn small" onClick={() => window.open(`tel:${l.contact}`)}>📞 {t("call")}</button>
-                          <button className="btn small" onClick={() => window.open(`mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(l.name || "")}`)}>✉️ {t("emailAction")}</button>
-                          <button className="btn btn-ghost small" onClick={() => { navigator.clipboard?.writeText(l.contact || ""); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
-                          <button className="btn btn-ghost small" onClick={() => toggleFav(l.id)}>{favorites.includes(l.id) ? "★" : "☆"} {t("favorite")}</button>
+                          <button
+                            className="btn small"
+                            onClick={() => window.open(`tel:${l.contact}`)}
+                          >
+                            📞 {t("call")}
+                          </button>
+                          <button
+                            className="btn small"
+                            onClick={() =>
+                              window.open(
+                                `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                  l.name || ""
+                                )}`
+                              )
+                            }
+                          >
+                            ✉️ {t("emailAction")}
+                          </button>
+                          <button
+                            className="btn btn-ghost small"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(l.contact || "");
+                              showMessage(t("copied"), "success");
+                            }}
+                          >
+                            📋 {t("copy")}
+                          </button>
+                          <button
+                            className="btn btn-ghost small"
+                            onClick={() => handleShareListing(l)}
+                          >
+                            🔗 {t("share") || "Shpërndaj"}
+                          </button>
+                          <button
+                            className="btn btn-ghost small"
+                            onClick={() => toggleFav(l.id)}
+                          >
+                            {favorites.includes(l.id) ? "★" : "☆"} {t("favorite")}
+                          </button>
                         </div>
                       </article>
                     ))
                   )}
                 </div>
+              </section>
+
+              <section className="card trust-section">
+                <h2 className="section-title">
+                  {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                </h2>
+                <ul className="trust-list">
+                  <li>
+                    ✅{" "}
+                    {t("trustPoint1") ||
+                      "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                  </li>
+                  <li>
+                    ✅{" "}
+                    {t("trustPoint2") ||
+                      "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                  </li>
+                  <li>
+                    ✅{" "}
+                    {t("trustPoint3") ||
+                      "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                  </li>
+                  <li>
+                    ✅{" "}
+                    {t("trustPoint4") ||
+                      "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                  </li>
+                </ul>
               </section>
             </div>
           )}
@@ -2347,6 +2463,7 @@ export default function App() {
                   <button className="btn small" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
                   <button className="btn small" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
                   <button className="btn btn-ghost small" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
+                  <button className="btn btn-ghost small" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
                 </div>
               </motion.div>
             </motion.div>
