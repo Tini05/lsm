@@ -124,6 +124,7 @@ export default function App() {
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
   const [selectedListing, setSelectedListing] = useState(null);
+  const [initialListingId, setInitialListingId] = useState(null);
 
   /* Dashboard/UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -199,6 +200,26 @@ export default function App() {
     return () => window.removeEventListener("keydown", onEsc);
   }, [editingListing, selectedListing]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const listingId = params.get("listing");
+    if (listingId) {
+      setInitialListingId(listingId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!initialListingId || !listings.length) return;
+  
+    const target = listings.find((l) => l.id === initialListingId);
+  
+    if (target && target.status === "verified") {
+      setSelectedListing(target);
+      // prevent reopening on every listings change
+      setInitialListingId(null);
+    }
+  }, [initialListingId, listings]);
+  
   /* Auth state & DB subscription */
   useEffect(() => auth.onAuthStateChanged((u) => setUser(u)), []);
   useEffect(() => {
@@ -1228,7 +1249,13 @@ export default function App() {
                             <article
                               key={l.id}
                               className="listing-card"
-                              onClick={() => setSelectedListing(l)}
+                              onClick={() => {
+                                setSelectedListing(l);
+                                const url = new URL(window.location.href);
+                                url.searchParams.set("listing", l.id);
+                                window.history.replaceState({}, "", url.toString());
+                              }}
+
                               style={{marginBottom: "3%"}}
                             >
                               <header className="listing-header">
@@ -1683,7 +1710,14 @@ export default function App() {
                     </div>
                   ) : (
                     filtered.map((l) => (
-                      <article key={l.id} className="listing-card" onClick={() => setSelectedListing(l)} style={{marginBottom: "3%"}}>
+                      <article key={l.id} className="listing-card" 
+                        onClick={() => {
+                          setSelectedListing(l);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("listing", l.id);
+                          window.history.replaceState({}, "", url.toString());
+                        }}
+                        style={{marginBottom: "3%"}}>
                         <header className="listing-header">
                           <h3 className="listing-title">{l.name}</h3>
                           {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
@@ -2427,7 +2461,14 @@ export default function App() {
         {/* LISTING DETAILS MODAL */}
         <AnimatePresence>
           {selectedListing && (
-            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedListing(null)}>
+            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              onClick={() => {
+                setSelectedListing(null);
+                const url = new URL(window.location.href);
+                url.searchParams.delete("listing");
+                window.history.replaceState({}, "", url.toString());
+              }}
+            >
               <motion.div className="modal listing-details-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.3 }}>
                 <div className="modal-header category-banner" style={{ background: "linear-gradient(135deg, #2563eb, #3b82f6)", color: "#fff" }}>
                   <div className="flex items-center gap-2">
@@ -2436,7 +2477,16 @@ export default function App() {
                     </span>
                     <h3 className="modal-title">{selectedListing.name}</h3>
                   </div>
-                  <button className="icon-btn text-white" onClick={() => setSelectedListing(null)}>✕</button>
+                  <button className="icon-btn text-white" 
+                    onClick={() => {
+                      setSelectedListing(null);
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("listing");
+                      window.history.replaceState({}, "", url.toString());
+                    }}
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="modal-body listing-details-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
