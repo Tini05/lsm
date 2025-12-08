@@ -706,7 +706,12 @@ export default function App() {
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
           <span className="brand-emoji">
-            <img src={logo} alt="BizCall logo" /></span>
+            <img 
+              src={logo} 
+              alt="BizCall logo"
+              className="brand-logo"
+            />
+          </span>
           <h1 className="brand-title">BizCall</h1>
         </button>
 
