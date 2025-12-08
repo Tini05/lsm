@@ -1396,19 +1396,6 @@ export default function App() {
                     <span className="badge count">
                       {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
                     </span>
-                    {user && user.emailVerified && (
-                      <button
-                        type="button"
-                        className="btn btn-ghost small"
-                        onClick={() => {
-                          setSelectedTab("main");
-                          setShowPostForm(true);
-                          setForm((f) => ({ ...f, step: 1 }));
-                        }}
-                      >
-                        ➕ {t("submitListing")}
-                      </button>
-                    )}
                   </div>
                 </div>
                  
