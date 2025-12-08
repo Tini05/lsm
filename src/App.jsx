@@ -1369,7 +1369,7 @@ export default function App() {
             </div>
           ) : (
             /* Home (Submit + Quick Browse) */
-            <div className="main-grid">
+            <div className="main-grid" style={{display: "block"}}>
               {/* ====== SUBMIT SECTION ====== */}
               {user && user.emailVerified && (
                 <button
@@ -1430,8 +1430,8 @@ export default function App() {
                   ))}
                 </div>
                 
-                <div className="quick-filters" style={{marginBottom: ".5rem"}}>
-                  <input className="input" placeholder={t("searchPlaceholder") || "Search"} value={q} onChange={(e) => setQ(e.target.value)} style={{width: "59%"}}/>
+                <div className="quick-filters" style={{marginBottom: ".5rem", display: "flex", flexWrap: "wrap"}}>
+                  <input className="input" placeholder={t("searchPlaceholder") || "Search"} value={q} onChange={(e) => setQ(e.target.value)} style={{flex: "1"}}/>
                   <select className="select category-dropdown" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
                     <option value="">{t("allCategories")}</option>
                     {categories.map((cat) => (<option key={cat} value={t(cat)}>{t(cat)}</option>))}
