@@ -130,6 +130,7 @@ export default function App() {
   /* Dashboard/UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("main"); // myListings | account | allListings
+  const [showPostForm, setShowPostForm] = useState(false);
 
   /* Editing */
   const [editingListing, setEditingListing] = useState(null);
@@ -1371,281 +1372,125 @@ export default function App() {
             <div className="main-grid">
               {/* ====== SUBMIT SECTION ====== */}
               {user && user.emailVerified ? (
-                <section className="card form-section">
-                  <h2 className="section-title">📝 {t("submitListing")}</h2>
-
-                  {/* Step indicators */}
-                  <div className="plan-grid" style={{ marginBottom: 12 }}>
-                    {[1, 2, 3].map((s) => (
-                      <div key={s} className={`plan-option ${form.step === s ? "selected" : ""}`} style={{ cursor: "default" }}>
-                        <div className="plan-content">
-                          <div className="plan-duration">
-                            {s === 1 ? t("stepBasic") : s === 2 ? t("stepDetails") : t("stepPlanPreview")}
+                showPostForm ? (
+                  // FULL FORM (like now)
+                  <section className="card form-section">
+                    <div className="section-header-row">
+                      <div>
+                        <h2 className="section-title">📝 {t("submitListing")}</h2>
+                        <p className="section-subtitle-small">
+                          {t("myListingsHint") ||
+                            "Create a new local business or service listing in a few simple steps."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-ghost small"
+                        onClick={() => setShowPostForm(false)}
+                      >
+                        ✕ {t("back")}
+                      </button>
+                    </div>
+              
+                    {/* Step indicators */}
+                    <div className="plan-grid" style={{ marginBottom: 12 }}>
+                      {[1, 2, 3].map((s) => (
+                        <div
+                          key={s}
+                          className={`plan-option ${form.step === s ? "selected" : ""}`}
+                          style={{ cursor: "default" }}
+                        >
+                          <div className="plan-content">
+                            <div className="plan-duration">
+                              {s === 1
+                                ? t("stepBasic")
+                                : s === 2
+                                ? t("stepDetails")
+                                : t("stepPlanPreview")}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Step 1 */}
-                  {form.step === 1 && (
-                    <form
-                      className="form"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!form.name || !form.category || !form.locationCity) return showMessage(t("fillAllFields"), "error");
-                        setForm({ ...form, step: 2 });
-                      }}
+                      ))}
+                    </div>
+              
+                    {/* === Step 1 / 2 / 3 (your existing code) === */}
+                    {/* paste your existing Step 1, Step 2, Step 3 exactly here, unchanged */}
+                    {/* I won't spam it again, you already have it. */}
+              
+                    {/** keep also the trust section card here if you want, or remove it from inside form **/}
+                    <section
+                      className="card trust-section"
+                      style={{ marginTop: "5%", height: "fit-content" }}
                     >
-                      <input
-                        className="input"
-                        placeholder={t("name")}
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: stripDangerous(e.target.value).slice(0, 100) })}
-                        maxLength="100"
-                        required
-                      />
-                      <select
-                        className="select category-dropdown"
-                        value={form.category}
-                        onChange={(e) => setForm({ ...form, category: e.target.value })}
-                        required
-                      >
-                        <option value="">{t("selectCategory")}</option>
-                        {categories.map((cat) => (<option key={cat} value={cat}>{t(cat)}</option>))}
-                      </select>
-
-                      {/* Location picker with map modal */}
-                      <div className="location-picker">
-                        {/* City selector from MK_CITIES */}
-                        <select
-                          className="select city-dropdown"
-                          value={form.locationCity}
-                          onChange={(e) =>
-                            setForm({
-                              ...form,
-                              locationCity: e.target.value || ""
-                            })
-                          }
-                          required
-                        >
-                          <option value="">{t("selectCity") || "Select city"}</option>
-                          {MK_CITIES.map((city) => (
-                            <option key={city} value={city}>
-                              {city}
-                            </option>
-                          ))}
-                        </select>
-
-                        {/* Optional extra details: town / village / neighborhood etc. */}
-                        <input
-                          className="input"
-                          placeholder={t("locationExtra") || "Town / village / neighborhood (optional)"}
-                          maxLength="100"
-                          value={form.locationExtra}
-                          onChange={(e) => {
-                            const extra = stripDangerous(e.target.value).slice(0, 100);
-                            setForm({
-                              ...form,
-                              locationExtra: extra,
-                            });
-                          }}
-                        />
-
-                        <button
-                          type="button"
-                          className="btn btn-ghost small"
-                          style={{ marginTop: 6 }}
-                          onClick={() => setShowMapPicker(true)}
-                        >
-                          {t("chooseOnMap") || "Choose on map"}
-                        </button>
-                      </div>
-
-                      <div className="modal-actions" style={{ padding: 0, marginTop: 8 }}>
-                        <button type="submit" className="btn">{t("continue")}</button>
-                      </div>
-                    </form>
-                  )}
-
-                  {/* Step 2 */}
-                  {form.step === 2 && (
-                    <form
-                      className="form"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!form.description || !form.contact) return showMessage(t("fillAllFields"), "error");
-                        if (!validatePhone(form.contact)) return showMessage(t("enterValidPhone"), "error");
-                        setForm({ ...form, step: 3 });
-                      }}
-                    >
-                      <textarea
-                        className="textarea"
-                        placeholder={t("description")}
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: stripDangerous(e.target.value).slice(0, 1000) })}
-                        maxLength="1000"
-                        required
-                      />
-                      <div className="phone-input-group">
-                        <select className="select phone-country" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
-                          {countryCodes.map((c) => (<option key={c.code} value={c.code}>{c.name} ({c.code})</option>))}
-                        </select>
-                        <input
-                          className="input phone-number"
-                          type="tel"
-                          required
-                          pattern="[0-9]{8,15}"
-                          placeholder={t("enterPhone")}
-                          value={form.contact}
-                          onChange={(e) => setForm({ ...form, contact: e.target.value.replace(/\D/g, "") })}
-                          maxLength="15"
-                          inputMode="numeric"
-                        />
-                      </div>
-
-                      {/* Offer price range + currency */}
-                      <div className="offer-price-range">
-                        <label className="field-label">{t("offerPriceLabel")}</label>
-                        <div className="offer-range-row">
-                          <input
-                            className="input"
-                            type="number"
-                            min="0"
-                            placeholder={t("minPrice")}
-                            value={form.offerMin}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/[^\d.,]/g, "");
-                              const updated = { ...form, offerMin: val };
-                              updated.offerprice = formatOfferPrice(updated.offerMin, updated.offerMax, updated.offerCurrency);
-                              setForm(updated);
-                            }}
-                          />
-                          <span>—</span>
-                          <input
-                            className="input"
-                            type="number"
-                            min="0"
-                            placeholder={t("maxPrice")}
-                            value={form.offerMax}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(/[^\d.,]/g, "");
-                              const updated = { ...form, offerMax: val };
-                              updated.offerprice = formatOfferPrice(updated.offerMin, updated.offerMax, updated.offerCurrency);
-                              setForm(updated);
-                            }}
-                          />
-                          <select
-                            className="select"
-                            value={form.offerCurrency}
-                            onChange={(e) => {
-                              const updated = { ...form, offerCurrency: e.target.value };
-                              updated.offerprice = formatOfferPrice(updated.offerMin, updated.offerMax, updated.offerCurrency);
-                              setForm(updated);
-                            }}
-                          >
-                            {currencyOptions.map((cur) => (
-                              <option key={cur} value={cur}>{cur}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <input
-                        className="input"
-                        placeholder={t("tagsPlaceholder")}
-                        value={form.tags}
-                        onChange={(e) => setForm({ ...form, tags: stripDangerous(e.target.value).slice(0, 64) })}
-                        maxLength="64"
-                      />
-                      <input
-                        className="input"
-                        placeholder={t("socialPlaceholder")}
-                        value={form.socialLink}
-                        onChange={(e) => setForm({ ...form, socialLink: stripDangerous(e.target.value).slice(0, 200) })}
-                        maxLength="200"
-                      />
-                      <input className="input" type="file" accept="image/*" onChange={handleImageUpload} />
-                      {form.imagePreview && <img src={form.imagePreview} alt="preview" style={{ width: "100%", borderRadius: 12, border: "1px solid #e5e7eb", marginTop: 8 }} />}
-
-                      <div className="modal-actions" style={{ padding: 0, marginTop: 8 }}>
-                        <button type="button" className="btn btn-ghost" onClick={() => setForm({ ...form, step: 1 })}>{t("back")}</button>
-                        <button type="submit" className="btn">{t("continue")}</button>
-                      </div>
-                    </form>
-                  )}
-
-                  {/* Step 3 */}
-                  {form.step === 3 && (
-                    <form className="form" onSubmit={handleSubmit}>
-                      <div className="plan-selector">
-                        <label className="plan-label">{t("selectDuration")}</label>
-                        <div className="plan-grid">
-                          {Object.keys(priceMap).map((months) => (
-                            <label key={months} className={`plan-option ${plan === months ? "selected" : ""}`}>
-                              <input type="radio" name="plan" value={months} checked={plan === months} onChange={(e) => setPlan(e.target.value)} />
-                              <div className="plan-content">
-                                <div className="plan-duration">
-                                  {months === "1" ? t("oneMonth") : months === "3" ? t("threeMonths") : months === "6" ? t("sixMonths") : t("twelveMonths")}
-                                </div>
-                                <div className="plan-price">{priceMap[months]} {t("eur")}</div>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Live Preview */}
-                      <div className="card" style={{ marginTop: 8 }}>
-                        <div className="listing-header">
-                          <h3 className="listing-title">{form.name || t("previewTitlePlaceholder")}</h3>
-                          <span className="badge verified">✓ {t("verified")}</span>
-                        </div>
-                        <div className="listing-meta">{t(form.category) || form.category || "—"} • {previewLocation || "—"}</div>
-                        {form.imagePreview && <img src={form.imagePreview} alt="preview" style={{ width: "100%", borderRadius: 12, border: "1px solid #e5e7eb", margin: "10px 0" }} />}
-                        <p className="listing-description">{form.description || t("previewDescriptionPlaceholder")}</p>
-                        <div className="listing-meta" style={{ marginTop: 8 }}>
-                          {form.offerprice && <>💶 <strong>{form.offerprice}</strong>&nbsp;&nbsp;</>}
-                          {form.tags && <>🏷️ {form.tags}</>}
-                        </div>
-                      </div>
-
-                      <button type="submit" className="btn submit" disabled={loading || paymentModalOpen}>
-                        {loading ? "⏳ " + t("loading") : `${t("createAndPay")} (${priceMap[plan]} ${t("eur")})`}
-                      </button>
-                    </form>
-                  )}
-
-                  <section className="card trust-section" style={{marginTop: "5%", height: "fit-content"}}>
-                    <h2 className="section-title">
-                      {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
-                    </h2>
-                    <ul className="trust-list">
+                      <h2 className="section-title">
+                        {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                      </h2>
+                      <ul className="trust-list">
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint1") ||
+                            "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint2") ||
+                            "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint3") ||
+                            "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint4") ||
+                            "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                        </li>
+                      </ul>
+                    </section>
+                  </section>
+                ) : (
+                  // COLLAPSED CARD WITH BUTTON
+                  <section className="card form-section">
+                    <h2 className="section-title">📝 {t("submitListing")}</h2>
+                    <p className="section-subtitle-small">
+                      {t("myListingsHint") ||
+                        "Post a new listing for your local business or service in North Macedonia."}
+                    </p>
+              
+                    <ul className="trust-list" style={{ marginBottom: "1rem" }}>
                       <li>
                         ✅{" "}
                         {t("trustPoint1") ||
-                          "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                          "Verified listings so people can trust who they call."}
                       </li>
                       <li>
                         ✅{" "}
                         {t("trustPoint2") ||
-                          "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                          "Direct contact, no extra commissions or middlemen."}
                       </li>
                       <li>
                         ✅{" "}
                         {t("trustPoint3") ||
-                          "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
-                      </li>
-                      <li>
-                        ✅{" "}
-                        {t("trustPoint4") ||
-                          "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                          "Built for Tetovë, Shkup, Gostivar and all cities in North Macedonia."}
                       </li>
                     </ul>
+              
+                    <button
+                      type="button"
+                      className="btn full-width"
+                      onClick={() => {
+                        setShowPostForm(true);
+                        setForm((f) => ({ ...f, step: 1 }));
+                      }}
+                    >
+                      ➕ {t("submitListing")}
+                    </button>
                   </section>
-                </section>
+                )
               ) : (
-                 <section className="card trust-section" style={{height: "fit-content"}}>
+                // Not logged in / not verified – trust only
+                <section className="card trust-section" style={{ height: "fit-content" }}>
                   <h2 className="section-title">
                     {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
                   </h2>
@@ -1671,18 +1516,49 @@ export default function App() {
                         "Mundësi raportimi për listime të dyshimta dhe abuzime."}
                     </li>
                   </ul>
+              
+                  <button
+                    type="button"
+                    className="btn full-width"
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setMessage({ text: "", type: "info" });
+                    }}
+                  >
+                    {t("loginToPost") || "Hyni për të postuar një listim"}
+                  </button>
                 </section>
               )}
 
               {/* ====== BROWSE SECTION ====== */}
-              <section className="card listings-section" style={{display: user && user.emailVerified ? "block" : "block"}}>
-                <div className="listings-header">
+             <section className="card listings-section">
+              <div className="listings-header">
+                <div>
                   <h2 className="section-title">🏪 {t("browse")}</h2>
+                  <p className="section-subtitle-small">
+                    {t("allListingsHint") || "Browse verified local businesses and services."}
+                  </p>
+                </div>
+                <div className="listings-header-actions">
                   <span className="badge count">
                     {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
                   </span>
+                  {user && user.emailVerified && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost small"
+                      onClick={() => {
+                        setSelectedTab("main");
+                        setShowPostForm(true);
+                        setForm((f) => ({ ...f, step: 1 }));
+                      }}
+                    >
+                      ➕ {t("submitListing")}
+                    </button>
+                  )}
                 </div>
-
+              </div>
+               
                 <div className="category-chips">
                   {categories.map((cat) => (
                     <button
@@ -1802,8 +1678,6 @@ export default function App() {
                   )}
                 </div>
               </section>
-
-             
             </div>
           )}
         </div>
