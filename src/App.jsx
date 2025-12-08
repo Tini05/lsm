@@ -1,6 +1,7 @@
 // src/App.jsx
 const API_BASE = "https://lsm-wozo.onrender.com" || "http://localhost:5000";
 
+import logo from "./assets/logo.png";
 import React, { useEffect, useMemo, useState } from "react";
 import { auth, db, createRecaptcha } from "./firebase";
 import { ref as dbRef, set, update, onValue, remove } from "firebase/database";
@@ -705,7 +706,7 @@ export default function App() {
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
           <span className="brand-emoji">
-            <img src="./assets/logo.png" alt="BizCall logo" /></span>
+            <img src={logo} alt="BizCall logo" /></span>
           <h1 className="brand-title">BizCall</h1>
         </button>
 
