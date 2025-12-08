@@ -1581,7 +1581,7 @@ export default function App() {
                     </form>
                   )}
 
-                  {/* <section className="card trust-section"> */}
+                  <section className="card trust-section" style={{marginTop: "5%"}}>
                     <h2 className="section-title">
                       {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
                     </h2>
@@ -1607,7 +1607,7 @@ export default function App() {
                           "Mundësi raportimi për listime të dyshimta dhe abuzime."}
                       </li>
                     </ul>
-                  {/* </section>  */}
+                  </section>
                 </section>
               ) : (
                  <section className="card trust-section">
