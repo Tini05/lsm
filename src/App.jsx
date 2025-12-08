@@ -2129,39 +2129,13 @@ export default function App() {
                         })
                       }
                       onApprove={async (data, actions) => {
-                        let orderId = data.orderID;
-                    
+                        const orderId = data.orderID;
                         try {
-                          // Try to capture on the client (normal PayPal popup case)
-                          const details = await actions.order
-                            .capture()
-                            .catch((err) => {
-                              const msg = String(err?.message || err);
-                    
-                              // Ignore "already captured" & "window closed" noise, keep orderId
-                              if (
-                                msg.includes("ORDER_ALREADY_CAPTURED") ||
-                                msg.includes("Window closed for postrobot_method")
-                              ) {
-                                console.warn("Non-fatal PayPal capture issue:", msg);
-                                return { id: data.orderID };
-                              }
-                    
-                              // Anything else: real problem
-                              throw err;
-                            });
-                    
-                          if (details?.id) {
-                            orderId = details.id;
-                          }
-                    
-                          // Now let your backend do the real verification / capture
                           if (paymentIntent.type === "extend") {
-                            await handleServerCaptureForExtend(orderId, paymentIntent.listingId);
+                            await handleServerCaptureForExtend(orderId, paymentIntent.listingId, extendPlan);
                           } else {
                             await handleServerCapture(orderId, pendingOrder.listingId);
                           }
-                    
                           showMessage(t("thankYou"), "success");
                         } catch (err) {
                           console.error("PayPal approval error:", err);
