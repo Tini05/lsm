@@ -1382,37 +1382,36 @@ export default function App() {
                 >
                   ➕ {t("submitListing")}
                 </button>
-                
-
-              {/* ====== BROWSE SECTION ====== */}
-             <section className="card listings-section">
-              <div className="listings-header">
-                <div>
-                  <h2 className="section-title">🏪 {t("browse")}</h2>
-                  <p className="section-subtitle-small">
-                    {t("allListingsHint") || "Browse verified local businesses and services."}
-                  </p>
+               )} 
+                {/* ====== BROWSE SECTION ====== */}
+               <section className="card listings-section">
+                <div className="listings-header">
+                  <div>
+                    <h2 className="section-title">🏪 {t("browse")}</h2>
+                    <p className="section-subtitle-small">
+                      {t("allListingsHint") || "Browse verified local businesses and services."}
+                    </p>
+                  </div>
+                  <div className="listings-header-actions">
+                    <span className="badge count">
+                      {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
+                    </span>
+                    {user && user.emailVerified && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost small"
+                        onClick={() => {
+                          setSelectedTab("main");
+                          setShowPostForm(true);
+                          setForm((f) => ({ ...f, step: 1 }));
+                        }}
+                      >
+                        ➕ {t("submitListing")}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="listings-header-actions">
-                  <span className="badge count">
-                    {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
-                  </span>
-                  {user && user.emailVerified && (
-                    <button
-                      type="button"
-                      className="btn btn-ghost small"
-                      onClick={() => {
-                        setSelectedTab("main");
-                        setShowPostForm(true);
-                        setForm((f) => ({ ...f, step: 1 }));
-                      }}
-                    >
-                      ➕ {t("submitListing")}
-                    </button>
-                  )}
-                </div>
-              </div>
-               
+                 
                 <div className="category-chips">
                   {categories.map((cat) => (
                     <button
