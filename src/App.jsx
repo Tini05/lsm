@@ -1616,7 +1616,7 @@ export default function App() {
                     </form>
                   )}
 
-                  <section className="card trust-section" style={{marginTop: "5%"}}>
+                  <section className="card trust-section" style={{marginTop: "5%", height: "fit-content"}}>
                     <h2 className="section-title">
                       {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
                     </h2>
@@ -1645,7 +1645,7 @@ export default function App() {
                   </section>
                 </section>
               ) : (
-                 <section className="card trust-section">
+                 <section className="card trust-section" style={{height: "fit-content"}}>
                   <h2 className="section-title">
                     {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
                   </h2>
