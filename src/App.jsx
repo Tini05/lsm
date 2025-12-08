@@ -672,7 +672,7 @@ export default function App() {
   const handleShareListing = (listing) => {
   const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
   const text = `${listing.name || ""} • ${listing.location || ""} – ${
-    t("shareText") || t("title") || "Tregu Lokal i Ndihmës"
+    t("shareText") || BizCall || "Tregu Lokal i Ndihmës"
   }`;
 
   if (navigator.share) {
@@ -705,7 +705,7 @@ export default function App() {
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
           <span className="brand-emoji">🏪</span>
-          <h1 className="brand-title">{t("title")}</h1>
+          <h1 className="brand-title">BizCall</h1>
         </button>
 
         <div className="header-actions">
@@ -2567,7 +2567,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="footer">
-          <p>© 2024 {t("appName")} • {t("title")}</p>
+          <p>© 2024 {t("appName")} • BizCall</p>
         </footer>
       </div>
     </PayPalScriptProvider>
