@@ -1486,3 +1486,10 @@ body {
   gap: 0.35rem;
   font-size: 0.9rem;
 }
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
