@@ -705,13 +705,13 @@ export default function App() {
     <header className="header">
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
-          <span className="brand-emoji">
+          {/* <span className="brand-emoji"> */}
             <img 
               src={logo} 
               alt="BizCall logo"
               className="brand-logo"
             />
-          </span>
+          {/* </span> */}
           <h1 className="brand-title">BizCall</h1>
         </button>
 
