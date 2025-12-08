@@ -1675,7 +1675,7 @@ export default function App() {
               )}
 
               {/* ====== BROWSE SECTION ====== */}
-              <section className="card listings-section" style={{display: user && user.emailVerified ? "block" : "contents"}}>
+              <section className="card listings-section" style={{display: user && user.emailVerified ? "block" : "block"}}>
                 <div className="listings-header">
                   <h2 className="section-title">🏪 {t("browse")}</h2>
                   <span className="badge count">
