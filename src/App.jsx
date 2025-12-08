@@ -1682,7 +1682,7 @@ export default function App() {
                     </div>
                   ) : (
                     filtered.map((l) => (
-                      <article key={l.id} className="listing-card" onClick={() => setSelectedListing(l)}>
+                      <article key={l.id} className="listing-card" onClick={() => setSelectedListing(l)} style={{marginBottom: "3%"}}>
                         <header className="listing-header">
                           <h3 className="listing-title">{l.name}</h3>
                           {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
