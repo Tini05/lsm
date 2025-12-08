@@ -1229,6 +1229,7 @@ export default function App() {
                               key={l.id}
                               className="listing-card"
                               onClick={() => setSelectedListing(l)}
+                              style={{marginBottom: "3%"}}
                             >
                               <header className="listing-header">
                                 <div className="listing-title-wrap">
