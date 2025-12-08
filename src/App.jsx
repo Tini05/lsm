@@ -1335,7 +1335,7 @@ export default function App() {
             /* Home (Submit + Quick Browse) */
             <div className="main-grid">
               {/* ====== SUBMIT SECTION ====== */}
-              {user && user.emailVerified && (
+              {user && user.emailVerified ? (
                 <section className="card form-section">
                   <h2 className="section-title">📝 {t("submitListing")}</h2>
 
@@ -1580,6 +1580,62 @@ export default function App() {
                       </button>
                     </form>
                   )}
+
+                  <section className="card trust-section">
+                    <h2 className="section-title">
+                      {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                    </h2>
+                    <ul className="trust-list">
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint1") ||
+                          "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint2") ||
+                          "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint3") ||
+                          "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint4") ||
+                          "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                      </li>
+                    </ul>
+                  </section> 
+                </section>
+              ) : (
+                 <section className="card trust-section">
+                  <h2 className="section-title">
+                    {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                  </h2>
+                  <ul className="trust-list">
+                    <li>
+                      ✅{" "}
+                      {t("trustPoint1") ||
+                        "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                    </li>
+                    <li>
+                      ✅{" "}
+                      {t("trustPoint2") ||
+                        "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                    </li>
+                    <li>
+                      ✅{" "}
+                      {t("trustPoint3") ||
+                        "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                    </li>
+                    <li>
+                      ✅{" "}
+                      {t("trustPoint4") ||
+                        "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                    </li>
+                  </ul>
                 </section>
               )}
 
@@ -1705,33 +1761,7 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="card trust-section">
-                <h2 className="section-title">
-                  {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
-                </h2>
-                <ul className="trust-list">
-                  <li>
-                    ✅{" "}
-                    {t("trustPoint1") ||
-                      "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
-                  </li>
-                  <li>
-                    ✅{" "}
-                    {t("trustPoint2") ||
-                      "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
-                  </li>
-                  <li>
-                    ✅{" "}
-                    {t("trustPoint3") ||
-                      "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
-                  </li>
-                  <li>
-                    ✅{" "}
-                    {t("trustPoint4") ||
-                      "Mundësi raportimi për listime të dyshimta dhe abuzime."}
-                  </li>
-                </ul>
-              </section>
+             
             </div>
           )}
         </div>
