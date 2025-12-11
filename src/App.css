@@ -27,7 +27,7 @@ body {
 
 /* =============== HEADER =============== */
 .header {
-  position: sticky;
+  /* position: sticky; */
   top: 0;
   z-index: 999;
   background: rgba(255, 255, 255, 0.8);
@@ -1645,7 +1645,7 @@ body {
 }
 
 .auth-tabs .tab.active {
-  color: #1d4ed8;
+  color: #fff;
   border-color: #2563eb;
 }
 
@@ -1721,7 +1721,6 @@ body {
   margin-top: 16px;
 }
 
-/* You already have .btn etc., this just tweaks inside modal */
 .auth-modal .btn.full-width {
   width: 100%;
 }
