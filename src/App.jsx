@@ -2587,7 +2587,7 @@ export default function App() {
                               className="btn full-width"
                               onClick={async () => {
                                 const rest = (phoneNumber || "").replace(/\D/g, "");
-                                if (!rest || rest.length < 5 || rest.length > 12)
+                                if (!rest || rest.length < 10 || rest.length > 15)
                                   return showMessage(t("enterValidPhone"), "error");
         
                                 const fullPhone = countryCode + rest;
@@ -2779,7 +2779,7 @@ export default function App() {
                         
                           // 2) PHONE IS MANDATORY HERE
                           const raw = (signupPhoneNumber || "").replace(/\D/g, "");
-                          if (!raw || raw.length < 5 || raw.length > 12)
+                          if (!raw || raw.length < 10 || raw.length > 15)
                             return showMessage(t("enterValidPhone"), "error");
                         
                           const fullPhone = signupCountryCode + raw;
