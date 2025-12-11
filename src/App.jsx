@@ -156,7 +156,10 @@ export default function App() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   // Signup flow: email + password + phone
   const [signupPhone, setSignupPhone] = useState("");
+  const [signupPhoneNumber, setSignupPhoneNumber] = useState("");
   const [signupCountryCode, setSignupCountryCode] = useState("+389");
+  const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
+  const [signupVerificationCode, setSignupVerificationCode] = useState("");
   
   // For signup phone verification
   const [signupConfirmation, setSignupConfirmation] = useState(null);
