@@ -157,7 +157,6 @@ export default function App() {
   // Signup flow: email + password + phone
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPhoneNumber, setSignupPhoneNumber] = useState("");
-  const [signupCountryCode, setSignupCountryCode] = useState("+389");
   const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
   const [signupVerificationCode, setSignupVerificationCode] = useState("");
   
@@ -353,7 +352,7 @@ export default function App() {
     setTimeout(() => setMessage({ text: "", type: "info" }), 5000);
   };
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 15;
+  const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
 
   const normalizePhoneForStorage = (raw) => {
     if (!raw) return raw;
@@ -2587,7 +2586,7 @@ export default function App() {
                               className="btn full-width"
                               onClick={async () => {
                                 const rest = (phoneNumber || "").replace(/\D/g, "");
-                                if (!rest || rest.length < 10 || rest.length > 15)
+                                if (!rest || rest.length < 5 || rest.length > 12)
                                   return showMessage(t("enterValidPhone"), "error");
         
                                 const fullPhone = countryCode + rest;
@@ -2779,10 +2778,10 @@ export default function App() {
                         
                           // 2) PHONE IS MANDATORY HERE
                           const raw = (signupPhoneNumber || "").replace(/\D/g, "");
-                          if (!raw || raw.length < 10 || raw.length > 15)
+                          if (!raw || raw.length < 5 || raw.length > 12)
                             return showMessage(t("enterValidPhone"), "error");
                         
-                          const fullPhone = signupCountryCode + raw;
+                          const fullPhone = countryCode + raw;
                           if (!validatePhone(fullPhone))
                             return showMessage(t("enterValidPhone"), "error");
                         
@@ -2870,7 +2869,7 @@ export default function App() {
                               if (user) {
                                 await set(dbRef(db, `users/${user.uid}`), {
                                   email: user.email || email,
-                                  phone: normalizePhoneForStorage(signupCountryCode + signupPhoneNumber),
+                                  phone: normalizePhoneForStorage(countryCode + signupPhoneNumber),
                                   createdAt: Date.now(),
                                 });
                               }
