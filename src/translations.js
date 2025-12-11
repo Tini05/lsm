@@ -85,6 +85,9 @@ const translations = {
     verifyEmailFirst: "Please verify your email before posting.",
     enterEmail: "Please provide your email for confirmation",
     signInWithPhone: "Phone Number",
+    loginSubtitle: "Access your BizCall account to explore and manage listings.",
+    signupSubtitle: "Create your BizCall account to post and contact local businesses.",
+    createAccount: "Create account",
 
     // PayPal / Payments
     payNow: "Pay Now",
@@ -342,6 +345,9 @@ const translations = {
     verifyEmailFirst: "Ju lutemi verifikoni emailin para se të postoni.",
     enterEmail: "Ju lutemi jepni emailin për konfirmim",
     signInWithPhone: "Numri i telefonit",
+    loginSubtitle: "Hyni në llogarinë tuaj BizCall për të shfletuar dhe menaxhuar listimet.",
+    signupSubtitle: "Krijoni një llogari BizCall për të postuar dhe kontaktuar biznese lokale.",
+    createAccount: "Krijo llogari",
 
     // PayPal / Payments
     payNow: "Paguaj tani",
@@ -603,6 +609,9 @@ const translations = {
     verifyEmailFirst: "Верификувајте е-пошта пред објава.",
     enterEmail: "Внесете е-пошта за потврда",
     signInWithPhone: "Телефонски број",
+    loginSubtitle: "Најавете се во вашиот BizCall профил за да прегледувате и управувате со огласи.",
+    signupSubtitle: "Креирајте BizCall сметка за да објавувате и да контактирате локални бизниси.",
+    createAccount: "Креирај сметка",
 
     // PayPal / Payments
     payNow: "Плати сега",
