@@ -18,6 +18,8 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  PhoneAuthProvider,
+  linkWithPhoneNumber,
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
@@ -152,6 +154,14 @@ export default function App() {
   const [verificationCode, setVerificationCode] = useState("");
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [phoneLoading, setPhoneLoading] = useState(false);
+  // Signup flow: email + password + phone
+  const [signupPhone, setSignupPhone] = useState("");
+  const [signupCountryCode, setSignupCountryCode] = useState("+389");
+  
+  // For signup phone verification
+  const [signupConfirmation, setSignupConfirmation] = useState(null);
+  const [signupPhoneLoading, setSignupPhoneLoading] = useState(false);
+  const [signupFullPhone, setSignupFullPhone] = useState("");
 
   const [emailForm, setEmailForm] = useState({
   newEmail: "",
@@ -2444,6 +2454,7 @@ export default function App() {
                     onClick={() => {
                       setAuthMode("login");
                       setAuthTab("email");
+                      setSignupConfirmation(null);
                     }}
                   >
                     {t("login") || "Login"}
@@ -2452,6 +2463,7 @@ export default function App() {
                     className={`tab ${authMode === "signup" ? "active" : ""}`}
                     onClick={() => {
                       setAuthMode("signup");
+                      setSignupConfirmation(null);
                     }}
                   >
                     {t("signup") || "Register"}
@@ -2485,6 +2497,7 @@ export default function App() {
                             "Log in with your email and password to manage your listings."}
                         </p>
         
+                        {/* Email */}
                         <div className="auth-field-group">
                           <span className="field-label">{t("email")}</span>
                           <input
@@ -2496,6 +2509,7 @@ export default function App() {
                           />
                         </div>
         
+                        {/* Password */}
                         <div className="auth-field-group">
                           <span className="field-label">{t("password")}</span>
                           <input
@@ -2507,7 +2521,7 @@ export default function App() {
                           />
                         </div>
         
-                        <div className="auth-actions stacked">
+                        <div className="auth-actions">
                           <button
                             className="btn full-width"
                             onClick={async () => {
@@ -2525,32 +2539,6 @@ export default function App() {
                             }}
                           >
                             {t("login")}
-                          </button>
-        
-                          <button
-                            className="btn small full-width btn-ghost"
-                            onClick={async () => {
-                              if (!validateEmail(email))
-                                return showMessage(t("enterValidEmail"), "error");
-                              const actionCodeSettings = {
-                                url: window.location.href,
-                                handleCodeInApp: true,
-                              };
-                              try {
-                                await sendSignInLinkToEmail(
-                                  auth,
-                                  email,
-                                  actionCodeSettings
-                                );
-                                window.localStorage.setItem("emailForSignIn", email);
-                                showMessage(t("emailLinkSent"), "success");
-                                setEmail("");
-                              } catch (err) {
-                                showMessage(err.message, "error");
-                              }
-                            }}
-                          >
-                            {t("sendLink")}
                           </button>
                         </div>
                       </div>
@@ -2597,16 +2585,11 @@ export default function App() {
                               onClick={async () => {
                                 const rest = (phoneNumber || "").replace(/\D/g, "");
                                 if (!rest || rest.length < 5 || rest.length > 12)
-                                  return showMessage(
-                                    t("enterValidPhone"),
-                                    "error"
-                                  );
+                                  return showMessage(t("enterValidPhone"), "error");
+        
                                 const fullPhone = countryCode + rest;
                                 if (!validatePhone(fullPhone))
-                                  return showMessage(
-                                    t("enterValidPhone"),
-                                    "error"
-                                  );
+                                  return showMessage(t("enterValidPhone"), "error");
         
                                 setPhoneLoading(true);
                                 try {
@@ -2697,6 +2680,7 @@ export default function App() {
                         "Create a BizCall account to post and manage your listings."}
                     </p>
         
+                    {/* Email */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("email")}</span>
                       <input
@@ -2708,6 +2692,7 @@ export default function App() {
                       />
                     </div>
         
+                    {/* Password */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("password")}</span>
                       <input
@@ -2719,6 +2704,7 @@ export default function App() {
                       />
                     </div>
         
+                    {/* Repeat password */}
                     <div className="auth-field-group">
                       <span className="field-label">
                         {t("repeatNewPassword") || "Repeat password"}
@@ -2737,6 +2723,7 @@ export default function App() {
                       />
                     </div>
         
+                    {/* Phone (MANDATORY) */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("phoneNumber")}</span>
                       <div className="phone-input-group">
@@ -2765,6 +2752,7 @@ export default function App() {
                       </div>
                     </div>
         
+                    {/* SIGNUP ACTIONS */}
                     <div className="auth-actions">
                       <button
                         className="btn full-width"
@@ -2777,25 +2765,29 @@ export default function App() {
                                 "Password must be at least 6 characters",
                               "error"
                             );
-                          if (!passwordForm.repeatNewPassword ||
-                              passwordForm.repeatNewPassword !== password)
+                          if (
+                            !passwordForm.repeatNewPassword ||
+                            passwordForm.repeatNewPassword !== password
+                          )
                             return showMessage(
                               t("passwordsDontMatch") || "Passwords don't match",
                               "error"
                             );
         
-                          // optional phone validation for signup
-                          let storedPhone = "";
-                          if (phoneNumber.trim()) {
-                            const rest = phoneNumber.replace(/\D/g, "");
-                            const full = countryCode + rest;
-                            if (!validatePhone(full)) {
-                              return showMessage(t("enterValidPhone"), "error");
-                            }
-                            storedPhone = normalizePhoneForStorage(full);
-                          }
+                          // phone is REQUIRED
+                          const rest = (phoneNumber || "").replace(/\D/g, "");
+                          if (!rest || rest.length < 5 || rest.length > 12)
+                            return showMessage(t("enterValidPhone"), "error");
+        
+                          const fullPhone = countryCode + rest;
+                          if (!validatePhone(fullPhone))
+                            return showMessage(t("enterValidPhone"), "error");
+        
+                          const normalized = normalizePhoneForStorage(fullPhone);
+                          setSignupFullPhone(normalized);
         
                           try {
+                            // 1) Create user with email/password
                             const cred = await createUserWithEmailAndPassword(
                               auth,
                               email,
@@ -2806,43 +2798,117 @@ export default function App() {
                               try {
                                 await sendEmailVerification(cred.user);
                               } catch {
-                                // ignore verification email error
+                                // ignore verification email errors
                               }
         
-                              // Save phone to DB profile (so registration "takes" phone)
-                              if (storedPhone) {
+                              // 2) Prepare reCAPTCHA
+                              if (!window.recaptchaVerifier) {
+                                createRecaptcha("recaptcha-container");
+                              }
+        
+                              // 3) Link phone to this same user
+                              setSignupPhoneLoading(true);
+                              const confirmation = await linkWithPhoneNumber(
+                                cred.user,
+                                fullPhone,
+                                window.recaptchaVerifier
+                              );
+                              setSignupConfirmation(confirmation);
+                              showMessage(
+                                t("codeSent") ||
+                                  "Verification code sent to your phone.",
+                                "success"
+                              );
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            showMessage(err.message, "error");
+                          } finally {
+                            setSignupPhoneLoading(false);
+                          }
+                        }}
+                        disabled={signupPhoneLoading}
+                      >
+                        {signupPhoneLoading ? "..." : t("createAccount") || "Create account"}
+                      </button>
+                    </div>
+        
+                    {/* SIGNUP SMS CODE STEP (PHONE LINKING) */}
+                    {signupConfirmation && (
+                      <div className="auth-actions" style={{ marginTop: "0.75rem" }}>
+                        <div className="auth-field-group">
+                          <span className="field-label">{t("enterCode")}</span>
+                          <input
+                            className="input"
+                            type="text"
+                            placeholder={t("enterCode")}
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value.replace(/\D/g, ""))
+                            }
+                            maxLength="6"
+                            inputMode="numeric"
+                          />
+                        </div>
+        
+                        <button
+                          className="btn full-width"
+                          onClick={async () => {
+                            if (!verificationCode.trim())
+                              return showMessage(t("enterCode"), "error");
+                            if (!/^\d{6}$/.test(verificationCode.trim()))
+                              return showMessage(t("invalidCode"), "error");
+        
+                            try {
+                              const result = await signupConfirmation.confirm(
+                                verificationCode.trim()
+                              );
+                              const user = result.user;
+        
+                              // Save profile to DB with phone
+                              try {
                                 await set(
-                                  dbRef(db, `users/${cred.user.uid}`),
+                                  dbRef(db, `users/${user.uid}`),
                                   {
-                                    email,
-                                    phone: storedPhone,
+                                    email: user.email,
+                                    phone: signupFullPhone,
                                     createdAt: Date.now(),
                                   }
                                 );
+                              } catch {
+                                // profile write failure isn't fatal for auth
                               }
-                            }
         
-                            showMessage(
-                              t("signupSuccess") ||
-                                "Signed up! Verification email sent — please verify before posting.",
-                              "success"
-                            );
-                            setShowAuthModal(false);
-                            setEmail("");
-                            setPassword("");
-                            setPasswordForm((f) => ({
-                              ...f,
-                              repeatNewPassword: "",
-                            }));
-                            setPhoneNumber("");
-                          } catch (err) {
-                            showMessage(err.message, "error");
-                          }
-                        }}
-                      >
-                        {t("signup") || "Register"}
-                      </button>
-                    </div>
+                              showMessage(
+                                t("signupSuccess") ||
+                                  "Account created, phone linked and verification email sent.",
+                                "success"
+                              );
+        
+                              // reset everything
+                              setShowAuthModal(false);
+                              setEmail("");
+                              setPassword("");
+                              setPasswordForm((f) => ({
+                                ...f,
+                                repeatNewPassword: "",
+                              }));
+                              setPhoneNumber("");
+                              setVerificationCode("");
+                              setSignupConfirmation(null);
+                              setSignupFullPhone("");
+                            } catch (err) {
+                              console.error(err);
+                              showMessage(err.message, "error");
+                            }
+                          }}
+                        >
+                          {t("verifyPhone") || "Verify phone & finish"}
+                        </button>
+                      </div>
+                    )}
+        
+                    <div id="recaptcha-container" className="recaptcha"></div>
                   </div>
                 )}
               </motion.div>
