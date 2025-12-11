@@ -2450,7 +2450,7 @@ export default function App() {
                     onClick={() => {
                       setAuthMode("login");
                       setAuthTab("email");
-                      setSignupConfirmation(null);
+                      setConfirmationResult(null);
                     }}
                   >
                     {t("login") || "Login"}
@@ -2459,7 +2459,7 @@ export default function App() {
                     className={`tab ${authMode === "signup" ? "active" : ""}`}
                     onClick={() => {
                       setAuthMode("signup");
-                      setSignupConfirmation(null);
+                      setConfirmationResult(null);
                     }}
                   >
                     {t("signup") || "Register"}
