@@ -142,7 +142,10 @@ export default function App() {
 
   /* Auth modal */
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authTab, setAuthTab] = useState("email");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  // OLD: const [authTab, setAuthTab] = useState("email");
+  const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
+  const [authTab, setAuthTab] = useState("email");   // "email" | "phone" (login method)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [countryCode, setCountryCode] = useState("+389");
@@ -2401,7 +2404,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* ===== AUTH MODAL (email + phone preserved) ===== */}
+        {/* ===== AUTH MODAL (login + signup, email + phone) ===== */}
         <AnimatePresence>
           {showAuthModal && (
             <motion.div
@@ -2418,34 +2421,283 @@ export default function App() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 20, opacity: 0 }}
               >
+                {/* Header */}
                 <div className="modal-header">
                   <h3 className="modal-title">
-                    {authTab === "email" ? t("emailLoginSignup") : t("verifyPhone")}
+                    {authMode === "signup"
+                      ? t("createAccount") || "Create your BizCall account"
+                      : authTab === "email"
+                      ? t("emailLoginSignup")
+                      : t("verifyPhone")}
                   </h3>
-                  <button className="icon-btn" onClick={() => setShowAuthModal(false)}>
+                  <button
+                    className="icon-btn"
+                    onClick={() => setShowAuthModal(false)}
+                  >
                     ✕
                   </button>
                 </div>
         
-                {/* Tabs */}
-                <div className="auth-tabs">
+                {/* Mode tabs: Login / Register */}
+                <div className="auth-mode-tabs">
                   <button
-                    className={`tab ${authTab === "email" ? "active" : ""}`}
-                    onClick={() => setAuthTab("email")}
+                    className={`tab ${authMode === "login" ? "active" : ""}`}
+                    onClick={() => {
+                      setAuthMode("login");
+                      setAuthTab("email");
+                    }}
                   >
-                    {t("emailTab")}
+                    {t("login") || "Login"}
                   </button>
                   <button
-                    className={`tab ${authTab === "phone" ? "active" : ""}`}
-                    onClick={() => setAuthTab("phone")}
+                    className={`tab ${authMode === "signup" ? "active" : ""}`}
+                    onClick={() => {
+                      setAuthMode("signup");
+                    }}
                   >
-                    {t("signInWithPhone")}
+                    {t("signup") || "Register"}
                   </button>
                 </div>
         
-                {/* EMAIL TAB */}
-                {authTab === "email" ? (
-                  <div className="modal-body auth-body">
+                {/* =================== LOGIN MODE =================== */}
+                {authMode === "login" && (
+                  <>
+                    {/* Login method tabs: Email / Phone */}
+                    <div className="auth-tabs">
+                      <button
+                        className={`tab ${authTab === "email" ? "active" : ""}`}
+                        onClick={() => setAuthTab("email")}
+                      >
+                        {t("emailTab") || "Email"}
+                      </button>
+                      <button
+                        className={`tab ${authTab === "phone" ? "active" : ""}`}
+                        onClick={() => setAuthTab("phone")}
+                      >
+                        {t("signInWithPhone") || "Phone"}
+                      </button>
+                    </div>
+        
+                    {/* EMAIL LOGIN */}
+                    {authTab === "email" ? (
+                      <div className="modal-body auth-body auth-body-card">
+                        <p className="auth-subtitle">
+                          {t("loginSubtitle") ||
+                            "Log in with your email and password to manage your listings."}
+                        </p>
+        
+                        <div className="auth-field-group">
+                          <span className="field-label">{t("email")}</span>
+                          <input
+                            className="input"
+                            type="email"
+                            placeholder={t("email")}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                        </div>
+        
+                        <div className="auth-field-group">
+                          <span className="field-label">{t("password")}</span>
+                          <input
+                            className="input"
+                            type="password"
+                            placeholder={t("password")}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                        </div>
+        
+                        <div className="auth-actions stacked">
+                          <button
+                            className="btn full-width"
+                            onClick={async () => {
+                              if (!validateEmail(email))
+                                return showMessage(t("enterValidEmail"), "error");
+                              try {
+                                await signInWithEmailAndPassword(auth, email, password);
+                                showMessage(t("signedIn"), "success");
+                                setShowAuthModal(false);
+                                setEmail("");
+                                setPassword("");
+                              } catch (e) {
+                                showMessage(e.message, "error");
+                              }
+                            }}
+                          >
+                            {t("login")}
+                          </button>
+        
+                          <button
+                            className="btn small full-width btn-ghost"
+                            onClick={async () => {
+                              if (!validateEmail(email))
+                                return showMessage(t("enterValidEmail"), "error");
+                              const actionCodeSettings = {
+                                url: window.location.href,
+                                handleCodeInApp: true,
+                              };
+                              try {
+                                await sendSignInLinkToEmail(
+                                  auth,
+                                  email,
+                                  actionCodeSettings
+                                );
+                                window.localStorage.setItem("emailForSignIn", email);
+                                showMessage(t("emailLinkSent"), "success");
+                                setEmail("");
+                              } catch (err) {
+                                showMessage(err.message, "error");
+                              }
+                            }}
+                          >
+                            {t("sendLink")}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* PHONE LOGIN */
+                      <div className="modal-body auth-body auth-body-card">
+                        <p className="auth-subtitle">
+                          {t("phoneLoginSubtitle") ||
+                            "Log in quickly with an SMS code on your phone."}
+                        </p>
+        
+                        <div className="auth-field-group">
+                          <span className="field-label">{t("phoneNumber")}</span>
+                          <div className="phone-input-group">
+                            <select
+                              className="select phone-country"
+                              value={countryCode}
+                              onChange={(e) => setCountryCode(e.target.value)}
+                            >
+                              {countryCodes.map((c) => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name} ({c.code})
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              className="input phone-number"
+                              type="tel"
+                              placeholder={t("phoneNumber")}
+                              value={phoneNumber}
+                              onChange={(e) =>
+                                setPhoneNumber(e.target.value.replace(/\D/g, ""))
+                              }
+                              maxLength="12"
+                              inputMode="numeric"
+                            />
+                          </div>
+                        </div>
+        
+                        {!confirmationResult ? (
+                          <div className="auth-actions">
+                            <button
+                              className="btn full-width"
+                              onClick={async () => {
+                                const rest = (phoneNumber || "").replace(/\D/g, "");
+                                if (!rest || rest.length < 5 || rest.length > 12)
+                                  return showMessage(
+                                    t("enterValidPhone"),
+                                    "error"
+                                  );
+                                const fullPhone = countryCode + rest;
+                                if (!validatePhone(fullPhone))
+                                  return showMessage(
+                                    t("enterValidPhone"),
+                                    "error"
+                                  );
+        
+                                setPhoneLoading(true);
+                                try {
+                                  if (!window.recaptchaVerifier)
+                                    createRecaptcha("recaptcha-container");
+                                  const result = await signInWithPhoneNumber(
+                                    auth,
+                                    fullPhone,
+                                    window.recaptchaVerifier
+                                  );
+                                  setConfirmationResult(result);
+                                  showMessage(t("codeSent"), "success");
+                                } catch (err) {
+                                  console.error(err);
+                                  showMessage(err.message, "error");
+                                  if (window.recaptchaVerifier) {
+                                    window.recaptchaVerifier.clear();
+                                    window.recaptchaVerifier = null;
+                                  }
+                                } finally {
+                                  setPhoneLoading(false);
+                                }
+                              }}
+                              disabled={phoneLoading}
+                            >
+                              {phoneLoading ? "Sending..." : t("sendLink")}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="auth-actions">
+                            <div className="auth-field-group">
+                              <span className="field-label">{t("enterCode")}</span>
+                              <input
+                                className="input"
+                                type="text"
+                                placeholder={t("enterCode")}
+                                value={verificationCode}
+                                onChange={(e) =>
+                                  setVerificationCode(
+                                    e.target.value.replace(/\D/g, "")
+                                  )
+                                }
+                                maxLength="6"
+                                inputMode="numeric"
+                              />
+                            </div>
+        
+                            <button
+                              className="btn full-width"
+                              onClick={async () => {
+                                if (!confirmationResult || !verificationCode.trim())
+                                  return showMessage(t("enterCode"), "error");
+                                if (!/^\d{6}$/.test(verificationCode.trim()))
+                                  return showMessage(t("invalidCode"), "error");
+        
+                                setPhoneLoading(true);
+                                try {
+                                  await confirmationResult.confirm(verificationCode);
+                                  showMessage(t("signedIn"), "success");
+                                  setShowAuthModal(false);
+                                  setPhoneNumber("");
+                                  setVerificationCode("");
+                                  setConfirmationResult(null);
+                                } catch (err) {
+                                  showMessage(err.message, "error");
+                                } finally {
+                                  setPhoneLoading(false);
+                                }
+                              }}
+                              disabled={phoneLoading}
+                            >
+                              {phoneLoading ? "Verifying..." : t("verifyPhone")}
+                            </button>
+                          </div>
+                        )}
+        
+                        <div id="recaptcha-container" className="recaptcha"></div>
+                      </div>
+                    )}
+                  </>
+                )}
+        
+                {/* =================== SIGNUP MODE =================== */}
+                {authMode === "signup" && (
+                  <div className="modal-body auth-body auth-body-card">
+                    <p className="auth-subtitle">
+                      {t("signupSubtitle") ||
+                        "Create a BizCall account to post and manage your listings."}
+                    </p>
+        
                     <div className="auth-field-group">
                       <span className="field-label">{t("email")}</span>
                       <input
@@ -2468,83 +2720,24 @@ export default function App() {
                       />
                     </div>
         
-                    <div className="auth-actions">
-                      <button
-                        className="btn full-width"
-                        onClick={async () => {
-                          if (!validateEmail(email))
-                            return showMessage(t("enterValidEmail"), "error");
-                          await signInWithEmailAndPassword(auth, email, password)
-                            .then(() => {
-                              showMessage(t("signedIn"), "success");
-                              setShowAuthModal(false);
-                              setEmail("");
-                              setPassword("");
-                            })
-                            .catch((e) => showMessage(e.message, "error"));
-                        }}
-                      >
-                        {t("login")}
-                      </button>
-        
-                      <button
-                        className="btn btn-ghost full-width"
-                        onClick={async () => {
-                          if (!validateEmail(email))
-                            return showMessage(t("enterValidEmail"), "error");
-                          if (password.length < 6)
-                            return showMessage(
-                              "Password must be at least 6 characters",
-                              "error"
-                            );
-                          try {
-                            const cred = await createUserWithEmailAndPassword(
-                              auth,
-                              email,
-                              password
-                            );
-                            if (cred?.user) await sendEmailVerification(cred.user);
-                            showMessage(
-                              "Signed up! Verification email sent — please verify before posting.",
-                              "success"
-                            );
-                            setShowAuthModal(false);
-                            setEmail("");
-                            setPassword("");
-                          } catch (err) {
-                            showMessage(err.message, "error");
-                          }
-                        }}
-                      >
-                        {t("signup")}
-                      </button>
-        
-                      <button
-                        className="btn small full-width"
-                        onClick={async () => {
-                          if (!validateEmail(email))
-                            return showMessage(t("enterValidEmail"), "error");
-                          const actionCodeSettings = {
-                            url: window.location.href,
-                            handleCodeInApp: true,
-                          };
-                          try {
-                            await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-                            window.localStorage.setItem("emailForSignIn", email);
-                            showMessage(t("emailLinkSent"), "success");
-                            setEmail("");
-                          } catch (err) {
-                            showMessage(err.message, "error");
-                          }
-                        }}
-                      >
-                        {t("sendLink")}
-                      </button>
+                    <div className="auth-field-group">
+                      <span className="field-label">
+                        {t("repeatNewPassword") || "Repeat password"}
+                      </span>
+                      <input
+                        className="input"
+                        type="password"
+                        placeholder={t("repeatNewPassword") || "Repeat password"}
+                        value={passwordForm.repeatNewPassword}
+                        onChange={(e) =>
+                          setPasswordForm((f) => ({
+                            ...f,
+                            repeatNewPassword: e.target.value,
+                          }))
+                        }
+                      />
                     </div>
-                  </div>
-                ) : (
-                  /* PHONE TAB */
-                  <div className="modal-body auth-body">
+        
                     <div className="auth-field-group">
                       <span className="field-label">{t("phoneNumber")}</span>
                       <div className="phone-input-group">
@@ -2573,92 +2766,84 @@ export default function App() {
                       </div>
                     </div>
         
-                    {!confirmationResult ? (
-                      <div className="auth-actions">
-                        <button
-                          className="btn full-width"
-                          onClick={async () => {
-                            const rest = (phoneNumber || "").replace(/\D/g, "");
-                            if (!rest || rest.length < 5 || rest.length > 12)
-                              return showMessage(t("enterValidPhone"), "error");
-                            const fullPhone = countryCode + rest;
-                            if (!validatePhone(fullPhone))
-                              return showMessage(t("enterValidPhone"), "error");
+                    <div className="auth-actions">
+                      <button
+                        className="btn full-width"
+                        onClick={async () => {
+                          if (!validateEmail(email))
+                            return showMessage(t("enterValidEmail"), "error");
+                          if (password.length < 6)
+                            return showMessage(
+                              t("passwordTooShort") ||
+                                "Password must be at least 6 characters",
+                              "error"
+                            );
+                          if (!passwordForm.repeatNewPassword ||
+                              passwordForm.repeatNewPassword !== password)
+                            return showMessage(
+                              t("passwordsDontMatch") || "Passwords don't match",
+                              "error"
+                            );
         
-                            setPhoneLoading(true);
-                            try {
-                              if (!window.recaptchaVerifier)
-                                createRecaptcha("recaptcha-container");
-                              const result = await signInWithPhoneNumber(
-                                auth,
-                                fullPhone,
-                                window.recaptchaVerifier
-                              );
-                              setConfirmationResult(result);
-                              showMessage(t("codeSent"), "success");
-                            } catch (err) {
-                              console.error(err);
-                              showMessage(err.message, "error");
-                              if (window.recaptchaVerifier) {
-                                window.recaptchaVerifier.clear();
-                                window.recaptchaVerifier = null;
+                          // optional phone validation for signup
+                          let storedPhone = "";
+                          if (phoneNumber.trim()) {
+                            const rest = phoneNumber.replace(/\D/g, "");
+                            const full = countryCode + rest;
+                            if (!validatePhone(full)) {
+                              return showMessage(t("enterValidPhone"), "error");
+                            }
+                            storedPhone = normalizePhoneForStorage(full);
+                          }
+        
+                          try {
+                            const cred = await createUserWithEmailAndPassword(
+                              auth,
+                              email,
+                              password
+                            );
+        
+                            if (cred?.user) {
+                              try {
+                                await sendEmailVerification(cred.user);
+                              } catch {
+                                // ignore verification email error
                               }
-                            } finally {
-                              setPhoneLoading(false);
+        
+                              // Save phone to DB profile (so registration "takes" phone)
+                              if (storedPhone) {
+                                await set(
+                                  dbRef(db, `users/${cred.user.uid}`),
+                                  {
+                                    email,
+                                    phone: storedPhone,
+                                    createdAt: Date.now(),
+                                  }
+                                );
+                              }
                             }
-                          }}
-                          disabled={phoneLoading}
-                        >
-                          {phoneLoading ? "Sending..." : t("sendLink")}
-                        </button>
+        
+                            showMessage(
+                              t("signupSuccess") ||
+                                "Signed up! Verification email sent — please verify before posting.",
+                              "success"
+                            );
+                            setShowAuthModal(false);
+                            setEmail("");
+                            setPassword("");
+                            setPasswordForm((f) => ({
+                              ...f,
+                              repeatNewPassword: "",
+                            }));
+                            setPhoneNumber("");
+                          } catch (err) {
+                            showMessage(err.message, "error");
+                          }
+                        }}
+                      >
+                        {t("signup") || "Register"}
+                      </button>
                     </div>
-                    ) : (
-                      <div className="auth-actions">
-                        <div className="auth-field-group">
-                          <span className="field-label">{t("enterCode")}</span>
-                          <input
-                            className="input"
-                            type="text"
-                            placeholder={t("enterCode")}
-                            value={verificationCode}
-                            onChange={(e) =>
-                              setVerificationCode(e.target.value.replace(/\D/g, ""))
-                            }
-                            maxLength="6"
-                            inputMode="numeric"
-                          />
-                        </div>
-        
-                        <button
-                          className="btn full-width"
-                          onClick={async () => {
-                            if (!confirmationResult || !verificationCode.trim())
-                              return showMessage(t("enterCode"), "error");
-                            if (!/^\d{6}$/.test(verificationCode.trim()))
-                              return showMessage(t("invalidCode"), "error");
-        
-                            setPhoneLoading(true);
-                            try {
-                              await confirmationResult.confirm(verificationCode);
-                              showMessage(t("signedIn"), "success");
-                              setShowAuthModal(false);
-                              setPhoneNumber("");
-                              setVerificationCode("");
-                              setConfirmationResult(null);
-                            } catch (err) {
-                              showMessage(err.message, "error");
-                            } finally {
-                              setPhoneLoading(false);
-                            }
-                          }}
-                          disabled={phoneLoading}
-                        >
-                          {phoneLoading ? "Verifying..." : t("verifyPhone")}
-                        </button>
-                      </div>
-                    )}
-        
-                    <div id="recaptcha-container" className="recaptcha"></div>
                   </div>
                 )}
               </motion.div>
