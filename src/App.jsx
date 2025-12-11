@@ -2790,24 +2790,27 @@ export default function App() {
                               // not critical
                             }
                         
-                            // 4) Prepare reCAPTCHA for signup phone link
+                            // 4) Prepare reCAPTCHA for signup phone link (reuse main container)
                             setPhoneLoading(true);
-                        
-                            if (!window.recaptchaVerifierSignup) {
-                              // reuse your helper, but separate ID from login recaptcha
-                              createRecaptcha("recaptcha-signup");
-                              window.recaptchaVerifierSignup = window.recaptchaVerifier;
+                            
+                            if (!window.recaptchaVerifier) {
+                              // use the same container as login
+                              createRecaptcha("recaptcha-container");
                             }
-                        
+                            
+                            // use the same verifier instance
                             const confirmation = await linkWithPhoneNumber(
                               user,
                               fullPhone,
-                              window.recaptchaVerifierSignup
+                              window.recaptchaVerifier
                             );
-                        
+                            
                             // 5) Save confirmation so user can enter the code
                             setConfirmationResult(confirmation);
-                            showMessage(t("codeSent") || "Verification code sent via SMS", "success");
+                            showMessage(
+                              t("codeSent") || "Verification code sent via SMS",
+                              "success"
+                            );
                           } catch (err) {
                             console.error(err);
                             showMessage(err.message, "error");
