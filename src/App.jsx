@@ -142,7 +142,6 @@ export default function App() {
 
   /* Auth modal */
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   // OLD: const [authTab, setAuthTab] = useState("email");
   const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
   const [authTab, setAuthTab] = useState("email");   // "email" | "phone" (login method)
