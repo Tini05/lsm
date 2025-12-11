@@ -20,7 +20,6 @@ import {
   EmailAuthProvider,
   PhoneAuthProvider,
   linkWithPhoneNumber,
-  linkWithCredential,
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
@@ -36,105 +35,94 @@ const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
 /* Data */
 const categories = [
-  "food",
-  "car",
-  "electronics",
-  "homeRepair",
-  "clothing",
-  "health",
-  "education",
-  "beauty",
-  "events",
-  "other",
-];
-
-const plans = [
-  { id: "1", days: 30, label: "1 month", price: 5 },
-  { id: "3", days: 90, label: "3 months", price: 9 },
-  { id: "6", days: 180, label: "6 months", price: 15 },
-  { id: "12", days: 365, label: "12 months", price: 20 },
+  "food", "car", "electronics", "homeRepair", "health",
+  "education", "clothing", "pets", "services",
+  "tech", "entertainment", "events", "other"
 ];
 
 const categoryIcons = {
-  food: "🍽️",
+  food: "🍔",
   car: "🚗",
-  electronics: "💻",
-  homeRepair: "🔧",
+  electronics: "💡",
+  homeRepair: "🧰",
+  health: "💅",
+  education: "🎓",
   clothing: "👕",
-  health: "⚕️",
-  education: "📚",
-  beauty: "💅",
-  events: "🎉",
-  other: "📌",
+  pets: "🐾",
+  services: "💼",
+  tech: "💻",
+  entertainment: "🎮",
+  events: "🎟️",
+  other: "✨",
 };
 
-function tKey(lang, key) {
-  return TRANSLATIONS[lang] && TRANSLATIONS[lang][key]
-    ? TRANSLATIONS[lang][key]
-    : TRANSLATIONS["en"][key] || key;
-}
-
-function formatDateTime(ts) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  return d.toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function normalizePhoneForStorage(phone) {
-  if (!phone) return "";
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("389")) return "+" + digits;
-  if (digits.startsWith("0")) return "+389" + digits.slice(1);
-  return "+" + digits;
-}
-
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function validatePhone(phone) {
-  return /^\+?\d{7,15}$/.test(phone.replace(/\s/g, ""));
-}
-
-function listingIsActive(listing) {
-  if (!listing || !listing.expiry) return false;
-  const now = Date.now();
-  return now < listing.expiry;
-}
-
-function getStatusBadge(listing, now = Date.now()) {
-  if (!listingIsActive(listing)) return "expired";
-  const remaining = listing.expiry - now;
-  const daysLeft = remaining / (1000 * 60 * 60 * 24);
-  if (daysLeft <= 3) return "expiringSoon";
-  if (listing.featured) return "featured";
-  return "active";
-}
-
-const PhoneCountryOptions = [
-  { code: "+389", label: "+389 (MK)" },
-  { code: "+355", label: "+355 (AL)" },
-  { code: "+381", label: "+381 (RS)" },
+const countryCodes = [
+  { name: "MK", code: "+389" },
+  { name: "AL", code: "+355" },
+  { name: "KS", code: "+383" },
+  { name: "SR", code: "+381" },
+  { name: "GR", code: "+30" },
+  { name: "BG", code: "+359" },
+  { name: "TR", code: "+90" },
+  { name: "DE", code: "+49" },
+  { name: "US", code: "+1" },
 ];
 
-const initialOptions = {
-  paypal: {
-    "client-id": PAYPAL_CLIENT_ID,
-    currency: "EUR",
-    intent: "capture",
-  },
+const currencyOptions = ["EUR", "MKD"];
+
+/* Helper: strip obvious garbage like tags */
+const stripDangerous = (v = "") => v.replace(/[<>]/g, "");
+
+/* Helper: format offer price range */
+const formatOfferPrice = (min, max, currency) => {
+  const cleanMin = (min || "").trim();
+  const cleanMax = (max || "").trim();
+  const cur = currency || "EUR";
+
+  if (!cleanMin && !cleanMax) return "";
+  if (cleanMin && cleanMax) return `${cleanMin} - ${cleanMax} ${cur}`;
+  if (cleanMin) return `from ${cleanMin} ${cur}`;
+  if (cleanMax) return `up to ${cleanMax} ${cur}`;
+  return "";
 };
 
-function App() {
-  const [lang, setLang] = useState("sq");
-  const t = (key) => tKey(lang, key);
+/* Helper: build final location string from city + extra */
+const buildLocationString = (city, extra) => {
+  const c = (city || "").trim();
+  const e = (extra || "").trim();
+  if (!c && !e) return "";
+  if (c && e) return `${c} - ${e}`;
+  return c || e;
+};
 
+export default function App() {
+  /* i18n */
+  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "sq");
+  const t = (k) => TRANSLATIONS[lang]?.[k] ?? TRANSLATIONS.sq?.[k] ?? k;
+  useEffect(() => localStorage.setItem("lang", lang), [lang]);
+
+  /* Core state */
+  const [form, setForm] = useState({
+    step: 1,
+    name: "",
+    category: "",
+    locationCity: "",
+    locationExtra: "",
+    locationData: null, // { city, area, lat, lng, mapsUrl } if you want later
+    description: "",
+    contact: "",
+    offerMin: "",
+    offerMax: "",
+    offerCurrency: "EUR",
+    offerprice: "",   // preformatted price string, saved in DB
+    tags: "",
+    socialLink: "",
+    imagePreview: null, // local-only preview
+  });
+  const [plan, setPlan] = useState("1");
+  const priceMap = { "1": 0.1, "3": 10, "6": 16, "12": 25 }; // plan price (listing duration)
+
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "info" });
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
@@ -158,7 +146,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   // OLD: const [authTab, setAuthTab] = useState("email");
   const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
-  const [authTab, setAuthTab] = useState("email"); // "email" | "phone" (login method)
+  const [authTab, setAuthTab] = useState("email");   // "email" | "phone" (login method)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [countryCode, setCountryCode] = useState("+389");
@@ -168,12 +156,12 @@ function App() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   // Signup flow: email + password + phone
   // const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
-
+  
   // For signup phone verification
   // const [signupPhoneLoading, setSignupPhoneLoading] = useState(false);
   const [emailForm, setEmailForm] = useState({
-    newEmail: "",
-    currentPassword: "",
+  newEmail: "",
+  currentPassword: "",
   });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -184,43 +172,43 @@ function App() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  /* Filters */
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [cityFilter, setCityFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active");
-  const [mySort, setMySort] = useState("expiryAsc");
-  const [allSort, setAllSort] = useState("recent");
+  /* Payment modal */
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentIntent, setPaymentIntent] = useState(null); // { type: 'create'|'extend', orderID, amount, listingId }
+  const [pendingOrder, setPendingOrder] = useState(null); // kept for create flow capture
 
-  const [initialOptionsState, setInitialOptionsState] =
-    useState(initialOptions);
+  /* Filters / search */
+  const [q, setQ] = useState("");
+  const [catFilter, setCatFilter] = useState("");
+  const [locFilter, setLocFilter] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged((u) => {
-      setUser(u);
-      if (!u) {
-        setSelectedTab("main");
-      }
-    });
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
-    if (!user) {
-      setSidebarOpen(false);
-      return;
+  /* Favorites */
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("favorites") || "[]");
+    } catch {
+      return [];
     }
-    const userListingsRef = dbRef(db, "listings");
-    const unsub = onValue(userListingsRef, (snapshot) => {
-      const data = snapshot.val() || {};
-      const arr = Object.entries(data).map(([id, value]) => ({
-        id,
-        ...value,
-      }));
-      setListings(arr);
-    });
-    return () => unsub();
-  }, [user]);
+  });
+  useEffect(() => localStorage.setItem("favorites", JSON.stringify(favorites)), [favorites]);
+
+  /* Close sidebar with ESC */
+  useEffect(() => {
+    const onEsc = (e) => {
+      if (e.key === "Escape") {
+        setSidebarOpen(false);
+        setShowAuthModal(false);
+        setPaymentModalOpen(false);
+        setShowMapPicker(false);
+        if (editingListing) { setEditingListing(null); setEditForm(null); }
+        if (selectedListing) setSelectedListing(null);
+      }
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [editingListing, selectedListing]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -230,310 +218,47 @@ function App() {
     }
   }, []);
 
-  const showMessage = (text, type = "info") => {
-    setMessage({ text, type });
-    if (text) {
-      setTimeout(
-        () =>
-          setMessage((prev) =>
-            prev.text === text ? { text: "", type: "info" } : prev
-          ),
-        4000
-      );
-    }
-  };
-
   useEffect(() => {
-    if (initialListingId && listings.length > 0) {
-      const found = listings.find((l) => l.id === initialListingId);
-      if (found) {
-        setSelectedListing(found);
-        setSelectedTab("allListings");
-      }
+    if (!initialListingId || !listings.length) return;
+  
+    const target = listings.find((l) => l.id === initialListingId);
+  
+    if (target && target.status === "verified") {
+      setSelectedListing(target);
+      // prevent reopening on every listings change
       setInitialListingId(null);
     }
   }, [initialListingId, listings]);
-
-  const filteredMyListings = useMemo(() => {
-    if (!user) return [];
-    const now = Date.now();
-    let result = listings.filter((l) => l.ownerUid === user.uid);
-
-    result = result.filter((l) => {
-      const isActive = listingIsActive(l);
-      const badge = getStatusBadge(l, now);
-      if (statusFilter === "all") return true;
-      if (statusFilter === "active") return isActive;
-      if (statusFilter === "expired") return !isActive;
-      if (statusFilter === "featured") return badge === "featured";
-      if (statusFilter === "expiringSoon") return badge === "expiringSoon";
-      return true;
+  
+  /* Auth state & DB subscription */
+  useEffect(() => auth.onAuthStateChanged((u) => setUser(u)), []);
+  useEffect(() => {
+    const listingsRef = dbRef(db, "listings");
+    onValue(listingsRef, (snapshot) => {
+      const val = snapshot.val() || {};
+      const arr = Object.keys(val).map((k) => ({ id: k, ...val[k] }));
+      const valid = arr.filter((i) => !i.expiresAt || i.expiresAt > Date.now());
+      setListings(valid);
     });
+  }, []);
 
-    if (categoryFilter !== "all") {
-      result = result.filter((l) => l.category === categoryFilter);
-    }
-    if (cityFilter !== "all") {
-      result = result.filter((l) => l.city === cityFilter);
-    }
-    if (searchTerm.trim()) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter(
-        (l) =>
-          (l.name || "").toLowerCase().includes(lower) ||
-          (l.description || "").toLowerCase().includes(lower) ||
-          (l.address || "").toLowerCase().includes(lower)
-      );
-    }
-
-    result.sort((a, b) => {
-      if (mySort === "expiryAsc") {
-        return (a.expiry || 0) - (b.expiry || 0);
+  /* Email-link sign-in (preserved) */
+  useEffect(() => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let emailForSignIn = window.localStorage.getItem("emailForSignIn");
+      if (!emailForSignIn) emailForSignIn = window.prompt(t("enterEmail"));
+      if (emailForSignIn) {
+        signInWithEmailLink(auth, emailForSignIn, window.location.href)
+          .then(() => {
+            window.localStorage.removeItem("emailForSignIn");
+            showMessage(t("signedIn"), "success");
+            setShowAuthModal(false);
+          })
+          .catch((err) => showMessage(t("error") + " " + err.message, "error"));
       }
-      if (mySort === "expiryDesc") {
-        return (b.expiry || 0) - (a.expiry || 0);
-      }
-      if (mySort === "createdDesc") {
-        return (b.createdAt || 0) - (a.createdAt || 0);
-      }
-      if (mySort === "createdAsc") {
-        return (a.createdAt || 0) - (b.createdAt || 0);
-      }
-      return 0;
-    });
-
-    return result;
-  }, [
-    user,
-    listings,
-    categoryFilter,
-    cityFilter,
-    searchTerm,
-    statusFilter,
-    mySort,
-  ]);
-
-  const filteredAllListings = useMemo(() => {
-    const now = Date.now();
-    let result = listings.filter((l) => listingIsActive(l));
-
-    if (categoryFilter !== "all") {
-      result = result.filter((l) => l.category === categoryFilter);
     }
-    if (cityFilter !== "all") {
-      result = result.filter((l) => l.city === cityFilter);
-    }
-    if (searchTerm.trim()) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter(
-        (l) =>
-          (l.name || "").toLowerCase().includes(lower) ||
-          (l.description || "").toLowerCase().includes(lower) ||
-          (l.address || "").toLowerCase().includes(lower)
-      );
-    }
-
-    result.sort((a, b) => {
-      if (allSort === "recent") {
-        return (b.createdAt || 0) - (a.createdAt || 0);
-      }
-      if (allSort === "priceAsc") {
-        return (a.price || 0) - (b.price || 0);
-      }
-      if (allSort === "priceDesc") {
-        return (b.price || 0) - (a.price || 0);
-      }
-      if (allSort === "expirySoon") {
-        return (a.expiry || 0) - (b.expiry || 0);
-      }
-      return 0;
-    });
-
-    return result;
-  }, [
-    listings,
-    categoryFilter,
-    cityFilter,
-    searchTerm,
-    allSort,
-  ]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      showMessage(t("logoutSuccess") || "Logged out successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
-
-  const resetFilters = () => {
-    setCategoryFilter("all");
-    setCityFilter("all");
-    setSearchTerm("");
-    setStatusFilter("active");
-    setMySort("expiryAsc");
-    setAllSort("recent");
-  };
-
-  const handleCreateListing = async (e) => {
-    e.preventDefault();
-    if (!user) return showMessage(t("loginRequired"), "error");
-
-    const form = Object.fromEntries(new FormData(e.target));
-    const {
-      name,
-      category,
-      city,
-      price,
-      description,
-      phone,
-      address,
-      days,
-      featured,
-    } = form;
-
-    if (!name || !category || category === "none" || !city || !description) {
-      return showMessage(t("fillRequiredFields"), "error");
-    }
-
-    const numericPrice = parseFloat(price.replace(",", ".") || "0");
-    const numericDays = parseInt(days, 10) || 30;
-    const now = Date.now();
-    const expiry = now + numericDays * 24 * 60 * 60 * 1000;
-
-    const newListingRef = dbRef(db, "listings").push();
-    const listingId = newListingRef.key;
-
-    const newListing = {
-      name,
-      category,
-      city,
-      price: numericPrice,
-      description,
-      phone,
-      address,
-      createdAt: now,
-      expiry,
-      ownerUid: user.uid,
-      featured: featured === "on",
-      planDays: numericDays,
-      planLabel: plans.find((p) => p.days === numericDays)?.label || "",
-    };
-
-    try {
-      await set(newListingRef, newListing);
-      showMessage(t("listingCreated"), "success");
-      setShowPostForm(false);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
-
-  const handleDeleteListing = async (listingId) => {
-    if (!user) return showMessage(t("loginRequired"), "error");
-    if (!window.confirm(t("confirmDeleteListing") || "Delete this listing?"))
-      return;
-    try {
-      await remove(dbRef(db, `listings/${listingId}`));
-      showMessage(t("listingDeleted"), "success");
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
-
-  const handleEditListing = (listing) => {
-    setEditingListing(listing);
-    setEditForm({ ...listing });
-  };
-
-  const handleSaveEditListing = async (e) => {
-    e.preventDefault();
-    if (!user || !editingListing || !editForm)
-      return showMessage(t("loginRequired"), "error");
-
-    const listingId = editingListing.id;
-    const updates = {
-      name: editForm.name,
-      category: editForm.category,
-      city: editForm.city,
-      price: parseFloat(editForm.price || 0),
-      description: editForm.description,
-      phone: editForm.phone,
-      address: editForm.address,
-      featured: !!editForm.featured,
-    };
-    try {
-      await update(dbRef(db, `listings/${listingId}`), updates);
-      showMessage(t("listingUpdated"), "success");
-      setEditingListing(null);
-      setEditForm(null);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
-
-  const handleExtendListing = (listing) => {
-    setExtendTarget(listing);
-    setExtendPlan("1");
-  };
-
-  const handleExtendSuccess = async (details, data) => {
-    if (!extendTarget) return;
-    const planObj = plans.find((p) => p.id === extendPlan);
-    if (!planObj) return;
-
-    const now = Date.now();
-    const currentExpiry =
-      extendTarget.expiry && extendTarget.expiry > now
-        ? extendTarget.expiry
-        : now;
-    const newExpiry =
-      currentExpiry + planObj.days * 24 * 60 * 60 * 1000;
-
-    try {
-      await update(dbRef(db, `listings/${extendTarget.id}`), {
-        expiry: newExpiry,
-        planDays: planObj.days,
-        planLabel: planObj.label,
-      });
-      showMessage(t("listingExtended"), "success");
-      setExtendTarget(null);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
-
-  const handleEmailAuth = async (e) => {
-    e.preventDefault();
-    if (!validateEmail(email)) {
-      return showMessage(t("enterValidEmail"), "error");
-    }
-    if (!password) {
-      return showMessage(t("enterPassword"), "error");
-    }
-
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      if (!cred.user.emailVerified) {
-        showMessage(
-          t("emailNotVerified") || "Email not verified. Please check your inbox.",
-          "warning"
-        );
-      } else {
-        showMessage(t("loginSuccess") || "Logged in successfully", "success");
-      }
-      setShowAuthModal(false);
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message, "error");
-    }
-  };
+    // eslint-disable-next-line
+  }, []);
 
   const handleChangeEmail = async (e) => {
     e.preventDefault();
@@ -552,23 +277,23 @@ function App() {
       return;
     }
 
+    setSavingEmail(true);
     try {
-      setSavingEmail(true);
-      const credential = EmailAuthProvider.credential(
+      const cred = EmailAuthProvider.credential(
         user.email,
         emailForm.currentPassword
       );
-      await reauthenticateWithCredential(user, credential);
+      await reauthenticateWithCredential(user, cred);
       await updateEmail(user, emailForm.newEmail);
-      showMessage(t("emailUpdated"), "success");
+      try {
+        await sendEmailVerification(user);
+      } catch {
+        // not critical if verification email fails, email is still changed
+      }
+      showMessage(t("emailUpdateSuccess"), "success");
       setEmailForm({ newEmail: "", currentPassword: "" });
     } catch (err) {
-      console.error(err);
-      if (err.code === "auth/wrong-password") {
-        showMessage(t("wrongPassword"), "error");
-      } else {
-        showMessage(err.message, "error");
-      }
+      showMessage(t("emailUpdateError") + " " + err.message, "error");
     } finally {
       setSavingEmail(false);
     }
@@ -580,11 +305,11 @@ function App() {
 
     const { currentPassword, newPassword, repeatNewPassword } = passwordForm;
 
-    if (!currentPassword || !newPassword || !repeatNewPassword) {
-      showMessage(t("fillAllFields"), "error");
+    if (!currentPassword) {
+      showMessage(t("enterCurrentPassword"), "error");
       return;
     }
-    if (newPassword.length < 6) {
+    if (!newPassword || newPassword.length < 6) {
       showMessage(t("passwordTooShort"), "error");
       return;
     }
@@ -592,1430 +317,2195 @@ function App() {
       showMessage(t("passwordsDontMatch"), "error");
       return;
     }
+    if (!user.email) {
+      showMessage(t("passwordChangeNotAvailable"), "error");
+      return;
+    }
 
+    setSavingPassword(true);
     try {
-      setSavingPassword(true);
-      if (!user.email) {
-        showMessage(t("passwordChangeNotAvailable"), "error");
-        return;
-      }
-
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
+      const cred = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, cred);
       await updatePassword(user, newPassword);
-      showMessage(t("passwordUpdated"), "success");
+      showMessage(t("passwordUpdateSuccess"), "success");
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
         repeatNewPassword: "",
       });
     } catch (err) {
-      console.error(err);
-      if (err.code === "auth/wrong-password") {
-        showMessage(t("wrongPassword"), "error");
-      } else {
-        showMessage(err.message, "error");
-      }
+      showMessage(t("passwordUpdateError") + " " + err.message, "error");
     } finally {
       setSavingPassword(false);
     }
   };
 
-  useEffect(() => {
-    const url = window.location.href;
-    if (isSignInWithEmailLink(auth, url)) {
-      let storedEmail = window.localStorage.getItem("emailForSignIn");
-      if (!storedEmail) {
-        storedEmail = window.prompt("Please provide your email");
-      }
-      if (storedEmail) {
-        signInWithEmailLink(auth, storedEmail, url)
-          .then((result) => {
-            window.localStorage.removeItem("emailForSignIn");
-            showMessage("Signed in successfully with magic link", "success");
-          })
-          .catch((error) => {
-            console.error(error);
-            showMessage(error.message, "error");
-          });
-      }
-    }
-  }, []);
+  /* Helpers */
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: "", type: "info" }), 5000);
+  };
+  const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
 
-  const handleSendMagicLink = async () => {
-    if (!validateEmail(email)) {
-      return showMessage(t("enterValidEmail"), "error");
-    }
-    const actionCodeSettings = {
-      url: window.location.href,
-      handleCodeInApp: true,
+  const normalizePhoneForStorage = (raw) => {
+    if (!raw) return raw;
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("+")) return trimmed.replace(/\s+/g, "");
+    const cleaned = trimmed.replace(/\D/g, "");
+    if (cleaned === "") return trimmed;
+    if (cleaned.length > 8 && cleaned.startsWith("00")) return "+" + cleaned.replace(/^0{2}/, "");
+    const known = countryCodes.map((c) => c.code.replace("+", ""));
+    for (const pre of known) if (cleaned.startsWith(pre)) return "+" + cleaned;
+    return "+389" + cleaned;
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm((f) => ({ ...f, imagePreview: ev.target?.result || null }));
+    reader.readAsDataURL(file);
+  };
+
+  async function createListingInFirebase(obj) {
+    const listingId = obj.id || "lst_" + Date.now();
+    const listingData = {
+      ...obj,
+      id: listingId,
+      userId: user?.uid || null,
+      userEmail: user?.email || null,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + parseInt(obj.plan) * 30 * 24 * 60 * 60 * 1000,
     };
+    await set(dbRef(db, `listings/${listingId}`), listingData);
+    return listingId;
+  }
+
+  async function fetchListing(listingId) {
+    return new Promise((resolve) => {
+      const ref = dbRef(db, `listings/${listingId}`);
+      onValue(ref, (snapshot) => resolve(snapshot.val()), { onlyOnce: true });
+    });
+  }
+  async function deleteListing(listingId) {
     try {
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem("emailForSignIn", email);
-      showMessage(t("magicLinkSent"), "success");
+      await remove(dbRef(db, `listings/${listingId}`));
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+    }
+  }
+  async function checkPaymentStatus(listingId) {
+    setTimeout(async () => {
+      const snapshot = await fetchListing(listingId);
+      if (!snapshot) return;
+      if (snapshot.status === "pending_payment") {
+        await update(dbRef(db, `listings/${listingId}`), { status: "expired" });
+        await deleteListing(listingId);
+      }
+    }, 60000);
+  }
+
+  /* Create listing + open payment modal */
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!user) { setShowAuthModal(true); showMessage(t("loginRequired"), "error"); return; }
+    if (!user.emailVerified) { showMessage(t("verifyEmailFirst"), "error"); return; }
+
+    const finalLocation = buildLocationString(form.locationCity, form.locationExtra);
+
+    // basic validation across all steps
+    const requiredOk = form.name && form.category && finalLocation && form.description && form.contact;
+    if (!requiredOk) return showMessage(t("fillAllFields"), "error");
+
+    const normalizedContact = normalizePhoneForStorage(form.contact);
+    if (!validatePhone(normalizedContact)) return showMessage(t("enterValidPhone"), "error");
+
+    // refresh offerprice string from range fields
+    const offerpriceStr = formatOfferPrice(form.offerMin, form.offerMax, form.offerCurrency);
+
+    setLoading(true);
+    setMessage({ text: "", type: "info" });
+    const listingId = "lst_" + Date.now();
+
+    try {
+      // create pending listing
+      await createListingInFirebase({
+        ...form,
+        id: listingId,
+        category: categories.find(c => t(c) === form.category) ? categories.find(c => t(c) === form.category) : form.category,
+        contact: normalizedContact,
+        location: finalLocation,
+        locationCity: form.locationCity,
+        locationExtra: form.locationExtra,
+        plan,
+        offerprice: offerpriceStr || "",   // business offer price (range)
+        status: "pending_payment",
+        pricePaid: 0,
+        price: priceMap[plan],              // plan price (duration)
+      });
+
+      // create order on your server
+      const createRes = await fetch(`${API_BASE}/api/paypal/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId, amount: priceMap[plan], action: "create_listing" }),
+      });
+      const createData = await createRes.json();
+      if (!createData.orderID) throw new Error("Failed to create PayPal order");
+
+      setPendingOrder({ listingId, orderID: createData.orderID });
+      setPaymentIntent({ type: "create", orderID: createData.orderID, amount: priceMap[plan], listingId });
+      setPaymentModalOpen(true);
+
+      showMessage(t("orderCreated"), "success");
+      checkPaymentStatus(listingId);
     } catch (err) {
       console.error(err);
-      showMessage(err.message, "error");
+      showMessage(t("error") + " " + err.message, "error");
+      await deleteListing(listingId);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  const [showFullDescription, setShowFullDescription] = useState({});
-  const toggleDescription = (id) => {
-    setShowFullDescription((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  /* Capture create flow */
+  async function handleServerCapture(orderID, listingId) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/paypal/capture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderID, listingId, action: "create_listing" }),
+      });
+      const json = await resp.json();
+      if (json.ok) {
+        const normalizedContact = normalizePhoneForStorage(form.contact);
+        const offerpriceStr = formatOfferPrice(form.offerMin, form.offerMax, form.offerCurrency);
+        const finalLocation = buildLocationString(form.locationCity, form.locationExtra);
 
-  const renderStatusBadge = (listing) => {
-    const badge = getStatusBadge(listing);
-    const statusLabels = {
-      active: t("statusActive") || "Active",
-      expired: t("statusExpired") || "Expired",
-      featured: t("statusFeatured") || "Featured",
-      expiringSoon: t("statusExpiringSoon") || "Expiring soon",
+        await update(dbRef(db, `listings/${listingId}`), {
+          ...form,
+          status: "verified",
+          pricePaid: priceMap[plan],
+          contact: normalizedContact,
+          offerprice: offerpriceStr || "",
+          location: finalLocation,
+          locationCity: form.locationCity,
+          locationExtra: form.locationExtra,
+          plan,
+          price: priceMap[plan],
+          id: listingId,
+          userId: user?.uid || null,
+          userEmail: user?.email || null,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + parseInt(plan) * 30 * 24 * 60 * 60 * 1000,
+        });
+        showMessage(t("paymentComplete"), "success");
+        setPendingOrder(null);
+        setPaymentModalOpen(false);
+        setPaymentIntent(null);
+        setForm({
+          step: 1,
+          name: "",
+          category: "",
+          locationCity: "",
+          locationExtra: "",
+          locationData: null,
+          description: "",
+          contact: "",
+          offerMin: "",
+          offerMax: "",
+          offerCurrency: "EUR",
+          offerprice: "",
+          tags: "",
+          socialLink: "",
+          imagePreview: null,
+        });
+      } else {
+        showMessage(t("paymentFailed") + " " + JSON.stringify(json.error), "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showMessage(t("error") + " " + err.message, "error");
+    }
+  }
+
+  /* Extend flow */
+  async function startExtendFlow(listing) {
+    if (!user) {
+      setShowAuthModal(true);
+      showMessage(t("loginRequired"), "error");
+      return;
+    }
+
+    if (listing.userId !== user.uid) {
+      showMessage(t("notOwner") || "You are not owner of this listing.", "error");
+      return;
+    }
+
+    // Use the listing's original plan as default (fallback 1 month)
+    const planKey = String(listing.plan || "1");
+    const amount = priceMap[planKey] ?? listing.price ?? 0;
+
+    setExtendTarget(listing);
+    setExtendPlan(planKey);
+    setPaymentIntent({
+      type: "extend",
+      listingId: listing.id,
+      amount,
+    });
+    setPaymentModalOpen(true);
+  }
+
+  async function handleServerCaptureForExtend(orderID, listingId, planKeyFromUI) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/paypal/capture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderID, listingId, action: "extend" }),
+      });
+      const json = await resp.json();
+
+      if (json.ok) {
+        const snapshot = await fetchListing(listingId);
+        const currentExpiry = snapshot?.expiresAt || Date.now();
+
+        // Use the plan chosen in the modal; fallback to listing.plan or 1
+        const effectivePlanKey =
+          planKeyFromUI || String(snapshot?.plan || "1");
+        const planMonths = parseInt(effectivePlanKey, 10) || 1;
+
+        const base = Math.max(Date.now(), currentExpiry);
+        const newExpiry =
+          base + planMonths * 30 * 24 * 60 * 60 * 1000; // months * 30 days
+
+        await update(dbRef(db, `listings/${listingId}`), {
+          expiresAt: newExpiry,
+          // optional: track last extension choice
+          lastExtendPlan: effectivePlanKey,
+        });
+
+        showMessage(t("extendSuccess") || "Listing extended successfully ✅", "success");
+        setExtendTarget(null);
+        setPaymentModalOpen(false);
+        setPaymentIntent(null);
+      } else {
+        showMessage(
+          (t("extendFailed") || "Extend payment failed:") +
+            " " +
+            JSON.stringify(json.error),
+          "error"
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      showMessage(t("error") + " " + err.message, "error");
+    }
+  }
+
+
+  /* Editing helpers (restored) */
+  const openEdit = (listing) => {
+    setEditingListing(listing);
+    setEditForm({
+      name: listing.name || "",
+      category: listing.category || "",
+      location: listing.location || "",
+      locationData: listing.locationData || null,
+      description: listing.description || "",
+      contact: (listing.contact || "").replace(/\D/g, ""),
+      plan: listing.plan || "1",
+      price: listing.price || priceMap[listing.plan] || "",         // plan price
+      offerprice: listing.offerprice || "",                         // business offer price (already formatted)
+      tags: listing.tags || "",
+      socialLink: listing.socialLink || "",
+      imagePreview: listing.imagePreview || null,
+    });
+  };
+  const saveEdit = async () => {
+    if (!editingListing || !editForm) return;
+    if (!editForm.name || editForm.name.trim().length < 3) return showMessage(t("fillAllFields"), "error");
+    if (!editForm.description || editForm.description.trim().length < 10) return showMessage(t("fillAllFields"), "error");
+    const normalizedContact = normalizePhoneForStorage(editForm.contact);
+    if (!validatePhone(normalizedContact)) return showMessage(t("enterValidPhone"), "error");
+    const updates = {
+      name: stripDangerous(editForm.name),
+      category: editForm.category,
+      location: stripDangerous(editForm.location),
+      locationData: editForm.locationData || null,
+      description: stripDangerous(editForm.description),
+      contact: normalizedContact,
+      offerprice: editForm.offerprice || "",   // update only business price string
+      tags: stripDangerous(editForm.tags || ""),
+      socialLink: stripDangerous(editForm.socialLink || ""),
+      imagePreview: editForm.imagePreview || null,
     };
-    return (
-      <span className={`status-badge status-${badge}`}>
-        {statusLabels[badge] || badge}
-      </span>
-    );
+    await update(dbRef(db, `listings/${editingListing.id}`), updates);
+    showMessage(t("save") + " ✅", "success");
+    setEditingListing(null); setEditForm(null);
   };
+
+  const confirmDelete = async (id) => {
+    if (!window.confirm("Delete this listing?")) return;
+    await deleteListing(id);
+    showMessage("Listing deleted", "success");
+  };
+
+  /* Derived data */
+  const verifiedListings = useMemo(() => listings.filter((l) => l.status === "verified"), [listings]);
+  const allLocations = useMemo(
+    () => Array.from(new Set(verifiedListings.map((l) => (l.location || "").trim()).filter(Boolean))),
+    [verifiedListings]
+  );
+  const filtered = useMemo(() => {
+    let arr = [...verifiedListings];
+    if (q.trim()) {
+      const term = q.trim().toLowerCase();
+      arr = arr.filter(
+        (l) =>
+          (l.name || "").toLowerCase().includes(term) ||
+          (l.description || "").toLowerCase().includes(term)
+      );
+    }
+    if (catFilter) arr = arr.filter((l) => (t(l.category) || l.category) === catFilter);
+    if (locFilter) arr = arr.filter((l) => l.location === locFilter);
+    if (sortBy === "newest") arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (sortBy === "expiring") arr.sort((a, b) => (a.expiresAt || 0) - (b.expiresAt || 0));
+    if (sortBy === "az") arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    return arr;
+  }, [verifiedListings, q, catFilter, locFilter, sortBy]);
+
+  const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
+  const toggleFav = (id) =>
+    setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleShareListing = (listing) => {
-    const url = `${window.location.origin}?listing=${listing.id}`;
-    if (navigator.share) {
-      navigator
-        .share({
-          title: listing.name,
-          text: listing.description,
-          url,
-        })
-        .catch((err) => console.error("Share cancelled or failed:", err));
-    } else {
-      navigator.clipboard
-        .writeText(url)
-        .then(() => showMessage(t("linkCopied") || "Link copied!", "success"))
-        .catch((err) => {
-          console.error(err);
-          showMessage(t("copyFailed") || "Failed to copy link", "error");
-        });
-    }
-  };
+  const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
+  const text = `${listing.name || ""} • ${listing.location || ""} – ${
+    t("shareText") || BizCall || "Tregu Lokal i Ndihmës"
+  }`;
 
-  useEffect(() => {
-    const newOptions = {
-      ...initialOptionsState,
-      paypal: {
-        ...initialOptionsState.paypal,
-        "client-id": PAYPAL_CLIENT_ID,
-      },
-    };
-    setInitialOptionsState(newOptions);
-  }, []);
+  if (navigator.share) {
+    navigator
+      .share({
+        title: listing.name || t("appName") || "Listing",
+        text,
+        url,
+      })
+      .catch(() => {
+        // user canceled or share failed silently; no need to spam them
+      });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url);
+    showMessage(
+      t("shareCopied") || "Linku i listimit u kopjua në clipboard ✅",
+      "success"
+    );
+  } else {
+    showMessage(
+      t("shareNotSupported") || "Ky pajisje nuk e përkrah ndarjen direkt.",
+      "error"
+    );
+  }
+};
+  
+  /* Header */
+  const Header = () => (
+    <header className="header">
+      <div className="header-inner">
+        <button onClick={() => setSelectedTab("main")} className="brand">
+          {/* <span className="brand-emoji"> */}
+            <img 
+              src={logo} 
+              alt="BizCall logo"
+              className="brand-logo"
+            />
+          {/* </span> */}
+          <h1 className="brand-title">BizCall</h1>
+        </button>
+
+        <div className="header-actions">
+          <select className="lang-select" value={lang} onChange={(e) => setLang(e.target.value)}>
+            <option value="sq">🇦🇱 SQ</option>
+            <option value="mk">🇲🇰 MK</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
+
+          {user ? (
+            <>
+              <button
+                className="btn btn-ghost"
+                onClick={() => {
+                  // setSelectedTab("myListings");
+                  setSidebarOpen(true);
+                }}
+              >
+                ☰ {t("dashboard")}
+              </button>
+              <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
+                {t("logout")}
+              </button>
+            </>
+          ) : (
+            <button
+              className="btn"
+              onClick={() => {
+                setShowAuthModal(true);
+                setMessage({ text: "", type: "info" });
+              }}
+            >
+              {t("login")}
+            </button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+
+  const previewLocation = buildLocationString(form.locationCity, form.locationExtra);
 
   return (
-    <PayPalScriptProvider options={initialOptionsState}>
-      <div className="app-container">
-        <Sidebar
-          lang={lang}
-          setLang={setLang}
-          user={user}
-          onLoginClick={() => {
-            setAuthMode("login");
-            setAuthTab("email");
-            setShowAuthModal(true);
-          }}
-          onSignupClick={() => {
-            setAuthMode("signup");
-            setAuthTab("email");
-            setShowAuthModal(true);
-          }}
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          onLogout={handleLogout}
-          t={t}
-        />
+    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR", locale: "en_MK" }}>
+      {message.text && <div className={`notification ${message.type}`}>{message.text}</div>}
 
-        <main className="main-content">
-          <header className="header">
-            <div className="header-left">
-              <img src={logo} alt="Logo" className="logo" />
-              <div className="header-text">
-                <h1 className="app-title">BizCall</h1>
-                <p className="app-subtitle">{t("appSubtitle")}</p>
-              </div>
-            </div>
+      <div className="app">
+        <Header />
 
-            <div className="header-right">
-              <button
-                className="btn secondary"
-                onClick={() => setSelectedTab("allListings")}
-              >
-                {t("exploreBusinesses")}
-              </button>
-
-              {user ? (
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    setShowPostForm(true);
-                    setSelectedTab("myListings");
-                  }}
-                >
-                  {t("postListing")}
-                </button>
-              ) : (
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    setAuthMode("signup");
-                    setAuthTab("email");
-                    setShowAuthModal(true);
-                  }}
-                >
-                  {t("getStarted")}
-                </button>
-              )}
-            </div>
-          </header>
-
-          {message.text && (
-            <div className={`message-banner message-${message.type}`}>
-              {message.text}
-            </div>
-          )}
-
-          <section className="hero-section">
-            <motion.div
-              className="hero-card"
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.4 }}
-            >
-              <h2>{t("heroTitle")}</h2>
-              <p>{t("heroSubtitle")}</p>
-              <div className="hero-actions">
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    if (!user) {
-                      setAuthMode("signup");
-                      setAuthTab("email");
-                      setShowAuthModal(true);
-                    } else {
-                      setShowPostForm(true);
-                      setSelectedTab("myListings");
-                    }
-                  }}
-                >
-                  {t("heroPrimaryButton")}
-                </button>
-                <button
-                  className="btn ghost"
-                  onClick={() => setSelectedTab("allListings")}
-                >
-                  {t("heroSecondaryButton")}
-                </button>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="hero-map-card"
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <h3>{t("mapTitle")}</h3>
-              <p className="map-subtitle">{t("mapSubtitle")}</p>
-              <div className="map-wrapper">
-                <NorthMacedoniaMap
-                  listings={listings}
-                  onCityClick={(cityCode) => {
-                    setCityFilter(cityCode);
-                    setSelectedTab("allListings");
-                  }}
-                  cityNames={MK_CITIES}
-                />
-              </div>
-            </motion.div>
-          </section>
-
-          <section className="filters-section">
-            <div className="filter-group">
-              <label>{t("category")}</label>
-              <select
-                className="select"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="all">{t("allCategories")}</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {t(`cat_${cat}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>{t("city")}</label>
-              <select
-                className="select"
-                value={cityFilter}
-                onChange={(e) => setCityFilter(e.target.value)}
-              >
-                <option value="all">{t("allCities")}</option>
-                {Object.entries(MK_CITIES).map(([code, name]) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group search-group">
-              <label>{t("search")}</label>
-              <input
-                type="text"
-                className="input"
-                placeholder={t("searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+        {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              <motion.div
+                className="sidebar-overlay"
+                onClick={() => setSidebarOpen(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
               />
-            </div>
-
-            <div className="filter-group">
-              <label>{t("status")}</label>
-              <select
-                className="select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+              <motion.aside
+                className="sidebar mobile-drawer"
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "tween", duration: 0.3 }}
+                style={{ touchAction: "none", WebkitOverflowScrolling: "touch" }}
               >
-                <option value="active">{t("statusActive")}</option>
-                <option value="expired">{t("statusExpired")}</option>
-                <option value="featured">{t("statusFeatured")}</option>
-                <option value="expiringSoon">{t("statusExpiringSoon")}</option>
-                <option value="all">{t("statusAll")}</option>
-              </select>
-            </div>
-
-            <div className="filter-group sort-group">
-              <label>
-                {selectedTab === "myListings"
-                  ? t("sortMyListings")
-                  : t("sortAllListings")}
-              </label>
-              <select
-                className="select"
-                value={selectedTab === "myListings" ? mySort : allSort}
-                onChange={(e) =>
-                  selectedTab === "myListings"
-                    ? setMySort(e.target.value)
-                    : setAllSort(e.target.value)
-                }
-              >
-                {selectedTab === "myListings" ? (
-                  <>
-                    <option value="expiryAsc">{t("sortSoonestExpiry")}</option>
-                    <option value="expiryDesc">{t("sortLatestExpiry")}</option>
-                    <option value="createdDesc">{t("sortNewest")}</option>
-                    <option value="createdAsc">{t("sortOldest")}</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="recent">{t("sortNewest")}</option>
-                    <option value="priceAsc">{t("sortPriceLowHigh")}</option>
-                    <option value="priceDesc">{t("sortPriceHighLow")}</option>
-                    <option value="expirySoon">
-                      {t("sortSoonestExpiry")}
-                    </option>
-                  </>
-                )}
-              </select>
-            </div>
-
-            <div className="filter-group reset-group">
-              <button className="btn ghost small" onClick={resetFilters}>
-                {t("resetFilters")}
-              </button>
-            </div>
-          </section>
-
-          <section className="content-section">
-            <div className="content-tabs">
-              <button
-                className={`content-tab ${
-                  selectedTab === "allListings" ? "active" : ""
-                }`}
-                onClick={() => setSelectedTab("allListings")}
-              >
-                {t("allListingsTab")}
-              </button>
-              {user && (
-                <button
-                  className={`content-tab ${
-                    selectedTab === "myListings" ? "active" : ""
-                  }`}
-                  onClick={() => setSelectedTab("myListings")}
-                >
-                  {t("myListingsTab")}
-                </button>
-              )}
-              {user && (
-                <button
-                  className={`content-tab ${
-                    selectedTab === "account" ? "active" : ""
-                  }`}
-                  onClick={() => setSelectedTab("account")}
-                >
-                  {t("accountTab")}
-                </button>
-              )}
-            </div>
-
-            {selectedTab === "allListings" && (
-              <div className="listings-grid">
-                {filteredAllListings.length === 0 ? (
-                  <div className="empty-state">
-                    <p>{t("noListingsFound")}</p>
-                  </div>
-                ) : (
-                  filteredAllListings.map((listing) => (
-                    <motion.div
-                      key={listing.id}
-                      className="listing-card"
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                    >
-                      <div className="listing-header">
-                        <div className="listing-title-group">
-                          <span className="category-icon">
-                            {categoryIcons[listing.category] || "🏷️"}
-                          </span>
-                          <h3>{listing.name}</h3>
-                        </div>
-                        {renderStatusBadge(listing)}
-                      </div>
-
-                      <p className="listing-description">
-                        {showFullDescription[listing.id]
-                          ? listing.description
-                          : (listing.description || "").length > 140
-                          ? (listing.description || "").slice(0, 140) + "..."
-                          : listing.description}
-                        {(listing.description || "").length > 140 && (
-                          <button
-                            className="link-button"
-                            onClick={() => toggleDescription(listing.id)}
-                          >
-                            {showFullDescription[listing.id]
-                              ? t("showLess")
-                              : t("showMore")}
-                          </button>
-                        )}
-                      </p>
-
-                      <div className="listing-meta">
-                        <span>
-                          {t("category")}: {t(`cat_${listing.category}`)}
-                        </span>
-                        <span>
-                          {t("city")}:{" "}
-                          {MK_CITIES[listing.city] || listing.city}
-                        </span>
-                        <span>
-                          {t("price")}: {listing.price || 0} €
-                        </span>
-                      </div>
-
-                      <div className="listing-footer">
-                        <button
-                          className="btn small"
-                          onClick={() => setSelectedListing(listing)}
-                        >
-                          {t("viewDetails")}
-                        </button>
-                        <button
-                          className="btn ghost small"
-                          onClick={() => handleShareListing(listing)}
-                        >
-                          {t("share")}
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {selectedTab === "myListings" && user && (
-              <div className="my-listings-section">
-                <div className="my-listings-header">
-                  <h2>{t("myListingsHeading")}</h2>
-                  <button
-                    className="btn small primary"
-                    onClick={() => setShowPostForm(true)}
-                  >
-                    {t("postNewListing")}
-                  </button>
+                <div className="drawer-header">
+                  <span className="drawer-title">{t("dashboard")}</span>
+                  <button className="icon-btn" onClick={() => setSidebarOpen(false)}>✕</button>
                 </div>
 
-                {filteredMyListings.length === 0 ? (
-                  <div className="empty-state">
-                    <p>{t("noMyListings")}</p>
-                  </div>
-                ) : (
-                  <div className="listings-grid">
-                    {filteredMyListings.map((listing) => (
-                      <motion.div
-                        key={listing.id}
-                        className="listing-card my-listing"
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                      >
-                        <div className="listing-header">
-                          <div className="listing-title-group">
-                            <span className="category-icon">
-                              {categoryIcons[listing.category] || "🏷️"}
-                            </span>
-                            <h3>{listing.name}</h3>
+                <Sidebar
+                  t={t}
+                  selected={selectedTab}
+                  onSelect={(tab) => {
+                    setSelectedTab(tab);
+                    setSidebarOpen(false);
+                  }}
+                  onLogout={async () => {
+                    await signOut(auth);
+                    showMessage(t("signedOut"), "success");
+                    setSidebarOpen(false);
+                  }}
+                />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Main content container */}
+        <div className="container">
+          {/* Routes */}
+          {selectedTab !== "main" ? (
+            <div className="dashboard">
+              {/* Desktop sidebar */}
+              <aside className="sidebar desktop-only">
+                <Sidebar
+                  t={t}
+                  selected={selectedTab}
+                  onSelect={(tab) => setSelectedTab(tab)}
+                  onLogout={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}
+                />
+              </aside>
+
+              {/* Dashboard content */}
+              <main className="dashboard-content">
+                <div className="panel">
+                  <div className="tab-panel">
+                    {selectedTab === "myListings" && (
+                      <div className="section my-listings-section">
+                        <div className="section-header-row">
+                          <div>
+                            <h2 className="section-title-inner">{t("myListings")}</h2>
+                            <p className="section-subtitle-small">
+                              {t("myListingsHint") || "Review, edit and extend your listings in one place."}
+                            </p>
                           </div>
-                          {renderStatusBadge(listing)}
+                          <span className="badge count">
+                            {myListings.length} {(t("listingsLabel") || "listings")}
+                          </span>
                         </div>
 
-                        <p className="listing-description">
-                          {showFullDescription[listing.id]
-                            ? listing.description
-                            : (listing.description || "").length > 140
-                            ? (listing.description || "").slice(0, 140) + "..."
-                            : listing.description}
-                          {(listing.description || "").length > 140 && (
-                            <button
-                              className="link-button"
-                              onClick={() => toggleDescription(listing.id)}
-                            >
-                              {showFullDescription[listing.id]
-                                ? t("showLess")
-                                : t("showMore")}
+                        {myListings.length === 0 ? (
+                          <div className="empty">
+                            <div className="empty-icon">📭</div>
+                            <p className="empty-text">{t("noListingsYet")}</p>
+                          </div>
+                        ) : (
+                          <div className="listing-grid my-listings-grid">
+                            {myListings.map((l) => (
+                              <article key={l.id} className="listing-card my-listing-card">
+                                <header className="listing-header my-listing-header">
+                                  <div className="listing-header-main">
+                                    <h3 className="listing-title">{l.name}</h3>
+
+                                    <div className="listing-meta-row">
+                                      <span className="pill pill-category">
+                                        {categoryIcons[l.category] || "🏷️"} {t(l.category) || l.category}
+                                      </span>
+                                      {l.location && (
+                                        <span className="pill pill-location">
+                                          📍 {l.location}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="listing-header-side">
+                                    <span
+                                      className={`status-chip ${
+                                        l.status === "verified" ? "status-chip-verified" : "status-chip-pending"
+                                      }`}
+                                    >
+                                      {l.status === "verified" ? `✅ ${t("verified")}` : `⏳ ${t("pending")}`}
+                                    </span>
+
+                                    <div className="plan-expiry-row">
+                                      <span className="plan-chip">
+                                        {l.plan} {t("months")}
+                                      </span>
+                                      <span className="expiry-chip">
+                                        {t("expires")}:{" "}
+                                        {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </header>
+
+                                <p className="listing-description clamp-3">
+                                  {l.description}
+                                </p>
+
+                                <div className="my-listing-footer">
+                                  <div className="my-listing-extra">
+                                    {l.offerprice && (
+                                      <span className="pill pill-offerprice">
+                                        💶 {l.offerprice}
+                                      </span>
+                                    )}
+                                    {l.tags && (
+                                      <span className="pill pill-tags">
+                                        🏷️ {l.tags}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="listing-actions listing-actions-compact">
+                                    <button
+                                      className="btn btn-ghost small"
+                                      onClick={() => openEdit(l)}
+                                    >
+                                      {t("edit")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      onClick={() => confirmDelete(l.id)}
+                                    >
+                                      {t("del")}
+                                    </button>
+                                    <button
+                                      className="btn small"
+                                      onClick={() => startExtendFlow(l)}
+                                    >
+                                      {t("extend")}
+                                    </button>
+                                    <button
+                                      className="btn small"
+                                      onClick={() => window.open(`tel:${l.contact}`)}
+                                    >
+                                      📞 {t("call")}
+                                    </button>
+                                    <button
+                                      className="btn small"
+                                      onClick={() =>
+                                        window.open(
+                                          `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                            l.name || ""
+                                          )}`
+                                        )
+                                      }
+                                    >
+                                      ✉️ {t("emailAction")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      onClick={() => {
+                                        navigator.clipboard?.writeText(l.contact || "");
+                                        showMessage(t("copied"), "success");
+                                      }}
+                                    >
+                                      📋 {t("copy")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      type="button"
+                                      onClick={() => handleShareListing(l)}
+                                    >
+                                      🔗 {t("share")}
+                                    </button>
+                                    <button
+                                      className="btn btn-ghost small"
+                                      type="button"
+                                      onClick={() => toggleFav(l.id)}
+                                    >
+                                      {favorites.includes(l.id) ? "★" : "☆"}
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+
+                    {selectedTab === "account" && (
+                      <div className="section">
+                        <div className="card account-card">
+                          <h2 className="section-title">👤 {t("accountTitle")}</h2>
+                          <p className="account-subtitle">
+                            {t("accountSubtitle")}
+                          </p>
+
+                          <div className="account-main">
+                            {/* LEFT: basic info */}
+                            <div className="account-info">
+                              <div className="account-row">
+                                <span className="account-label">{t("emailLabel")}</span>
+                                <span className="account-value">{user?.email || "—"}</span>
+                              </div>
+
+                              <div className="account-row">
+                                <span className="account-label">{t("verifiedLabel")}</span>
+                                <span className="account-value">
+                                  {user?.emailVerified ? (
+                                    <span className="badge verified">✅ {t("verified")}</span>
+                                  ) : (
+                                    <span className="badge not-verified">
+                                      ⏳ {t("pendingVerification")}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+
+                              <div className="account-row">
+                                <span className="account-label">{t("accountSince")}</span>
+                                <span className="account-value">
+                                  {user?.metadata?.creationTime
+                                    ? new Date(user.metadata.creationTime).toLocaleDateString()
+                                    : "—"}
+                                </span>
+                              </div>
+
+                              {!user?.emailVerified && (
+                                <div className="account-row">
+                                  <button
+                                    className="btn small"
+                                    onClick={async () => {
+                                      try {
+                                        if (user) {
+                                          await sendEmailVerification(user);
+                                          showMessage(t("verificationSent"), "success");
+                                        }
+                                      } catch (err) {
+                                        showMessage(
+                                          t("verificationError") + " " + err.message,
+                                          "error"
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    {t("resendVerificationEmail")}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* RIGHT: security / settings */}
+                            <div className="account-security">
+                              <h3 className="account-security-title">{t("securitySettings")}</h3>
+                              <p className="account-security-text">{t("securitySettingsText")}</p>
+
+                              {/* Change email */}
+                              <form className="account-form" onSubmit={handleChangeEmail}>
+                                <h4 className="account-form-title">{t("changeEmail")}</h4>
+                                <div className="account-form-row">
+                                  <label className="account-label">
+                                    {t("newEmail")}
+                                  </label>
+                                  <input
+                                    type="email"
+                                    className="input"
+                                    value={emailForm.newEmail}
+                                    onChange={(e) =>
+                                      setEmailForm((f) => ({ ...f, newEmail: e.target.value }))
+                                    }
+                                    placeholder={t("newEmailPlaceholder")}
+                                  />
+                                </div>
+                                <div className="account-form-row">
+                                  <label className="account-label">
+                                    {t("currentPassword")}
+                                  </label>
+                                  <input
+                                    type="password"
+                                    className="input"
+                                    value={emailForm.currentPassword}
+                                    onChange={(e) =>
+                                      setEmailForm((f) => ({
+                                        ...f,
+                                        currentPassword: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("currentPasswordPlaceholder")}
+                                  />
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="btn small"
+                                  disabled={savingEmail}
+                                >
+                                  {savingEmail ? t("saving") : t("saveEmail")}
+                                </button>
+                              </form>
+
+                              {/* Change password */}
+                              <form className="account-form" onSubmit={handleChangePassword}>
+                                <h4 className="account-form-title">{t("changePassword")}</h4>
+
+                                <div className="account-form-row">
+                                  <label className="account-label">
+                                    {t("currentPassword")}
+                                  </label>
+                                  <input
+                                    type="password"
+                                    className="input"
+                                    value={passwordForm.currentPassword}
+                                    onChange={(e) =>
+                                      setPasswordForm((f) => ({
+                                        ...f,
+                                        currentPassword: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("currentPasswordPlaceholder")}
+                                  />
+                                </div>
+
+                                <div className="account-form-row">
+                                  <label className="account-label">
+                                    {t("newPassword")}
+                                  </label>
+                                  <input
+                                    type="password"
+                                    className="input"
+                                    value={passwordForm.newPassword}
+                                    onChange={(e) =>
+                                      setPasswordForm((f) => ({
+                                        ...f,
+                                        newPassword: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("newPasswordPlaceholder")}
+                                  />
+                                </div>
+
+                                <div className="account-form-row">
+                                  <label className="account-label">
+                                    {t("repeatNewPassword")}
+                                  </label>
+                                  <input
+                                    type="password"
+                                    className="input"
+                                    value={passwordForm.repeatNewPassword}
+                                    onChange={(e) =>
+                                      setPasswordForm((f) => ({
+                                        ...f,
+                                        repeatNewPassword: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("repeatNewPasswordPlaceholder")}
+                                  />
+                                </div>
+
+                                <button
+                                  type="submit"
+                                  className="btn small"
+                                  disabled={savingPassword}
+                                >
+                                  {savingPassword ? t("saving") : t("savePassword")}
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedTab === "allListings" && (
+                      <div className="section">
+                        {/* Header with title + count */}
+                        <div className="listings-header">
+                          <div className="listings-header-text">
+                            <h2 className="section-title">🏪 {t("browse")}</h2>
+                            <p className="section-subtitle">
+                              {t("allListingsHint") ||
+                                "View and filter all verified listings from the platform."}
+                            </p>
+                          </div>
+                          <div className="listings-count">
+                            <span className="badge count">
+                              {filtered.length} {t("resultsLabel") || "results"}
+                            </span>
+                            <span className="badge soft">
+                              {verifiedListings.length}{" "}
+                              {t("verified")?.toLowerCase?.() || "verified"}
+                            </span>
+                          </div>
+                        </div>
+                    
+                        {/* Filters */}
+                        <div className="filters filters-dashboard">
+                          <div className="searchbar">
+                            <input
+                              className="input"
+                              placeholder={t("searchPlaceholder") || "Search by name or description"}
+                              value={q}
+                              onChange={(e) => setQ(e.target.value)}
+                              style={{ width: "90%" }}
+                            />
+                            {q && (
+                              <button
+                                className="btn btn-ghost small"
+                                type="button"
+                                onClick={() => setQ("")}
+                              >
+                                ✕
+                              </button>
+                            )}
+                            <button className="btn btn-ghost" type="button">
+                              {t("search")}
                             </button>
+                          </div>
+                    
+                          <div className="filter-row">
+                            <div className="filter-group">
+                              <label className="filter-label">{t("category")}</label>
+                              <select
+                                className="select category-dropdown"
+                                value={catFilter}
+                                onChange={(e) => setCatFilter(e.target.value)}
+                              >
+                                <option value="">{t("allCategories")}</option>
+                                {categories.map((cat) => (
+                                  <option key={cat} value={t(cat)}>
+                                    {t(cat)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                    
+                            <div className="filter-group">
+                              <label className="filter-label">{t("location")}</label>
+                              <select
+                                className="select"
+                                value={locFilter}
+                                onChange={(e) => setLocFilter(e.target.value)}
+                              >
+                                <option value="">{t("allLocations")}</option>
+                                {allLocations.map((l) => (
+                                  <option key={l} value={l}>
+                                    {l}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                    
+                            <div className="filter-group">
+                              <label className="filter-label">{t("sortBy")}</label>
+                              <select
+                                className="select"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                              >
+                                <option value="newest">{t("sortNewest")}</option>
+                                <option value="expiring">{t("sortExpiring")}</option>
+                                <option value="az">{t("sortAZ")}</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                    
+                        {/* Listings grid */}
+                        <div
+                          className="listing-grid listing-grid-dashboard"
+                          style={{ display: "block" }}
+                        >
+                          {filtered.map((l) => (
+                            <article
+                              key={l.id}
+                              className="listing-card"
+                              onClick={() => {
+                                setSelectedListing(l);
+                                const url = new URL(window.location.href);
+                                url.searchParams.set("listing", l.id);
+                                window.history.replaceState({}, "", url.toString());
+                              }}
+
+                              style={{marginBottom: "3%"}}
+                            >
+                              <header className="listing-header">
+                                <div className="listing-title-wrap">
+                                  <div className="listing-title-row">
+                                    <span className="category-icon">
+                                      {categoryIcons[l.category] || "🏷️"}
+                                    </span>
+                                    <h3 className="listing-title">{l.name}</h3>
+                                  </div>
+                                  <div className="listing-meta">
+                                    {t(l.category) || l.category} • {l.location}
+                                  </div>
+                                </div>
+                    
+                                <div className="listing-badges">
+                                  <span className="badge verified">✓ {t("verified")}</span>
+                                </div>
+                              </header>
+                    
+                              <p className="listing-description listing-description-clamp">
+                                {l.description}
+                              </p>
+                    
+                              <div
+                                className="listing-footer-row"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="listing-footer-left">
+                                  {l.offerprice && (
+                                    <span className="pill pill-price">{l.offerprice}</span>
+                                  )}
+                                  {l.tags && (
+                                    <span className="pill pill-tags">
+                                      {l.tags.split(",")[0]?.trim()}
+                                      {l.tags.split(",").length > 1 ? " +" : ""}
+                                    </span>
+                                  )}
+                                </div>
+                    
+                                <div className="listing-actions compact">
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={() => window.open(`tel:${l.contact}`)}
+                                  >
+                                    📞
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={() =>
+                                      window.open(
+                                        `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                          l.name || ""
+                                        )}`
+                                      )
+                                    }
+                                  >
+                                    ✉️
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard?.writeText(l.contact || "");
+                                      showMessage(t("copied"), "success");
+                                    }}
+                                  >
+                                    📋
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={() => handleShareListing(l)}
+                                  >
+                                    🔗
+                                  </button>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={() => toggleFav(l.id)}
+                                  >
+                                    {favorites.includes(l.id) ? "★" : "☆"}
+                                  </button>
+                                </div>
+                              </div>
+                            </article>
+                          ))}
+                    
+                          {filtered.length === 0 && (
+                            <div className="empty">
+                              <div className="empty-icon">📭</div>
+                              <p className="empty-text">{t("noListingsYet")}</p>
+                            </div>
                           )}
-                        </p>
-
-                        <div className="listing-meta">
-                          <span>
-                            {t("category")}: {t(`cat_${listing.category}`)}
-                          </span>
-                          <span>
-                            {t("city")}:{" "}
-                            {MK_CITIES[listing.city] || listing.city}
-                          </span>
-                          <span>
-                            {t("price")}: {listing.price || 0} €
-                          </span>
-                          <span>
-                            {t("expires")}: {formatDateTime(listing.expiry)}
-                          </span>
                         </div>
-
-                        <div className="listing-footer">
-                          <button
-                            className="btn small"
-                            onClick={() => handleEditListing(listing)}
-                          >
-                            {t("edit")}
-                          </button>
-                          <button
-                            className="btn small secondary"
-                            onClick={() => handleExtendListing(listing)}
-                          >
-                            {t("extend")}
-                          </button>
-                          <button
-                            className="btn small danger"
-                            onClick={() => handleDeleteListing(listing.id)}
-                          >
-                            {t("delete")}
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              </main>
+            </div>
+          ) : (
+            /* Home (Submit + Quick Browse) */
+            <div className="main-grid" style={{display: "block"}}>
+              {/* ====== SUBMIT SECTION ====== */}
+              {user && user.emailVerified && (
+                <button
+                  type="button"
+                  className="floating-post-btn"
+                  onClick={() => {
+                    setShowPostForm(true);
+                    setForm((f) => ({ ...f, step: 1 }));
+                  }}
+                >
+                  ➕ {t("submitListing")}
+                </button>
+               )} 
+                {/* ====== BROWSE SECTION ====== */}
+               <section className="card listings-section">
+                <div className="listings-header">
+                  <div>
+                    <h2 className="section-title">🏪 {t("browse")}</h2>
+                    <p className="section-subtitle-small">
+                      {t("allListingsHint") || "Browse verified local businesses and services."}
+                    </p>
+                  </div>
+                  <div className="listings-header-actions">
+                    <span className="badge count">
+                      {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
+                    </span>
+                  </div>
+                </div>
+                 
+                <div className="category-chips">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`chip ${catFilter === t(cat) ? "chip-active" : ""}`}
+                      onClick={() =>
+                        setCatFilter((prev) => (prev === t(cat) ? "" : t(cat)))
+                      }
+                    >
+                      <span className="chip-icon">
+                        {categoryIcons[cat] || "🏷️"}
+                      </span>
+                      <span className="chip-label">{t(cat)}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="quick-filters" style={{marginBottom: ".5rem", display: "flex", flexWrap: "wrap"}}>
+                  <input className="input" placeholder={t("searchPlaceholder") || "Search"} value={q} onChange={(e) => setQ(e.target.value)} style={{flex: "1"}}/>
+                  <select className="select category-dropdown" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
+                    <option value="">{t("allCategories")}</option>
+                    {categories.map((cat) => (<option key={cat} value={t(cat)}>{t(cat)}</option>))}
+                  </select>
+                </div>
 
-                {showPostForm && (
-                  <motion.div
-                    className="modal-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                <div className="listing-grid" style={{display: "block"}}>
+                  {filtered.length === 0 ? (
+                    <div className="empty">
+                      <div className="empty-icon">📭</div>
+                      <p className="empty-text">{t("noListingsYet")}</p>
+                    </div>
+                  ) : (
+                    filtered.map((l) => (
+                      <article key={l.id} className="listing-card" 
+                        onClick={() => {
+                          setSelectedListing(l);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("listing", l.id);
+                          window.history.replaceState({}, "", url.toString());
+                        }}
+                        style={{marginBottom: "3%"}}>
+                        <header className="listing-header">
+                          <h3 className="listing-title">{l.name}</h3>
+                          {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
+                        </header>
+                        <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
+                       <p className="listing-description listing-description-clamp">
+                          {l.description}
+                        </p>
+                        
+                        <div
+                          className="listing-footer-row"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="listing-footer-left">
+                            {l.offerprice && (
+                              <span className="pill pill-price">{l.offerprice}</span>
+                            )}
+                            {l.tags && (
+                              <span className="pill pill-tags">
+                                {l.tags.split(",")[0]?.trim()}
+                                {l.tags.split(",").length > 1 ? " +" : ""}
+                              </span>
+                            )}
+                          </div>
+                        
+                          <div className="listing-actions compact">
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => window.open(`tel:${l.contact}`)}
+                            >
+                              📞
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                    l.name || ""
+                                  )}`
+                                )
+                              }
+                            >
+                              ✉️
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(l.contact || "");
+                                showMessage(t("copied"), "success");
+                              }}
+                            >
+                              📋
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => handleShareListing(l)}
+                            >
+                              🔗
+                            </button>
+                            <button
+                              className="icon-btn"
+                              type="button"
+                              onClick={() => toggleFav(l.id)}
+                            >
+                              {favorites.includes(l.id) ? "★" : "☆"}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {showPostForm && user && user.emailVerified && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPostForm(false)}
+            >
+              <motion.aside
+                className="modal post-form-drawer"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ type: "tween", duration: 0.3 }}
+              >
+                <div className="modal-header">
+                  <h3 className="modal-title">📝 {t("submitListing")}</h3>
+                  <button
+                    className="icon-btn"
                     onClick={() => setShowPostForm(false)}
                   >
-                    <motion.div
-                      className="modal listing-modal"
-                      onClick={(e) => e.stopPropagation()}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 20, opacity: 0 }}
-                    >
-                      <div className="modal-header">
-                        <h3>{t("createListingTitle")}</h3>
-                        <button
-                          className="icon-btn"
-                          onClick={() => setShowPostForm(false)}
+                    ✕
+                  </button>
+                </div>
+        
+                <div className="modal-body" style={{ maxHeight: "80vh", overflowY: "auto" }}>
+                {user && user.emailVerified ? (
+                  <section className="card form-section">
+                    <h2 className="section-title">📝 {t("submitListing")}</h2>
+                
+                    {/* Step indicators */}
+                    <div className="plan-grid" style={{ marginBottom: 12 }}>
+                      {[1, 2, 3].map((s) => (
+                        <div
+                          key={s}
+                          className={`plan-option ${form.step === s ? "selected" : ""}`}
+                          style={{ cursor: "default" }}
                         >
-                          ✕
-                        </button>
-                      </div>
-                      <form onSubmit={handleCreateListing}>
-                        <div className="form-grid">
-                          <div className="form-group">
-                            <label>{t("businessName")}</label>
-                            <input
-                              name="name"
-                              className="input"
-                              type="text"
-                              required
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("category")}</label>
-                            <select
-                              name="category"
-                              className="select"
-                              defaultValue="none"
-                              required
-                            >
-                              <option value="none" disabled>
-                                {t("selectCategory")}
-                              </option>
-                              {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                  {t(`cat_${cat}`)}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="form-group">
-                            <label>{t("city")}</label>
-                            <select
-                              name="city"
-                              className="select"
-                              defaultValue=""
-                              required
-                            >
-                              <option value="" disabled>
-                                {t("selectCity")}
-                              </option>
-                              {Object.entries(MK_CITIES).map(
-                                ([code, name]) => (
-                                  <option key={code} value={code}>
-                                    {name}
-                                  </option>
-                                )
-                              )}
-                            </select>
-                          </div>
-                          <div className="form-group">
-                            <label>{t("price")}</label>
-                            <input
-                              name="price"
-                              className="input"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("phoneNumber")}</label>
-                            <input
-                              name="phone"
-                              className="input"
-                              type="text"
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("address")}</label>
-                            <input
-                              name="address"
-                              className="input"
-                              type="text"
-                            />
-                          </div>
-                          <div className="form-group form-group-full">
-                            <label>{t("description")}</label>
-                            <textarea
-                              name="description"
-                              className="textarea"
-                              rows="4"
-                              required
-                            ></textarea>
-                          </div>
-                          <div className="form-group">
-                            <label>{t("planDuration")}</label>
-                            <select
-                              name="days"
-                              className="select"
-                              defaultValue="30"
-                            >
-                              {plans.map((p) => (
-                                <option key={p.id} value={p.days}>
-                                  {p.label} ({p.price} €)
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="form-group">
-                            <label className="checkbox-label">
-                              <input
-                                name="featured"
-                                type="checkbox"
-                                className="checkbox"
-                              />
-                              <span>{t("markAsFeatured")}</span>
-                            </label>
+                          <div className="plan-content">
+                            <div className="plan-duration">
+                              {s === 1
+                                ? t("stepBasic")
+                                : s === 2
+                                ? t("stepDetails")
+                                : t("stepPlanPreview")}
+                            </div>
                           </div>
                         </div>
-
-                        <div className="modal-footer">
+                      ))}
+                    </div>
+                
+                    {/* Step 1 */}
+                    {form.step === 1 && (
+                      <form
+                        className="form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!form.name || !form.category || !form.locationCity)
+                            return showMessage(t("fillAllFields"), "error");
+                          setForm({ ...form, step: 2 });
+                        }}
+                      >
+                        <input
+                          className="input"
+                          placeholder={t("name")}
+                          value={form.name}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              name: stripDangerous(e.target.value).slice(0, 100),
+                            })
+                          }
+                          maxLength="100"
+                          required
+                        />
+                
+                        <select
+                          className="select category-dropdown"
+                          value={form.category}
+                          onChange={(e) => setForm({ ...form, category: e.target.value })}
+                          required
+                        >
+                          <option value="">{t("selectCategory")}</option>
+                          {categories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {t(cat)}
+                            </option>
+                          ))}
+                        </select>
+                
+                        {/* Location picker with map modal */}
+                        <div className="location-picker">
+                          {/* City selector from MK_CITIES */}
+                          <select
+                            className="select city-dropdown"
+                            value={form.locationCity}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                locationCity: e.target.value || "",
+                              })
+                            }
+                            required
+                          >
+                            <option value="">{t("selectCity") || "Select city"}</option>
+                            {MK_CITIES.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
+                
+                          {/* Optional extra details: town / village / neighborhood etc. */}
+                          <input
+                            className="input"
+                            placeholder={
+                              t("locationExtra") || "Town / village / neighborhood (optional)"
+                            }
+                            maxLength="100"
+                            value={form.locationExtra}
+                            onChange={(e) => {
+                              const extra = stripDangerous(e.target.value).slice(0, 100);
+                              setForm({
+                                ...form,
+                                locationExtra: extra,
+                              });
+                            }}
+                          />
+                
                           <button
                             type="button"
-                            className="btn ghost"
-                            onClick={() => setShowPostForm(false)}
+                            className="btn btn-ghost small"
+                            style={{ marginTop: 6 }}
+                            onClick={() => setShowMapPicker(true)}
                           >
-                            {t("cancel")}
+                            {t("chooseOnMap") || "Choose on map"}
                           </button>
-                          <button type="submit" className="btn primary">
-                            {t("publishListing")}
+                        </div>
+                
+                        <div className="modal-actions" style={{ padding: 0, marginTop: 8 }}>
+                          <button type="submit" className="btn">
+                            {t("continue")}
                           </button>
                         </div>
                       </form>
-                    </motion.div>
-                  </motion.div>
+                    )}
+                
+                    {/* Step 2 */}
+                    {form.step === 2 && (
+                      <form
+                        className="form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (!form.description || !form.contact)
+                            return showMessage(t("fillAllFields"), "error");
+                          if (!validatePhone(form.contact))
+                            return showMessage(t("enterValidPhone"), "error");
+                          setForm({ ...form, step: 3 });
+                        }}
+                      >
+                        <textarea
+                          className="textarea"
+                          placeholder={t("description")}
+                          value={form.description}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              description: stripDangerous(e.target.value).slice(0, 1000),
+                            })
+                          }
+                          maxLength="1000"
+                          required
+                        />
+                
+                        <div className="phone-input-group">
+                          <select
+                            className="select phone-country"
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                          >
+                            {countryCodes.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.name} ({c.code})
+                              </option>
+                            ))}
+                          </select>
+                
+                          <input
+                            className="input phone-number"
+                            type="tel"
+                            required
+                            pattern="[0-9]{8,15}"
+                            placeholder={t("enterPhone")}
+                            value={form.contact}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                contact: e.target.value.replace(/\D/g, ""),
+                              })
+                            }
+                            maxLength="15"
+                            inputMode="numeric"
+                          />
+                        </div>
+                
+                        {/* Offer price range + currency */}
+                        <div className="offer-price-range">
+                          <label className="field-label">{t("offerPriceLabel")}</label>
+                          <div className="offer-range-row">
+                            <input
+                              className="input"
+                              type="number"
+                              min="0"
+                              placeholder={t("minPrice")}
+                              value={form.offerMin}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^\d.,]/g, "");
+                                const updated = { ...form, offerMin: val };
+                                updated.offerprice = formatOfferPrice(
+                                  updated.offerMin,
+                                  updated.offerMax,
+                                  updated.offerCurrency
+                                );
+                                setForm(updated);
+                              }}
+                            />
+                            <span>—</span>
+                            <input
+                              className="input"
+                              type="number"
+                              min="0"
+                              placeholder={t("maxPrice")}
+                              value={form.offerMax}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^\d.,]/g, "");
+                                const updated = { ...form, offerMax: val };
+                                updated.offerprice = formatOfferPrice(
+                                  updated.offerMin,
+                                  updated.offerMax,
+                                  updated.offerCurrency
+                                );
+                                setForm(updated);
+                              }}
+                            />
+                            <select
+                              className="select"
+                              value={form.offerCurrency}
+                              onChange={(e) => {
+                                const updated = { ...form, offerCurrency: e.target.value };
+                                updated.offerprice = formatOfferPrice(
+                                  updated.offerMin,
+                                  updated.offerMax,
+                                  updated.offerCurrency
+                                );
+                                setForm(updated);
+                              }}
+                            >
+                              {currencyOptions.map((cur) => (
+                                <option key={cur} value={cur}>
+                                  {cur}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                
+                        <input
+                          className="input"
+                          placeholder={t("tagsPlaceholder")}
+                          value={form.tags}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              tags: stripDangerous(e.target.value).slice(0, 64),
+                            })
+                          }
+                          maxLength="64"
+                        />
+                
+                        <input
+                          className="input"
+                          placeholder={t("socialPlaceholder")}
+                          value={form.socialLink}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              socialLink: stripDangerous(e.target.value).slice(0, 200),
+                            })
+                          }
+                          maxLength="200"
+                        />
+                
+                        <input
+                          className="input"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                
+                        {form.imagePreview && (
+                          <img
+                            src={form.imagePreview}
+                            alt="preview"
+                            style={{
+                              width: "100%",
+                              borderRadius: 12,
+                              border: "1px solid #e5e7eb",
+                              marginTop: 8,
+                            }}
+                          />
+                        )}
+                
+                        <div className="modal-actions" style={{ padding: 0, marginTop: 8 }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => setForm({ ...form, step: 1 })}
+                          >
+                            {t("back")}
+                          </button>
+                          <button type="submit" className="btn">
+                            {t("continue")}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                
+                    {/* Step 3 */}
+                    {form.step === 3 && (
+                      <form className="form" onSubmit={handleSubmit}>
+                        <div className="plan-selector">
+                          <label className="plan-label">{t("selectDuration")}</label>
+                          <div className="plan-grid">
+                            {Object.keys(priceMap).map((months) => (
+                              <label
+                                key={months}
+                                className={`plan-option ${
+                                  plan === months ? "selected" : ""
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="plan"
+                                  value={months}
+                                  checked={plan === months}
+                                  onChange={(e) => setPlan(e.target.value)}
+                                />
+                                <div className="plan-content">
+                                  <div className="plan-duration">
+                                    {months === "1"
+                                      ? t("oneMonth")
+                                      : months === "3"
+                                      ? t("threeMonths")
+                                      : months === "6"
+                                      ? t("sixMonths")
+                                      : t("twelveMonths")}
+                                  </div>
+                                  <div className="plan-price">
+                                    {priceMap[months]} {t("eur")}
+                                  </div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                
+                        {/* Live Preview */}
+                        <div className="card" style={{ marginTop: 8 }}>
+                          <div className="listing-header">
+                            <h3 className="listing-title">
+                              {form.name || t("previewTitlePlaceholder")}
+                            </h3>
+                            <span className="badge verified">✓ {t("verified")}</span>
+                          </div>
+                
+                          <div className="listing-meta">
+                            {t(form.category) || form.category || "—"} •{" "}
+                            {previewLocation || "—"}
+                          </div>
+                
+                          {form.imagePreview && (
+                            <img
+                              src={form.imagePreview}
+                              alt="preview"
+                              style={{
+                                width: "100%",
+                                borderRadius: 12,
+                                border: "1px solid #e5e7eb",
+                                margin: "10px 0",
+                              }}
+                            />
+                          )}
+                
+                          <p className="listing-description">
+                            {form.description || t("previewDescriptionPlaceholder")}
+                          </p>
+                
+                          <div className="listing-meta" style={{ marginTop: 8 }}>
+                            {form.offerprice && (
+                              <>
+                                💶 <strong>{form.offerprice}</strong>&nbsp;&nbsp;
+                              </>
+                            )}
+                            {form.tags && <>🏷️ {form.tags}</>}
+                          </div>
+                        </div>
+                
+                        <button
+                          type="submit"
+                          className="btn submit"
+                          disabled={loading || paymentModalOpen}
+                        >
+                          {loading
+                            ? `⏳ ${t("loading")}`
+                            : `${t("createAndPay")} (${priceMap[plan]} ${t("eur")})`}
+                        </button>
+                      </form>
+                    )}
+                
+                    <section
+                      className="card trust-section"
+                      style={{ marginTop: "5%", height: "fit-content" }}
+                    >
+                      <h2 className="section-title">
+                        {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                      </h2>
+                      <ul className="trust-list">
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint1") ||
+                            "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint2") ||
+                            "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint3") ||
+                            "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                        </li>
+                        <li>
+                          ✅{" "}
+                          {t("trustPoint4") ||
+                            "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                        </li>
+                      </ul>
+                    </section>
+                  </section>
+                ) : (
+                  <section className="card trust-section" style={{ height: "fit-content" }}>
+                    <h2 className="section-title">
+                      {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                    </h2>
+                    <ul className="trust-list">
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint1") ||
+                          "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint2") ||
+                          "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint3") ||
+                          "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                      </li>
+                      <li>
+                        ✅{" "}
+                        {t("trustPoint4") ||
+                          "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                      </li>
+                    </ul>
+                  </section>
                 )}
+                </div>
+              </motion.aside>
+            </motion.div>
+          )}
+        </AnimatePresence>
+    
+        {/* MAP PICKER MODAL */}
+        <AnimatePresence>
+          {showMapPicker && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMapPicker(false)}
+            >
+              <motion.div
+                className="modal map-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
+                <div className="modal-header">
+                  <h3 className="modal-title">
+                    {t("chooseOnMap") || "Choose location on map"}
+                  </h3>
+                  <button
+                    className="icon-btn"
+                    onClick={() => setShowMapPicker(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
 
-                {editingListing && editForm && (
-                  <motion.div
-                    className="modal-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                <div className="modal-body" style={{ maxHeight: "70vh", overflow: "hidden" }}>
+                  <NorthMacedoniaMap
+                    selectedCity={form.locationCity}
+                    onSelectCity={(cityName) => {
+                      setForm((f) => ({ ...f, locationCity: cityName }));
+                      showMessage(
+                        `${t("locationSetTo") || "Location set to"} ${cityName}`,
+                        "success"
+                      );
+                      setShowMapPicker(false);
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ===== EDIT MODAL (restored, resized) ===== */}
+        <AnimatePresence>
+          {editingListing && editForm && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setEditingListing(null);
+                setEditForm(null);
+              }}
+            >
+              <motion.div
+                className="modal edit-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+              >
+                <div className="modal-header">
+                  <h3 className="modal-title">{t("edit")}</h3>
+                  <button
+                    className="icon-btn"
                     onClick={() => {
                       setEditingListing(null);
                       setEditForm(null);
                     }}
                   >
-                    <motion.div
-                      className="modal listing-modal"
-                      onClick={(e) => e.stopPropagation()}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 20, opacity: 0 }}
+                    ✕
+                  </button>
+                </div>
+
+                <div className="modal-body edit-modal-body">
+                  <div className="field-group">
+                    <label className="field-label">{t("name")}</label>
+                    <input
+                      className="input"
+                      value={editForm.name}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          name: stripDangerous(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="field-group">
+                    <label className="field-label">{t("category")}</label>
+                    <select
+                      className="select"
+                      value={editForm.category}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, category: e.target.value })
+                      }
                     >
-                      <div className="modal-header">
-                        <h3>{t("editListingTitle")}</h3>
-                        <button
-                          className="icon-btn"
-                          onClick={() => {
-                            setEditingListing(null);
-                            setEditForm(null);
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <form onSubmit={handleSaveEditListing}>
-                        <div className="form-grid">
-                          <div className="form-group">
-                            <label>{t("businessName")}</label>
-                            <input
-                              className="input"
-                              type="text"
-                              value={editForm.name}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  name: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("category")}</label>
-                            <select
-                              className="select"
-                              value={editForm.category}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  category: e.target.value,
-                                }))
-                              }
-                            >
-                              {categories.map((cat) => (
-                                <option key={cat} value={cat}>
-                                  {t(`cat_${cat}`)}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="form-group">
-                            <label>{t("city")}</label>
-                            <select
-                              className="select"
-                              value={editForm.city}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  city: e.target.value,
-                                }))
-                              }
-                            >
-                              {Object.entries(MK_CITIES).map(
-                                ([code, name]) => (
-                                  <option key={code} value={code}>
-                                    {name}
-                                  </option>
-                                )
-                              )}
-                            </select>
-                          </div>
-                          <div className="form-group">
-                            <label>{t("price")}</label>
-                            <input
-                              className="input"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={editForm.price}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  price: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("phoneNumber")}</label>
-                            <input
-                              className="input"
-                              type="text"
-                              value={editForm.phone}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  phone: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>{t("address")}</label>
-                            <input
-                              className="input"
-                              type="text"
-                              value={editForm.address}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  address: e.target.value,
-                                }))
-                              }
-                            />
-                          </div>
-                          <div className="form-group form-group-full">
-                            <label>{t("description")}</label>
-                            <textarea
-                              className="textarea"
-                              rows="4"
-                              value={editForm.description}
-                              onChange={(e) =>
-                                setEditForm((prev) => ({
-                                  ...prev,
-                                  description: e.target.value,
-                                }))
-                              }
-                            ></textarea>
-                          </div>
-                          <div className="form-group">
-                            <label className="checkbox-label">
-                              <input
-                                type="checkbox"
-                                className="checkbox"
-                                checked={!!editForm.featured}
-                                onChange={(e) =>
-                                  setEditForm((prev) => ({
-                                    ...prev,
-                                    featured: e.target.checked,
-                                  }))
-                                }
-                              />
-                              <span>{t("markAsFeatured")}</span>
-                            </label>
-                          </div>
-                        </div>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {t(cat)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                        <div className="modal-footer">
-                          <button
-                            type="button"
-                            className="btn ghost"
-                            onClick={() => {
-                              setEditingListing(null);
-                              setEditForm(null);
-                            }}
-                          >
-                            {t("cancel")}
-                          </button>
-                          <button type="submit" className="btn primary">
-                            {t("saveChanges")}
-                          </button>
-                        </div>
-                      </form>
-                    </motion.div>
-                  </motion.div>
-                )}
+                  <div className="field-row-2">
+                    <div className="field-group">
+                      <label className="field-label">{t("location")}</label>
+                      <input
+                        className="input"
+                        value={editForm.location}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            location: stripDangerous(e.target.value),
+                            locationData: null,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="field-group">
+                      <label className="field-label">{t("contact")}</label>
+                      <input
+                        className="input"
+                        type="tel"
+                        value={editForm.contact}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            contact: e.target.value.replace(/\D/g, ""),
+                          })
+                        }
+                        maxLength="15"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
 
-                {extendTarget && (
-                  <motion.div
-                    className="modal-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setExtendTarget(null)}
+                  <div className="field-group">
+                    <label className="field-label">{t("description")}</label>
+                    <textarea
+                      className="textarea"
+                      rows={4}
+                      value={editForm.description}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          description: stripDangerous(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="field-row-2">
+                    <div className="field-group">
+                      <label className="field-label">
+                        {t("priceRangeLabel") || "Price range"}
+                      </label>
+                      <input
+                        className="input"
+                        placeholder="e.g. 500 - 800 MKD"
+                        value={editForm.offerprice}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            offerprice: stripDangerous(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="field-group">
+                      <label className="field-label">
+                        {t("tagsFieldLabel") || "Tags"}
+                      </label>
+                      <input
+                        className="input"
+                        placeholder={t("tagsPlaceholder") || "Tags (optional)"}
+                        value={editForm.tags}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            tags: stripDangerous(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="field-group">
+                    <label className="field-label">
+                      {t("websiteFieldLabel") || "Social / Website"}
+                    </label>
+                    <input
+                      className="input"
+                      placeholder={t("websitePlaceholder") || "Link (optional)"}
+                      value={editForm.socialLink}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          socialLink: stripDangerous(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="field-group">
+                    <label className="field-label">
+                      {t("coverImage") || "Cover image (local only)"}
+                    </label>
+                    <div className="edit-image-row">
+                      <label className="btn btn-ghost small" htmlFor="edit-image">
+                        {t("uploadCoverLocal") || "Upload cover"}
+                      </label>
+                      <input
+                        id="edit-image"
+                        style={{ display: "none" }}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (ev) =>
+                            setEditForm((f) => ({
+                              ...f,
+                              imagePreview: ev.target?.result || null,
+                            }));
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </div>
+                    {editForm.imagePreview && (
+                      <img
+                        src={editForm.imagePreview}
+                        alt="preview"
+                        className="edit-image-preview"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn" onClick={saveEdit}>
+                    {t("save")}
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setEditingListing(null);
+                      setEditForm(null);
+                    }}
                   >
-                    <motion.div
-                      className="modal listing-modal"
-                      onClick={(e) => e.stopPropagation()}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 20, opacity: 0 }}
-                    >
-                      <div className="modal-header">
-                        <h3>{t("extendListingTitle")}</h3>
-                        <button
-                          className="icon-btn"
-                          onClick={() => setExtendTarget(null)}
-                        >
-                          ✕
-                        </button>
-                      </div>
+                    {t("cancel")}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                      <div className="extend-info">
-                        <p>
-                          {t("extendingListing")}: <b>{extendTarget.name}</b>
-                        </p>
-                        <p>
-                          {t("currentExpiry")}:{" "}
-                          <b>{formatDateTime(extendTarget.expiry)}</b>
-                        </p>
-                      </div>
 
-                      <div className="extend-plans">
-                        {plans.map((plan) => (
+        {/* ===== PAYMENT MODAL (restored) ===== */}
+        <AnimatePresence>
+          {paymentModalOpen && paymentIntent && (
+            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setPaymentModalOpen(false); setPaymentIntent(null); }}>
+              <motion.div className="modal payment-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
+                <div className="modal-header">
+                  <h3 className="modal-title">
+                    {paymentIntent.type === "extend" ? `${t("extend")} • ${extendTarget?.name || ""}` : t("paypalCheckout")}
+                  </h3>
+                  <button className="icon-btn" onClick={() => { setPaymentModalOpen(false); setPaymentIntent(null); }}>✕</button>
+                </div>
+
+                <div className="modal-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                  <div className="payment-summary">
+                    <div className="payment-row">
+                      <span>{t("totalAmount")}</span>
+                      <span className="amount">{paymentIntent.amount?.toFixed(2)} EUR</span>
+                    </div>
+                    <div className="payment-row">
+                      <span>{t("payingWith")}</span>
+                      <span>PayPal</span>
+                    </div>
+                  </div>
+
+                  {/* Plan selector only for EXTEND */}
+                  {paymentIntent.type === "extend" && (
+                    <div className="plan-selector" style={{ marginTop: 12 }}>
+                      <label className="plan-label">
+                        {t("selectExtendDuration") || t("selectDuration") || "Select extension duration"}
+                      </label>
+                      <div className="plan-grid">
+                        {Object.keys(priceMap).map((months) => (
                           <label
-                            key={plan.id}
-                            className={`extend-plan ${
-                              extendPlan === plan.id ? "selected" : ""
-                            }`}
+                            key={months}
+                            className={`plan-option ${extendPlan === months ? "selected" : ""}`}
                           >
                             <input
                               type="radio"
-                              name="plan"
-                              value={plan.id}
-                              checked={extendPlan === plan.id}
-                              onChange={(e) => setExtendPlan(e.target.value)}
+                              name="extendPlan"
+                              value={months}
+                              checked={extendPlan === months}
+                              onChange={(e) => {
+                                const newPlan = e.target.value;
+                                setExtendPlan(newPlan);
+                                setPaymentIntent((prev) =>
+                                  prev && prev.type === "extend"
+                                    ? { ...prev, amount: priceMap[newPlan] }
+                                    : prev
+                                );
+                              }}
                             />
-                            <div className="extend-plan-content">
-                              <span className="extend-plan-label">
-                                {plan.label}
-                              </span>
-                              <span className="extend-plan-price">
-                                {plan.price} €
-                              </span>
+                            <div className="plan-content">
+                              <div className="plan-duration">
+                                {months === "1"
+                                  ? t("oneMonth")
+                                  : months === "3"
+                                  ? t("threeMonths")
+                                  : months === "6"
+                                  ? t("sixMonths")
+                                  : t("twelveMonths")}
+                              </div>
+                              <div className="plan-price">
+                                {priceMap[months]} {t("eur")}
+                              </div>
                             </div>
                           </label>
                         ))}
                       </div>
+                    </div>
+                  )}
 
-                      <div className="modal-footer">
-                        <button
-                          className="btn ghost"
-                          onClick={() => setExtendTarget(null)}
-                        >
-                          {t("cancel")}
-                        </button>
-
-                        <PayPalButtons
-                          style={{ layout: "horizontal" }}
-                          createOrder={(data, actions) => {
-                            const chosenPlan = plans.find(
-                              (p) => p.id === extendPlan
-                            );
-                            if (!chosenPlan) return;
-
-                            return actions.order.create({
-                              purchase_units: [
-                                {
-                                  amount: {
-                                    value: chosenPlan.price.toString(),
-                                  },
-                                  description: `Extend listing ${extendTarget.name} for ${chosenPlan.label}`,
-                                },
-                              ],
-                            });
-                          }}
-                          onApprove={(data, actions) => {
-                            return actions.order
-                              .capture()
-                              .then((details) =>
-                                handleExtendSuccess(details, data)
-                              );
-                          }}
-                          onError={(err) => {
-                            console.error(err);
-                            showMessage(err.message, "error");
-                          }}
-                        />
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </div>
-            )}
-
-            {selectedTab === "account" && user && (
-              <section className="account-section">
-                <h2>{t("accountSettings")}</h2>
-                <div className="account-grid">
-                  <div className="account-card">
-                    <h3>{t("basicInfo")}</h3>
-                    <p>
-                      <strong>{t("email")}:</strong>{" "}
-                      {user.email || t("noEmail")}
-                    </p>
-                    <p>
-                      <strong>{t("emailVerified")}:</strong>{" "}
-                      {user.emailVerified ? t("yes") : t("no")}
-                    </p>
-                    <p>
-                      <strong>{t("uid")}:</strong> {user.uid}
-                    </p>
-                  </div>
-
-                  <div className="account-card">
-                    <h3>{t("changeEmail")}</h3>
-                    <form onSubmit={handleChangeEmail}>
-                      <div className="form-group">
-                        <label>{t("newEmail")}</label>
-                        <input
-                          type="email"
-                          className="input"
-                          value={emailForm.newEmail}
-                          onChange={(e) =>
-                            setEmailForm((prev) => ({
-                              ...prev,
-                              newEmail: e.target.value,
-                            }))
+                  <div className="payment-buttons">
+                    <PayPalButtons
+                      style={{ layout: "vertical", color: "gold", shape: "pill", label: "paypal" }}
+                      createOrder={(data, actions) =>
+                        actions.order.create({
+                          intent: "CAPTURE",
+                          purchase_units: [
+                            {
+                              amount: {
+                                currency_code: "EUR",
+                                value: paymentIntent.amount?.toString() || "0.00",
+                              },
+                            },
+                          ],
+                          application_context: {
+                            shipping_preference: "NO_SHIPPING",
+                            user_action: "PAY_NOW",
+                            return_url: window.location.origin + "/paypal-success",
+                            cancel_url: window.location.origin + "/paypal-cancel",
+                          },
+                        })
+                      }
+                      onApprove={async (data, actions) => {
+                        const orderId = data.orderID;
+                        try {
+                          if (paymentIntent.type === "extend") {
+                            await handleServerCaptureForExtend(orderId, paymentIntent.listingId, extendPlan);
+                          } else {
+                            await handleServerCapture(orderId, pendingOrder.listingId);
                           }
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>{t("currentPassword")}</label>
-                        <input
-                          type="password"
-                          className="input"
-                          value={emailForm.currentPassword}
-                          onChange={(e) =>
-                            setEmailForm((prev) => ({
-                              ...prev,
-                              currentPassword: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        className="btn primary"
-                        disabled={savingEmail}
-                      >
-                        {savingEmail ? t("saving") : t("saveChanges")}
-                      </button>
-                    </form>
-                  </div>
-
-                  <div className="account-card">
-                    <h3>{t("changePassword")}</h3>
-                    <form onSubmit={handleChangePassword}>
-                      <div className="form-group">
-                        <label>{t("currentPassword")}</label>
-                        <input
-                          type="password"
-                          className="input"
-                          value={passwordForm.currentPassword}
-                          onChange={(e) =>
-                            setPasswordForm((prev) => ({
-                              ...prev,
-                              currentPassword: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>{t("newPassword")}</label>
-                        <input
-                          type="password"
-                          className="input"
-                          value={passwordForm.newPassword}
-                          onChange={(e) =>
-                            setPasswordForm((prev) => ({
-                              ...prev,
-                              newPassword: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>{t("repeatNewPassword")}</label>
-                        <input
-                          type="password"
-                          className="input"
-                          value={passwordForm.repeatNewPassword}
-                          onChange={(e) =>
-                            setPasswordForm((prev) => ({
-                              ...prev,
-                              repeatNewPassword: e.target.value,
-                            }))
-                          }
-                          required
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        className="btn primary"
-                        disabled={savingPassword}
-                      >
-                        {savingPassword ? t("saving") : t("saveChanges")}
-                      </button>
-                    </form>
+                          showMessage(t("thankYou"), "success");
+                        } catch (err) {
+                          console.error("PayPal approval error:", err);
+                          showMessage((t("paypalError") || "PayPal error:") + " " + String(err), "error");
+                        }
+                      }}
+                      onError={(err) =>
+                        showMessage((t("paypalError") || "PayPal error:") + " " + String(err), "error")
+                      }
+                    />
                   </div>
                 </div>
-              </section>
-            )}
-          </section>
 
-          {/* ===== AUTH MODAL (login + signup, email + phone) ===== */}
-          <AnimatePresence>
-            {showAuthModal && (
+                <div className="modal-actions">
+                  <button className="btn btn-ghost" onClick={() => { setPaymentModalOpen(false); setPaymentIntent(null); }}>
+                    {t("cancel")}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ===== AUTH MODAL (login + signup, email + phone) ===== */}
+        <AnimatePresence>
+          {showAuthModal && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAuthModal(false)}
+            >
               <motion.div
-                className="modal-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowAuthModal(false)}
+                className="modal auth-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
               >
-                <motion.div
-                  className="modal auth-modal"
-                  onClick={(e) => e.stopPropagation()}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 20, opacity: 0 }}
-                >
-                  <div className="modal-header">
-                    <h3>
-                      {authMode === "signup"
-                        ? t("createAccount") || "Create your BizCall account"
-                        : authTab === "email"
-                        ? t("emailLoginSignup")
-                        : t("verifyPhone")}
-                    </h3>
-                    <button
-                      className="icon-btn"
-                      onClick={() => setShowAuthModal(false)}
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Mode tabs: Login / Register */}
-                  <div className="auth-mode-tabs">
-                    <button
-                      className={`auth-mode-tab ${
-                        authMode === "login" ? "active" : ""
-                      }`}
-                      onClick={() => {
-                        setAuthMode("login");
-                        setAuthTab("email");
-                        setConfirmationResult(null);
-                        setVerificationCode("");
-                      }}
-                    >
-                      {t("login")}
-                    </button>
-                    <button
-                      className={`auth-mode-tab ${
-                        authMode === "signup" ? "active" : ""
-                      }`}
-                      onClick={() => {
-                        setAuthMode("signup");
-                        setAuthTab("email");
-                        setConfirmationResult(null);
-                        setVerificationCode("");
-                      }}
-                    >
-                      {t("signup")}
-                    </button>
-                  </div>
-
-                  {/* Auth content */}
-                  <div className="auth-content">
-                    {authMode === "login" && (
-                      <>
-                        <div className="auth-tab-toggle">
-                          <button
-                            className={`auth-tab-btn ${
-                              authTab === "email" ? "active" : ""
-                            }`}
-                            onClick={() => {
-                              setAuthTab("email");
-                              setConfirmationResult(null);
-                              setVerificationCode("");
-                            }}
-                          >
-                            {t("loginWithEmail")}
-                          </button>
-                          <button
-                            className={`auth-tab-btn ${
-                              authTab === "phone" ? "active" : ""
-                            }`}
-                            onClick={() => {
-                              setAuthTab("phone");
-                              setConfirmationResult(null);
-                              setVerificationCode("");
-                            }}
-                          >
-                            {t("loginWithPhone")}
-                          </button>
-                        </div>
-
-                        {authTab === "email" && (
-                          <form onSubmit={handleEmailAuth} className="auth-form">
-                            <div className="auth-field-group">
-                              <span className="field-label">
-                                {t("emailAddress")}
-                              </span>
-                              <input
-                                className="input"
-                                type="email"
-                                placeholder={t("emailPlaceholder")}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                              />
-                            </div>
-                            <div className="auth-field-group">
-                              <span className="field-label">
-                                {t("password")}
-                              </span>
-                              <input
-                                className="input"
-                                type="password"
-                                placeholder={t("password")}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                              />
-                            </div>
-                            <div className="auth-actions">
-                              <button type="submit" className="btn full-width">
-                                {t("login")}
-                              </button>
-                              <button
-                                type="button"
-                                className="btn ghost full-width"
-                                onClick={handleSendMagicLink}
-                              >
-                                {t("sendMagicLink")}
-                              </button>
-                            </div>
-                          </form>
-                        )}
-
-                        {authTab === "phone" && (
-                          <div className="auth-form">
-                            <div className="auth-field-group">
-                              <span className="field-label">
-                                {t("phoneNumber")}
-                              </span>
-                              <div className="phone-input-group">
-                                <select
-                                  className="select phone-country"
-                                  value={countryCode}
-                                  onChange={(e) =>
-                                    setCountryCode(e.target.value)
-                                  }
-                                >
-                                  {PhoneCountryOptions.map((opt) => (
-                                    <option key={opt.code} value={opt.code}>
-                                      {opt.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <input
-                                  className="input"
-                                  type="tel"
-                                  placeholder={t("phonePlaceholder")}
-                                  value={phoneNumber}
-                                  onChange={(e) =>
-                                    setPhoneNumber(e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-
-                            <div className="auth-field-group">
-                              <button
-                                className="btn full-width"
-                                onClick={async () => {
-                                  const raw = (phoneNumber || "").replace(
-                                    /\D/g,
-                                    ""
-                                  );
-                                  if (!raw || raw.length < 5 || raw.length > 12)
-                                    return showMessage(
-                                      t("enterValidPhone"),
-                                      "error"
-                                    );
-
-                                  const fullPhone = countryCode + raw;
-                                  if (!validatePhone(fullPhone))
-                                    return showMessage(
-                                      t("enterValidPhone"),
-                                      "error"
-                                    );
-
-                                  setPhoneLoading(true);
-                                  try {
-                                    if (!window.recaptchaVerifier)
-                                      createRecaptcha("recaptcha-container");
-                                    const result = await signInWithPhoneNumber(
-                                      auth,
-                                      fullPhone,
-                                      window.recaptchaVerifier
-                                    );
-                                    setConfirmationResult(result);
-                                    showMessage(
-                                      t("codeSent"),
-                                      "success"
-                                    );
-                                  } catch (err) {
-                                    console.error(err);
-                                    showMessage(err.message, "error");
-                                  } finally {
-                                    setPhoneLoading(false);
-                                  }
-                                }}
-                                disabled={phoneLoading}
-                              >
-                                {phoneLoading
-                                  ? t("sending")
-                                  : t("sendCode")}
-                              </button>
-                            </div>
-
-                            {confirmationResult && (
-                              <div className="auth-field-group">
-                                <span className="field-label">
-                                  {t("enterCode")}
-                                </span>
-                                <input
-                                  className="input"
-                                  type="text"
-                                  placeholder={t("enterCode")}
-                                  value={verificationCode}
-                                  onChange={(e) =>
-                                    setVerificationCode(
-                                      e.target.value.replace(/\D/g, "")
-                                    )
-                                  }
-                                  maxLength="6"
-                                  inputMode="numeric"
-                                />
-                                <button
-                                  className="btn full-width"
-                                  onClick={async () => {
-                                    if (!verificationCode.trim())
-                                      return showMessage(
-                                        t("enterCode"),
-                                        "error"
-                                      );
-                                    if (
-                                      !/^\d{6}$/.test(verificationCode.trim())
-                                    )
-                                      return showMessage(
-                                        t("invalidCode"),
-                                        "error"
-                                      );
-
-                                    setPhoneLoading(true);
-                                    try {
-                                      await confirmationResult.confirm(
-                                        verificationCode
-                                      );
-                                      showMessage(
-                                        t("signedIn"),
-                                        "success"
-                                      );
-                                      setShowAuthModal(false);
-                                      setPhoneNumber("");
-                                      setVerificationCode("");
-                                      setConfirmationResult(null);
-                                    } catch (err) {
-                                      console.error(err);
-                                      showMessage(err.message, "error");
-                                    } finally {
-                                      setPhoneLoading(false);
-                                    }
-                                  }}
-                                  disabled={phoneLoading}
-                                >
-                                  {phoneLoading
-                                    ? t("verifying")
-                                    : t("verifyAndLogin")}
-                                </button>
-                              </div>
-                            )}
-
-                            <div id="recaptcha-container" className="recaptcha"></div>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {authMode === "signup" && (
-                      <div className="auth-form">
+                {/* Header */}
+                <div className="modal-header">
+                  <h3 className="modal-title">
+                    {authMode === "signup"
+                      ? t("createAccount") || "Create your BizCall account"
+                      : authTab === "email"
+                      ? t("emailLoginSignup")
+                      : t("verifyPhone")}
+                  </h3>
+                  <button
+                    className="icon-btn"
+                    onClick={() => setShowAuthModal(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+        
+                {/* Mode tabs: Login / Register */}
+                <div className="auth-mode-tabs">
+                  <button
+                    className={`tab ${authMode === "login" ? "active" : ""}`}
+                    onClick={() => {
+                      setAuthMode("login");
+                      setAuthTab("email");
+                      setConfirmationResult(null);
+                    }}
+                  >
+                    {t("login") || "Login"}
+                  </button>
+                  <button
+                    className={`tab ${authMode === "signup" ? "active" : ""}`}
+                    onClick={() => {
+                      setAuthMode("signup");
+                      setConfirmationResult(null);
+                    }}
+                  >
+                    {t("signup") || "Register"}
+                  </button>
+                </div>
+        
+                {/* =================== LOGIN MODE =================== */}
+                {authMode === "login" && (
+                  <>
+                    {/* Login method tabs: Email / Phone */}
+                    <div className="auth-tabs">
+                      <button
+                        className={`tab ${authTab === "email" ? "active" : ""}`}
+                        onClick={() => setAuthTab("email")}
+                      >
+                        {t("emailTab") || "Email"}
+                      </button>
+                      <button
+                        className={`tab ${authTab === "phone" ? "active" : ""}`}
+                        onClick={() => setAuthTab("phone")}
+                      >
+                        {t("signInWithPhone") || "Phone"}
+                      </button>
+                    </div>
+        
+                    {/* EMAIL LOGIN */}
+                    {authTab === "email" ? (
+                      <div className="modal-body auth-body auth-body-card">
+                        <p className="auth-subtitle">
+                          {t("loginSubtitle") ||
+                            "Log in with your email and password to manage your listings."}
+                        </p>
+        
+                        {/* Email */}
                         <div className="auth-field-group">
-                          <span className="field-label">
-                            {t("emailAddress")}
-                          </span>
+                          <span className="field-label">{t("email")}</span>
                           <input
                             className="input"
                             type="email"
-                            placeholder={t("emailPlaceholder")}
+                            placeholder={t("email")}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                           />
                         </div>
-
+        
+                        {/* Password */}
                         <div className="auth-field-group">
                           <span className="field-label">{t("password")}</span>
                           <input
@@ -2026,248 +2516,140 @@ function App() {
                             onChange={(e) => setPassword(e.target.value)}
                           />
                         </div>
-
-                        <div className="auth-field-group">
-                          <span className="field-label">
-                            {t("repeatNewPassword")}
-                          </span>
-                          <input
-                            className="input"
-                            type="password"
-                            placeholder={t("repeatNewPassword")}
-                            value={passwordForm.repeatNewPassword}
-                            onChange={(e) =>
-                              setPasswordForm((prev) => ({
-                                ...prev,
-                                repeatNewPassword: e.target.value,
-                              }))
-                            }
-                          />
+        
+                        <div className="auth-actions">
+                          <button
+                            className="btn full-width"
+                            onClick={async () => {
+                              if (!validateEmail(email))
+                                return showMessage(t("enterValidEmail"), "error");
+                              try {
+                                await signInWithEmailAndPassword(auth, email, password);
+                                showMessage(t("signedIn"), "success");
+                                setShowAuthModal(false);
+                                setEmail("");
+                                setPassword("");
+                              } catch (e) {
+                                showMessage(e.message, "error");
+                              }
+                            }}
+                          >
+                            {t("login")}
+                          </button>
                         </div>
-
+                      </div>
+                    ) : (
+                      /* PHONE LOGIN */
+                      <div className="modal-body auth-body auth-body-card">
+                        <p className="auth-subtitle">
+                          {t("phoneLoginSubtitle") ||
+                            "Log in quickly with an SMS code on your phone."}
+                        </p>
+        
                         <div className="auth-field-group">
-                          <span className="field-label">
-                            {t("phoneNumber")}
-                          </span>
+                          <span className="field-label">{t("phoneNumber")}</span>
                           <div className="phone-input-group">
                             <select
                               className="select phone-country"
                               value={countryCode}
                               onChange={(e) => setCountryCode(e.target.value)}
                             >
-                              {PhoneCountryOptions.map((opt) => (
-                                <option key={opt.code} value={opt.code}>
-                                  {opt.label}
+                              {countryCodes.map((c) => (
+                                <option key={c.code} value={c.code}>
+                                  {c.name} ({c.code})
                                 </option>
                               ))}
                             </select>
                             <input
-                              className="input"
+                              className="input phone-number"
                               type="tel"
-                              placeholder={t("phonePlaceholder")}
+                              placeholder={t("phoneNumber")}
                               value={phoneNumber}
                               onChange={(e) =>
-                                setPhoneNumber(e.target.value)
+                                setPhoneNumber(e.target.value.replace(/\D/g, ""))
                               }
+                              maxLength="12"
+                              inputMode="numeric"
                             />
                           </div>
                         </div>
-
-                        <div className="auth-actions">
-                          <button
-                            className="btn full-width"
-                            onClick={async () => {
-                              if (!validateEmail(email))
-                                return showMessage(
-                                  t("enterValidEmail"),
-                                  "error"
-                                );
-
-                              if (!password || password.length < 6)
-                                return showMessage(
-                                  t("passwordTooShort") ||
-                                    "Password must be at least 6 characters",
-                                  "error"
-                                );
-
-                              if (
-                                !passwordForm.repeatNewPassword ||
-                                passwordForm.repeatNewPassword !== password
-                              )
-                                return showMessage(
-                                  t("passwordsDontMatch") ||
-                                    "Passwords don't match",
-                                  "error"
-                                );
-
-                              const raw = (phoneNumber || "").replace(
-                                /\D/g,
-                                ""
-                              );
-                              if (!raw || raw.length < 5 || raw.length > 12)
-                                return showMessage(
-                                  t("enterValidPhone"),
-                                  "error"
-                                );
-
-                              const fullPhone = countryCode + raw;
-                              if (!validatePhone(fullPhone))
-                                return showMessage(
-                                  t("enterValidPhone"),
-                                  "error"
-                                );
-
-                              try {
-                                const cred =
-                                  await createUserWithEmailAndPassword(
-                                    auth,
-                                    email,
-                                    password
-                                  );
-                                const user = cred.user;
-
-                                try {
-                                  await sendEmailVerification(user);
-                                } catch {
-                                  // ignore
-                                }
-
-                                // 4) Prepare reCAPTCHA for signup phone link
-                                setPhoneLoading(true);
-
-                                if (!window.recaptchaVerifierSignup) {
-                                  // reuse your helper, but separate ID from login recaptcha
-                                  createRecaptcha("recaptcha-signup");
-                                  window.recaptchaVerifierSignup =
-                                    window.recaptchaVerifier;
-                                }
-
-                                // 5) Use PhoneAuthProvider to send SMS & get verificationId
-                                const provider = new PhoneAuthProvider(auth);
-                                const verificationId =
-                                  await provider.verifyPhoneNumber(
-                                    fullPhone,
-                                    window.recaptchaVerifierSignup
-                                  );
-
-                                // 6) Save verificationId so user can enter the code
-                                setConfirmationResult(verificationId);
-                                showMessage(
-                                  t("codeSent") ||
-                                    "Verification code sent via SMS",
-                                  "success"
-                                );
-                              } catch (err) {
-                                console.error(err);
-                                showMessage(err.message, "error");
-                              } finally {
-                                setPhoneLoading(false);
-                              }
-                            }}
-                            disabled={phoneLoading}
-                          >
-                            {phoneLoading
-                              ? "..."
-                              : t("createAccount") || "Create account"}
-                          </button>
-                        </div>
-
-                        {/* SIGNUP SMS CODE STEP (PHONE LINKING) */}
-                        {confirmationResult && (
-                          <div
-                            className="auth-field-group"
-                            style={{ marginTop: "14px" }}
-                          >
-                            <span className="field-label">
-                              {t("enterCode")}
-                            </span>
-
-                            <input
-                              className="input"
-                              type="text"
-                              placeholder={t("enterCode")}
-                              value={verificationCode}
-                              onChange={(e) =>
-                                setVerificationCode(
-                                  e.target.value.replace(/\D/g, "")
-                                )
-                              }
-                              maxLength="6"
-                              inputMode="numeric"
-                            />
-
+        
+                        {!confirmationResult ? (
+                          <div className="auth-actions">
                             <button
                               className="btn full-width"
-                              style={{ marginTop: "10px" }}
                               onClick={async () => {
-                                // Basic validation
-                                if (!verificationCode.trim())
-                                  return showMessage(
-                                    t("enterCode"),
-                                    "error"
-                                  );
-
-                                if (
-                                  !/^\d{6}$/.test(verificationCode.trim())
-                                )
-                                  return showMessage(
-                                    t("invalidCode"),
-                                    "error"
-                                  );
-
+                                const rest = (phoneNumber || "").replace(/\D/g, "");
+                                if (!rest || rest.length < 5 || rest.length > 12)
+                                  return showMessage(t("enterValidPhone"), "error");
+        
+                                const fullPhone = countryCode + rest;
+                                if (!validatePhone(fullPhone))
+                                  return showMessage(t("enterValidPhone"), "error");
+        
+                                setPhoneLoading(true);
                                 try {
-                                  setPhoneLoading(true);
-
-                                  // Use verificationId (confirmationResult) to build credential
-                                  const verificationId = confirmationResult;
-                                  const credential =
-                                    PhoneAuthProvider.credential(
-                                      verificationId,
-                                      verificationCode.trim()
-                                    );
-
-                                  const currentUser = auth.currentUser;
-                                  const linkResult =
-                                    await linkWithCredential(
-                                      currentUser,
-                                      credential
-                                    );
-
-                                  const user =
-                                    linkResult.user || currentUser;
-
-                                  // Save profile to DB
-                                  if (user) {
-                                    await set(
-                                      dbRef(db, `users/${user.uid}`),
-                                      {
-                                        email: user.email || email,
-                                        phone: normalizePhoneForStorage(
-                                          countryCode + phoneNumber
-                                        ),
-                                        createdAt: Date.now(),
-                                      }
-                                    );
-                                  }
-
-                                  showMessage(
-                                    t("signupSuccess") ||
-                                      "Account created, phone linked, and verification email sent.",
-                                    "success"
+                                  if (!window.recaptchaVerifier)
+                                    createRecaptcha("recaptcha-container");
+                                  const result = await signInWithPhoneNumber(
+                                    auth,
+                                    fullPhone,
+                                    window.recaptchaVerifier
                                   );
-
-                                  // Cleanup UI
+                                  setConfirmationResult(result);
+                                  showMessage(t("codeSent"), "success");
+                                } catch (err) {
+                                  console.error(err);
+                                  showMessage(err.message, "error");
+                                  if (window.recaptchaVerifier) {
+                                    window.recaptchaVerifier.clear();
+                                    window.recaptchaVerifier = null;
+                                  }
+                                } finally {
+                                  setPhoneLoading(false);
+                                }
+                              }}
+                              disabled={phoneLoading}
+                            >
+                              {phoneLoading ? "Sending..." : t("sendLink")}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="auth-actions">
+                            <div className="auth-field-group">
+                              <span className="field-label">{t("enterCode")}</span>
+                              <input
+                                className="input"
+                                type="text"
+                                placeholder={t("enterCode")}
+                                value={verificationCode}
+                                onChange={(e) =>
+                                  setVerificationCode(
+                                    e.target.value.replace(/\D/g, "")
+                                  )
+                                }
+                                maxLength="6"
+                                inputMode="numeric"
+                              />
+                            </div>
+        
+                            <button
+                              className="btn full-width"
+                              onClick={async () => {
+                                if (!confirmationResult || !verificationCode.trim())
+                                  return showMessage(t("enterCode"), "error");
+                                if (!/^\d{6}$/.test(verificationCode.trim()))
+                                  return showMessage(t("invalidCode"), "error");
+        
+                                setPhoneLoading(true);
+                                try {
+                                  await confirmationResult.confirm(verificationCode);
+                                  showMessage(t("signedIn"), "success");
                                   setShowAuthModal(false);
-                                  setEmail("");
-                                  setPassword("");
-                                  setPasswordForm({
-                                    repeatNewPassword: "",
-                                  });
                                   setPhoneNumber("");
                                   setVerificationCode("");
                                   setConfirmationResult(null);
                                 } catch (err) {
-                                  console.error(err);
                                   showMessage(err.message, "error");
                                 } finally {
                                   setPhoneLoading(false);
@@ -2275,220 +2657,371 @@ function App() {
                               }}
                               disabled={phoneLoading}
                             >
-                              {phoneLoading
-                                ? t("verifying") || "Verifying..."
-                                : t("verifyPhone") ||
-                                  "Verify & Finish Signup"}
+                              {phoneLoading ? "Verifying..." : t("verifyPhone")}
                             </button>
-
-                            {/* Add reCAPTCHA for signup */}
-                            <div
-                              id="recaptcha-signup"
-                              className="recaptcha"
-                            />
                           </div>
                         )}
-
-                        <div
-                          id="recaptcha-container"
-                          className="recaptcha"
-                        ></div>
+        
+                        <div id="recaptcha-container" className="recaptcha"></div>
                       </div>
                     )}
+                  </>
+                )}
+        
+                {/* =================== SIGNUP MODE =================== */}
+                {authMode === "signup" && (
+                  <div className="modal-body auth-body auth-body-card">
+                    <p className="auth-subtitle">
+                      {t("signupSubtitle") ||
+                        "Create a BizCall account to post and manage your listings."}
+                    </p>
+        
+                    {/* Email */}
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("email")}</span>
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder={t("email")}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+        
+                    {/* Password */}
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("password")}</span>
+                      <input
+                        className="input"
+                        type="password"
+                        placeholder={t("password")}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+        
+                    {/* Repeat password */}
+                    <div className="auth-field-group">
+                      <span className="field-label">
+                        {t("repeatNewPassword") || "Repeat password"}
+                      </span>
+                      <input
+                        className="input"
+                        type="password"
+                        placeholder={t("repeatNewPassword") || "Repeat password"}
+                        value={passwordForm.repeatNewPassword}
+                        onChange={(e) =>
+                          setPasswordForm((f) => ({
+                            ...f,
+                            repeatNewPassword: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+        
+                    {/* Phone (MANDATORY) */}
+                    <div className="auth-field-group">
+                      <span className="field-label">{t("phoneNumber")}</span>
+                      <div className="phone-input-group">
+                        <select
+                          className="select phone-country"
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                        >
+                          {countryCodes.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.name} ({c.code})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="input phone-number"
+                          type="tel"
+                          placeholder={t("phoneNumber")}
+                          value={phoneNumber}
+                          onChange={(e) =>
+                            setPhoneNumber(e.target.value.replace(/\D/g, ""))
+                          }
+                          maxLength="12"
+                          inputMode="numeric"
+                        />
+                      </div>
+                    </div>
+        
+                    {/* SIGNUP ACTIONS */}
+                    <div className="auth-actions">
+                      <button
+                        className="btn full-width"
+                        onClick={async () => {
+                          // 1) Basic validation
+                          if (!validateEmail(email))
+                            return showMessage(t("enterValidEmail"), "error");
+                        
+                          if (password.length < 6)
+                            return showMessage(
+                              t("passwordTooShort") || "Password must be at least 6 characters",
+                              "error"
+                            );
+                        
+                          if (!passwordForm.repeatNewPassword ||
+                              passwordForm.repeatNewPassword !== password)
+                            return showMessage(
+                              t("passwordsDontMatch") || "Passwords don't match",
+                              "error"
+                            );
+                        
+                          // 2) PHONE IS MANDATORY HERE
+                          const raw = (phoneNumber || "").replace(/\D/g, "");
+                          if (!raw || raw.length < 5 || raw.length > 12)
+                            return showMessage(t("enterValidPhone"), "error");
+                        
+                          const fullPhone = countryCode + raw;
+                          if (!validatePhone(fullPhone))
+                            return showMessage(t("enterValidPhone"), "error");
+                        
+                          try {
+                            // 3) Create user with email/password
+                            const cred = await createUserWithEmailAndPassword(auth, email, password);
+                            const user = cred.user;
+                        
+                            try {
+                              await sendEmailVerification(user);
+                            } catch {
+                              // not critical
+                            }
+                        
+                            // 4) Prepare reCAPTCHA for signup phone link
+                            setPhoneLoading(true);
+                        
+                            if (!window.recaptchaVerifierSignup) {
+                              // reuse your helper, but separate ID from login recaptcha
+                              createRecaptcha("recaptcha-signup");
+                              window.recaptchaVerifierSignup = window.recaptchaVerifier;
+                            }
+                        
+                            const confirmation = await linkWithPhoneNumber(
+                              user,
+                              fullPhone,
+                              window.recaptchaVerifierSignup
+                            );
+                        
+                            // 5) Save confirmation so user can enter the code
+                            setConfirmationResult(confirmation);
+                            showMessage(t("codeSent") || "Verification code sent via SMS", "success");
+                          } catch (err) {
+                            console.error(err);
+                            showMessage(err.message, "error");
+                          } finally {
+                            setPhoneLoading(false);
+                          }
+                        }}
+                        disabled={phoneLoading}
+                      >
+                        {phoneLoading ? "..." : t("createAccount") || "Create account"}
+                      </button>
+                    </div>
+        
+                    {/* SIGNUP SMS CODE STEP (PHONE LINKING) */}
+                    {confirmationResult && (
+                      <div className="auth-field-group" style={{ marginTop: "14px" }}>
+                        <span className="field-label">{t("enterCode")}</span>
+                    
+                        <input
+                          className="input"
+                          type="text"
+                          placeholder={t("enterCode")}
+                          value={verificationCode}
+                          onChange={(e) =>
+                            setVerificationCode(e.target.value.replace(/\D/g, ""))
+                          }
+                          maxLength="6"
+                          inputMode="numeric"
+                        />
+                    
+                        <button
+                          className="btn full-width"
+                          style={{ marginTop: "10px" }}
+                          onClick={async () => {
+                            // Basic validation
+                            if (!verificationCode.trim())
+                              return showMessage(t("enterCode"), "error");
+                    
+                            if (!/^\d{6}$/.test(verificationCode.trim()))
+                              return showMessage(t("invalidCode"), "error");
+                    
+                            try {
+                              setPhoneLoading(true);
+                    
+                              // Confirm SMS code + finalize linking
+                              const result = await confirmationResult.confirm(
+                                verificationCode
+                              );
+                    
+                              const user = result.user || auth.currentUser;
+                    
+                              // (Optional) Save profile to DB
+                              if (user) {
+                                await set(dbRef(db, `users/${user.uid}`), {
+                                  email: user.email || email,
+                                  phone: normalizePhoneForStorage(countryCode + phoneNumber),
+                                  createdAt: Date.now(),
+                                });
+                              }
+                    
+                              showMessage(
+                                t("signupSuccess") ||
+                                  "Account created, phone linked, and verification email sent.",
+                                "success"
+                              );
+                    
+                              // Cleanup UI
+                              setShowAuthModal(false);
+                              setEmail("");
+                              setPassword("");
+                              setPasswordForm({ repeatNewPassword: "" });
+                              setPhoneNumber("");
+                              setVerificationCode("");
+                              setConfirmationResult(null);
+                    
+                            } catch (err) {
+                              console.error(err);
+                              showMessage(err.message, "error");
+                            } finally {
+                              setPhoneLoading(false);
+                            }
+                          }}
+                          disabled={phoneLoading}
+                        >
+                          {phoneLoading
+                            ? t("verifying") || "Verifying..."
+                            : t("verifyPhone") || "Verify & Finish Signup"}
+                        </button>
+                    
+                        {/* Add reCAPTCHA for signup */}
+                        <div id="recaptcha-signup" className="recaptcha" />
+                      </div>
+                    )}
+        
+                    <div id="recaptcha-container" className="recaptcha"></div>
                   </div>
-                </motion.div>
+                )}
               </motion.div>
-            )}
-          </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* LISTING DETAILS MODAL */}
-          <AnimatePresence>
-            {selectedListing && (
-              <motion.div
-                className="modal-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => {
-                  setSelectedListing(null);
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete("listing");
-                  window.history.replaceState({}, "", url.toString());
-                }}
-              >
-                <motion.div
-                  className="modal listing-details-modal"
-                  onClick={(e) => e.stopPropagation()}
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div
-                    className="modal-header category-banner"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #2563eb, #3b82f6)",
-                      color: "#fff",
+        {/* LISTING DETAILS MODAL */}
+        <AnimatePresence>
+          {selectedListing && (
+            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              onClick={() => {
+                setSelectedListing(null);
+                const url = new URL(window.location.href);
+                url.searchParams.delete("listing");
+                window.history.replaceState({}, "", url.toString());
+              }}
+            >
+              <motion.div className="modal listing-details-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.3 }}>
+                <div className="modal-header category-banner" style={{ background: "linear-gradient(135deg, #2563eb, #3b82f6)", color: "#fff" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="category-icon" style={{ fontSize: "1.5rem" }}>
+                      {categoryIcons[selectedListing.category] || "🏷️"}
+                    </span>
+                    <h3 className="modal-title">{selectedListing.name}</h3>
+                  </div>
+                  <button className="icon-btn text-white" 
+                    onClick={() => {
+                      setSelectedListing(null);
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("listing");
+                      window.history.replaceState({}, "", url.toString());
                     }}
                   >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="category-icon"
-                        style={{ fontSize: "1.5rem" }}
-                      >
-                        {categoryIcons[selectedListing.category] ||
-                          "🏷️"}
+                    ✕
+                  </button>
+                </div>
+
+                <div className="modal-body listing-details-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                  <div className="listing-info-grid">
+                    <div><strong>{t("category")}:</strong> {t(selectedListing.category) || selectedListing.category}</div>
+                    <div><strong>{t("location")}:</strong> {selectedListing.location || (t("unspecified") || "Unspecified")}</div>
+                    <div>
+                      <strong>{t("status")}:</strong>{" "}
+                      <span className={`status-badge ${selectedListing.status === "verified" ? "verified" : "pending"}`}>
+                        {selectedListing.status === "verified" ? "✅ " + t("verified") : "⏳ " + t("pending")}
                       </span>
-                      <h3 className="modal-title">
-                        {selectedListing.name}
-                      </h3>
                     </div>
-                    <button
-                      className="icon-btn light"
-                      onClick={() => {
-                        setSelectedListing(null);
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete("listing");
-                        window.history.replaceState(
-                          {},
-                          "",
-                          url.toString()
-                        );
-                      }}
-                    >
-                      ✕
-                    </button>
+                    {selectedListing.expiresAt && <div><strong>{t("expires")}:</strong> {new Date(selectedListing.expiresAt).toLocaleDateString()}</div>}
+                    {selectedListing.locationData && (
+                      <>
+                        <div>
+                          <strong>{t("cityLabel")}:</strong> {selectedListing.locationData.city}
+                        </div>
+                        <div>
+                          <strong>{t("areaLabel")}:</strong> {selectedListing.locationData.area}
+                        </div>
+                        <div>
+                          <strong>{t("map")}:</strong>{" "}
+                          {selectedListing.locationData.mapsUrl ? (
+                            <a href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">
+                              {t("openInMaps") || "Open in Maps"}
+                            </a>
+                          ) : (
+                            t("unspecified") || "Unspecified"
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className="modal-body listing-details-body">
-                    <div className="listing-details-main">
-                      <div className="listing-details-section">
-                        <h4>{t("businessOverview")}</h4>
-                        <p>{selectedListing.description}</p>
-                      </div>
+                  {selectedListing.imagePreview && <img src={selectedListing.imagePreview} alt="preview" style={{ width: "100%", borderRadius: 12, border: "1px solid #e5e7eb", marginBottom: 10 }} />}
 
-                      <div className="listing-details-section">
-                        <h4>{t("contactInfo")}</h4>
-                        <div className="details-grid">
-                          {selectedListing.phone && (
-                            <div className="detail-row">
-                              <span className="detail-label">
-                                {t("phoneNumber")}
-                              </span>
-                              <a
-                                href={`tel:${selectedListing.phone}`}
-                                className="detail-value link"
-                              >
-                                {selectedListing.phone}
-                              </a>
-                            </div>
-                          )}
-                          {selectedListing.address && (
-                            <div className="detail-row">
-                              <span className="detail-label">
-                                {t("address")}
-                              </span>
-                              <span className="detail-value">
-                                {selectedListing.address}
-                              </span>
-                            </div>
-                          )}
-                          <div className="detail-row">
-                            <span className="detail-label">
-                              {t("city")}
-                            </span>
-                            <span className="detail-value">
-                              {MK_CITIES[selectedListing.city] ||
-                                selectedListing.city}
-                            </span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">
-                              {t("price")}
-                            </span>
-                            <span className="detail-value">
-                              {(selectedListing.price || 0) + " €"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                  <p className="listing-description-full">{selectedListing.description}</p>
+
+                  {selectedListing.contact && (
+                    <div className="listing-contact-info">
+                      <p><strong>{t("contact")}:</strong> {selectedListing.contact}</p>
                     </div>
+                  )}
 
-                    <div className="listing-details-sidebar">
-                      <div className="listing-details-card">
-                        <h4>{t("listingStatus")}</h4>
-                        <div className="status-row">
-                          {renderStatusBadge(selectedListing)}
-                        </div>
-                        <div className="status-row">
-                          <span className="detail-label">
-                            {t("postedOn")}
-                          </span>
-                          <span className="detail-value">
-                            {formatDateTime(selectedListing.createdAt)}
-                          </span>
-                        </div>
-                        <div className="status-row">
-                          <span className="detail-label">
-                            {t("expires")}
-                          </span>
-                          <span className="detail-value">
-                            {formatDateTime(selectedListing.expiry)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="listing-details-card actions-card">
-                        <h4>{t("actions")}</h4>
-                        <button
-                          className="btn full-width primary"
-                          onClick={() => handleShareListing(selectedListing)}
-                        >
-                          {t("shareListing")}
-                        </button>
-                        {user && user.uid === selectedListing.ownerUid && (
-                          <>
-                            <button
-                              className="btn full-width secondary"
-                              onClick={() => {
-                                handleEditListing(selectedListing);
-                                setSelectedListing(null);
-                              }}
-                            >
-                              {t("editListing")}
-                            </button>
-                            <button
-                              className="btn full-width secondary"
-                              onClick={() => {
-                                handleExtendListing(selectedListing);
-                                setSelectedListing(null);
-                              }}
-                            >
-                              {t("extendListing")}
-                            </button>
-                            <button
-                              className="btn full-width danger"
-                              onClick={() => {
-                                handleDeleteListing(selectedListing.id);
-                                setSelectedListing(null);
-                              }}
-                            >
-                              {t("deleteListing")}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                  <div className="listing-contact-info" style={{ marginTop: 10 }}>
+                    <p>
+                      <strong>{t("priceLabel")}:</strong>{" "}
+                      {selectedListing.offerprice || t("unspecified") || "Unspecified"}
+                    </p>
+                    <p>
+                      <strong>{t("tagsLabel")}:</strong>{" "}
+                      {selectedListing.tags || t("unspecified") || "Unspecified"}
+                    </p>
+                    <p>
+                      <strong>{t("websiteLabel")}:</strong>{" "}
+                      {selectedListing.socialLink ? (
+                        <a href={selectedListing.socialLink} target="_blank" rel="noreferrer">
+                          {selectedListing.socialLink}
+                        </a>
+                      ) : (
+                        t("unspecified") || "Unspecified"
+                      )}
+                    </p>
                   </div>
-                </motion.div>
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn small" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
+                  <button className="btn small" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
+                  <button className="btn btn-ghost small" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
+                  <button className="btn btn-ghost small" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
+                </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* FOOTER */}
+        <footer className="footer">
+          <p>© 2024 {t("appName")} • BizCall</p>
+        </footer>
       </div>
     </PayPalScriptProvider>
   );
 }
-
-export default App;
