@@ -157,7 +157,6 @@ export default function App() {
   // Signup flow: email + password + phone
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
-  const [signupVerificationCode, setSignupVerificationCode] = useState("");
   
   // For signup phone verification
   const [signupConfirmation, setSignupConfirmation] = useState(null);
@@ -2835,9 +2834,9 @@ export default function App() {
                           className="input"
                           type="text"
                           placeholder={t("enterCode")}
-                          value={signupVerificationCode}
+                          value={verificationCode}
                           onChange={(e) =>
-                            setSignupVerificationCode(e.target.value.replace(/\D/g, ""))
+                            setVerificationCode(e.target.value.replace(/\D/g, ""))
                           }
                           maxLength="6"
                           inputMode="numeric"
@@ -2848,10 +2847,10 @@ export default function App() {
                           style={{ marginTop: "10px" }}
                           onClick={async () => {
                             // Basic validation
-                            if (!signupVerificationCode.trim())
+                            if (!verificationCode.trim())
                               return showMessage(t("enterCode"), "error");
                     
-                            if (!/^\d{6}$/.test(signupVerificationCode.trim()))
+                            if (!/^\d{6}$/.test(verificationCode.trim()))
                               return showMessage(t("invalidCode"), "error");
                     
                             try {
@@ -2859,7 +2858,7 @@ export default function App() {
                     
                               // Confirm SMS code + finalize linking
                               const result = await signupPhoneConfirmation.confirm(
-                                signupVerificationCode
+                                verificationCode
                               );
                     
                               const user = result.user || auth.currentUser;
@@ -2885,7 +2884,7 @@ export default function App() {
                               setPassword("");
                               setPasswordForm({ repeatNewPassword: "" });
                               setPhoneNumber("");
-                              setSignupVerificationCode("");
+                              setVerificationCode("");
                               setSignupPhoneConfirmation(null);
                     
                             } catch (err) {
