@@ -156,7 +156,6 @@ export default function App() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   // Signup flow: email + password + phone
   const [signupPhone, setSignupPhone] = useState("");
-  const [signupPhoneNumber, setSignupPhoneNumber] = useState("");
   const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
   const [signupVerificationCode, setSignupVerificationCode] = useState("");
   
@@ -2777,7 +2776,7 @@ export default function App() {
                             );
                         
                           // 2) PHONE IS MANDATORY HERE
-                          const raw = (signupPhoneNumber || "").replace(/\D/g, "");
+                          const raw = (phoneNumber || "").replace(/\D/g, "");
                           if (!raw || raw.length < 5 || raw.length > 12)
                             return showMessage(t("enterValidPhone"), "error");
                         
@@ -2869,7 +2868,7 @@ export default function App() {
                               if (user) {
                                 await set(dbRef(db, `users/${user.uid}`), {
                                   email: user.email || email,
-                                  phone: normalizePhoneForStorage(countryCode + signupPhoneNumber),
+                                  phone: normalizePhoneForStorage(countryCode + phoneNumber),
                                   createdAt: Date.now(),
                                 });
                               }
@@ -2885,7 +2884,7 @@ export default function App() {
                               setEmail("");
                               setPassword("");
                               setPasswordForm({ repeatNewPassword: "" });
-                              setSignupPhoneNumber("");
+                              setPhoneNumber("");
                               setSignupVerificationCode("");
                               setSignupPhoneConfirmation(null);
                     
