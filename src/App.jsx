@@ -20,6 +20,7 @@ import {
   EmailAuthProvider,
   PhoneAuthProvider,
   linkWithPhoneNumber,
+  RecaptchaVerifier,
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
