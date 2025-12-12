@@ -146,6 +146,8 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   // OLD: const [authTab, setAuthTab] = useState("email");
   const [authMode, setAuthMode] = useState("login"); // "login" | "signup"
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
   const [authTab, setAuthTab] = useState("email");   // "email" | "phone" (login method)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1393,7 +1395,26 @@ export default function App() {
                 >
                   ➕ {t("submitListing")}
                 </button>
-               )} 
+               )}
+
+              {user && !user.emailVerified && (
+                <div className="verify-banner">
+                  <div>
+                    <strong>{t("verifyYourEmail")}</strong>
+                    <div className="verify-banner-sub">{t("verifyEmailHint")}</div>
+                  </div>
+                  <button
+                    className="btn btn-ghost small"
+                    onClick={() => {
+                      setShowAuthModal(true);
+                      setAuthMode("verify");
+                    }}
+                  >
+                    {t("verifyYourEmail")}
+                  </button>
+                </div>
+              )}
+
                 {/* ====== BROWSE SECTION ====== */}
                <section className="card listings-section">
                 <div className="listings-header">
@@ -2881,7 +2902,7 @@ export default function App() {
                               );
                     
                               // Cleanup UI
-                              setShowAuthModal(false);
+                              // setShowAuthModal(false);
                               setEmail("");
                               setPassword("");
                               setPasswordForm({ repeatNewPassword: "" });
@@ -2889,9 +2910,10 @@ export default function App() {
                               setVerificationCode("");
                               setConfirmationResult(null);
 
+                              setAuthMode("verify");
                               // after createUserWithEmailAndPassword + sendEmailVerification
-                              setPostSignupVerifyOpen(true);
-                              setSignupEmailSentAt(Date.now());
+                              // setPostSignupVerifyOpen(true);
+                              // setSignupEmailSentAt(Date.now());
                             } catch (err) {
                               console.error(err);
                               showMessage(err.message, "error");
@@ -2912,6 +2934,81 @@ export default function App() {
                     )}
         
                     <div id="recaptcha-container" className="recaptcha"></div>
+                  </div>
+                )}
+
+                {/* =================== VERIFY MODE =================== */}
+                {authMode === "verify" && (
+                  <div className="modal-body auth-body auth-body-card">
+                    <p className="auth-subtitle">
+                      {t("verifyEmailHint")}
+                    </p>
+                
+                    <div className="auth-verify-box">
+                      <div className="auth-verify-row">
+                        <span className="auth-verify-label">{t("email")}</span>
+                        <span className="auth-verify-value">{auth.currentUser?.email || email}</span>
+                      </div>
+                      <p className="auth-verify-footnote">{t("verifyFootnote")}</p>
+                    </div>
+                
+                    <div className="auth-actions">
+                      <button
+                        className="btn btn-ghost full-width"
+                        disabled={resendBusy}
+                        onClick={async () => {
+                          if (!auth.currentUser) return showMessage(t("paypalError") || "Error", "error");
+                          setResendBusy(true);
+                          try {
+                            await sendEmailVerification(auth.currentUser);
+                            showMessage(t("emailLinkSent") || "Verification email sent.", "success");
+                          } catch (err) {
+                            showMessage(String(err?.message || err), "error");
+                          } finally {
+                            setResendBusy(false);
+                          }
+                        }}
+                      >
+                        {t("resendEmail")}
+                      </button>
+                
+                      <button
+                        className="btn full-width"
+                        disabled={verifyBusy}
+                        onClick={async () => {
+                          if (!auth.currentUser) return showMessage(t("paypalError") || "Error", "error");
+                          setVerifyBusy(true);
+                          try {
+                            await auth.currentUser.reload();
+                            if (auth.currentUser.emailVerified) {
+                              showMessage(t("emailVerified"), "success");
+                              setShowAuthModal(false);
+                              setAuthMode("login");
+                            } else {
+                              showMessage(t("notVerifiedYet"), "error");
+                            }
+                          } catch (err) {
+                            showMessage(String(err?.message || err), "error");
+                          } finally {
+                            setVerifyBusy(false);
+                          }
+                        }}
+                      >
+                        {verifyBusy ? t("verifying") : t("iVerified")}
+                      </button>
+                
+                      <button
+                        className="btn btn-ghost full-width"
+                        onClick={() => {
+                          // skippable, but posting remains blocked by your existing checks
+                          showMessage(t("verifyLater"), "success");
+                          setShowAuthModal(false);
+                          setAuthMode("login");
+                        }}
+                      >
+                        {t("verifyLater")}
+                      </button>
+                    </div>
                   </div>
                 )}
               </motion.div>
