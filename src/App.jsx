@@ -345,6 +345,19 @@ export default function App() {
     }
   };
 
+  const getSignupRecaptcha = () => {
+    if (window.signupRecaptchaVerifier) return window.signupRecaptchaVerifier;
+  
+    window.signupRecaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-signup",
+      { size: "invisible" }
+    );
+  
+    return window.signupRecaptchaVerifier;
+  };
+
+  
   /* Helpers */
   const showMessage = (text, type = "info") => {
     setMessage({ text, type });
@@ -2692,39 +2705,36 @@ export default function App() {
                   </>
                 )}
         
-                {/* =================== SIGNUP MODE =================== */}
                 {authMode === "signup" && (
                   <div className="modal-body auth-body auth-body-card">
                     <p className="auth-subtitle">
                       {t("signupSubtitle") ||
                         "Create a BizCall account to post and manage your listings."}
                     </p>
-        
-                    {/* Email */}
+                
+                    {/* EMAIL */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("email")}</span>
                       <input
                         className="input"
                         type="email"
-                        placeholder={t("email")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
-        
-                    {/* Password */}
+                
+                    {/* PASSWORD */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("password")}</span>
                       <input
                         className="input"
                         type="password"
-                        placeholder={t("password")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
-        
-                    {/* Repeat password */}
+                
+                    {/* REPEAT PASSWORD */}
                     <div className="auth-field-group">
                       <span className="field-label">
                         {t("repeatNewPassword") || "Repeat password"}
@@ -2732,18 +2742,14 @@ export default function App() {
                       <input
                         className="input"
                         type="password"
-                        placeholder={t("repeatNewPassword") || "Repeat password"}
                         value={passwordForm.repeatNewPassword}
                         onChange={(e) =>
-                          setPasswordForm((f) => ({
-                            ...f,
-                            repeatNewPassword: e.target.value,
-                          }))
+                          setPasswordForm({ repeatNewPassword: e.target.value })
                         }
                       />
                     </div>
-        
-                    {/* Phone (MANDATORY) */}
+                
+                    {/* PHONE (MANDATORY) */}
                     <div className="auth-field-group">
                       <span className="field-label">{t("phoneNumber")}</span>
                       <div className="phone-input-group">
@@ -2761,7 +2767,6 @@ export default function App() {
                         <input
                           className="input phone-number"
                           type="tel"
-                          placeholder={t("phoneNumber")}
                           value={phoneNumber}
                           onChange={(e) =>
                             setPhoneNumber(e.target.value.replace(/\D/g, ""))
@@ -2771,149 +2776,102 @@ export default function App() {
                         />
                       </div>
                     </div>
-        
-                    {/* SIGNUP ACTIONS */}
-                    <div className="auth-actions">
+                
+                    {/* STEP 1: SEND SMS */}
+                    {!confirmationResult && (
                       <button
                         className="btn full-width"
+                        disabled={phoneLoading}
                         onClick={async () => {
-                          // 1) Basic validation
                           if (!validateEmail(email))
                             return showMessage(t("enterValidEmail"), "error");
-                        
+                
                           if (password.length < 6)
-                            return showMessage(
-                              t("passwordTooShort") || "Password must be at least 6 characters",
-                              "error"
-                            );
-                        
-                          if (!passwordForm.repeatNewPassword ||
-                              passwordForm.repeatNewPassword !== password)
-                            return showMessage(
-                              t("passwordsDontMatch") || "Passwords don't match",
-                              "error"
-                            );
-                        
-                          // 2) PHONE IS MANDATORY HERE
-                          const raw = (phoneNumber || "").replace(/\D/g, "");
-                          if (!raw || raw.length < 5 || raw.length > 12)
+                            return showMessage(t("passwordTooShort"), "error");
+                
+                          if (passwordForm.repeatNewPassword !== password)
+                            return showMessage(t("passwordsDontMatch"), "error");
+                
+                          const raw = phoneNumber.replace(/\D/g, "");
+                          if (!raw || raw.length < 5)
                             return showMessage(t("enterValidPhone"), "error");
-                        
+                
                           const fullPhone = countryCode + raw;
                           if (!validatePhone(fullPhone))
                             return showMessage(t("enterValidPhone"), "error");
-                        
+                
+                          setPhoneLoading(true);
                           try {
-                            // 3) Create user with email/password
-                            const cred = await createUserWithEmailAndPassword(auth, email, password);
-                            const user = cred.user;
-                        
-                            try {
-                              await sendEmailVerification(user);
-                            } catch {
-                              // not critical
-                            }
-                        
-                            // 4) Prepare reCAPTCHA for signup phone link (reuse main container)
-                            setPhoneLoading(true);
-                            
-                            if (!window.recaptchaVerifier) {
-                              // use the same container as login
-                              createRecaptcha("recaptcha-container");
-                            }
-                            
-                            // use the same verifier instance
-                            const confirmation = await linkWithPhoneNumber(
-                              user,
+                            const verifier = getSignupRecaptcha();
+                            const confirmation = await signInWithPhoneNumber(
+                              auth,
                               fullPhone,
-                              window.recaptchaVerifier
+                              verifier
                             );
-                            
-                            // 5) Save confirmation so user can enter the code
                             setConfirmationResult(confirmation);
-                            showMessage(
-                              t("codeSent") || "Verification code sent via SMS",
-                              "success"
-                            );
+                            showMessage(t("codeSent"), "success");
                           } catch (err) {
                             console.error(err);
+                            window.signupRecaptchaVerifier?.clear?.();
+                            window.signupRecaptchaVerifier = null;
                             showMessage(err.message, "error");
                           } finally {
                             setPhoneLoading(false);
                           }
                         }}
-                        disabled={phoneLoading}
                       >
-                        {phoneLoading ? "..." : t("createAccount") || "Create account"}
+                        {t("createAccount") || "Create account"}
                       </button>
-                    </div>
-        
-                    {/* SIGNUP SMS CODE STEP (PHONE LINKING) */}
+                    )}
+                
+                    {/* STEP 2: VERIFY CODE + LINK EMAIL */}
                     {confirmationResult && (
-                      <div className="auth-field-group" style={{ marginTop: "14px" }}>
-                        <span className="field-label">{t("enterCode")}</span>
-                    
-                        <input
-                          className="input"
-                          type="text"
-                          placeholder={t("enterCode")}
-                          value={verificationCode}
-                          onChange={(e) =>
-                            setVerificationCode(e.target.value.replace(/\D/g, ""))
-                          }
-                          maxLength="6"
-                          inputMode="numeric"
-                        />
-                    
+                      <>
+                        <div className="auth-field-group" style={{ marginTop: 12 }}>
+                          <span className="field-label">{t("enterCode")}</span>
+                          <input
+                            className="input"
+                            value={verificationCode}
+                            onChange={(e) =>
+                              setVerificationCode(e.target.value.replace(/\D/g, ""))
+                            }
+                            maxLength="6"
+                          />
+                        </div>
+                
                         <button
                           className="btn full-width"
-                          style={{ marginTop: "10px" }}
+                          disabled={phoneLoading}
                           onClick={async () => {
-                            // Basic validation
-                            if (!verificationCode.trim())
-                              return showMessage(t("enterCode"), "error");
-                    
-                            if (!/^\d{6}$/.test(verificationCode.trim()))
+                            if (!/^\d{6}$/.test(verificationCode))
                               return showMessage(t("invalidCode"), "error");
-                    
+                
+                            setPhoneLoading(true);
                             try {
-                              setPhoneLoading(true);
-                    
-                              // Confirm SMS code + finalize linking
                               const result = await confirmationResult.confirm(
                                 verificationCode
                               );
-                    
-                              const user = result.user || auth.currentUser;
-                    
-                              // (Optional) Save profile to DB
-                              if (user) {
-                                await set(dbRef(db, `users/${user.uid}`), {
-                                  email: user.email || email,
-                                  phone: normalizePhoneForStorage(countryCode + phoneNumber),
-                                  createdAt: Date.now(),
-                                });
-                              }
-                    
-                              showMessage(
-                                t("signupSuccess") ||
-                                  "Account created, phone linked, and verification email sent.",
-                                "success"
+                              const user = result.user;
+                
+                              const emailCred = EmailAuthProvider.credential(
+                                email,
+                                password
                               );
-                    
-                              // Cleanup UI
-                              // setShowAuthModal(false);
-                              setEmail("");
-                              setPassword("");
-                              setPasswordForm({ repeatNewPassword: "" });
-                              setPhoneNumber("");
-                              setVerificationCode("");
-                              setConfirmationResult(null);
-
+                              await linkWithCredential(user, emailCred);
+                
+                              await sendEmailVerification(user);
+                
+                              await set(dbRef(db, `users/${user.uid}`), {
+                                email: user.email,
+                                phone: normalizePhoneForStorage(countryCode + phoneNumber),
+                                createdAt: Date.now(),
+                              });
+                
+                              showMessage(t("signupSuccess"), "success");
+                
                               setAuthMode("verify");
-                              // after createUserWithEmailAndPassword + sendEmailVerification
-                              // setPostSignupVerifyOpen(true);
-                              // setSignupEmailSentAt(Date.now());
+                              setConfirmationResult(null);
+                              setVerificationCode("");
                             } catch (err) {
                               console.error(err);
                               showMessage(err.message, "error");
@@ -2921,19 +2879,13 @@ export default function App() {
                               setPhoneLoading(false);
                             }
                           }}
-                          disabled={phoneLoading}
                         >
-                          {phoneLoading
-                            ? t("verifying") || "Verifying..."
-                            : t("verifyPhone") || "Verify & Finish Signup"}
+                          {t("verifyPhone") || "Verify & finish signup"}
                         </button>
-                    
-                        {/* Add reCAPTCHA for signup */}
-                        <div id="recaptcha-signup" className="recaptcha" />
-                      </div>
+                      </>
                     )}
-        
-                    <div id="recaptcha-container" className="recaptcha"></div>
+                
+                    <div id="recaptcha-signup" className="recaptcha" />
                   </div>
                 )}
 
