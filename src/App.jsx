@@ -156,6 +156,9 @@ export default function App() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   // Signup flow: email + password + phone
   // const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
+
+  const [postSignupVerifyOpen, setPostSignupVerifyOpen] = useState(false);
+  const [signupEmailSentAt, setSignupEmailSentAt] = useState(0);
   
   // For signup phone verification
   // const [signupPhoneLoading, setSignupPhoneLoading] = useState(false);
@@ -2885,7 +2888,10 @@ export default function App() {
                               setPhoneNumber("");
                               setVerificationCode("");
                               setConfirmationResult(null);
-                    
+
+                              // after createUserWithEmailAndPassword + sendEmailVerification
+                              setPostSignupVerifyOpen(true);
+                              setSignupEmailSentAt(Date.now());
                             } catch (err) {
                               console.error(err);
                               showMessage(err.message, "error");
@@ -2913,6 +2919,94 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {postSignupVerifyOpen && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPostSignupVerifyOpen(false)}
+            >
+              <motion.div
+                className="modal verify-email-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+              >
+                <div className="modal-header">
+                  <h3 className="modal-title">{t("verifyYourEmail") || "Verify your email"}</h3>
+                  <button className="icon-btn" onClick={() => setPostSignupVerifyOpen(false)}>
+                    ✕
+                  </button>
+                </div>
+        
+                <div className="modal-body">
+                  <p className="auth-subtitle">
+                    {t("verifyEmailHint") ||
+                      "We sent a verification link to your email. You can keep browsing, but you must verify before you can submit listings."}
+                  </p>
+        
+                  <div className="verify-actions">
+                    <button
+                      className="btn full-width"
+                      onClick={async () => {
+                        try {
+                          const u = auth.currentUser;
+                          if (!u) return showMessage("Not signed in.", "error");
+                          await sendEmailVerification(u);
+                          setSignupEmailSentAt(Date.now());
+                          showMessage(t("emailLinkSent") || "Verification email sent.", "success");
+                        } catch (err) {
+                          showMessage(err.message, "error");
+                        }
+                      }}
+                    >
+                      {t("resendEmail") || "Resend verification email"}
+                    </button>
+        
+                    <button
+                      className="btn btn-ghost full-width"
+                      onClick={async () => {
+                        try {
+                          // Force-refresh the user object to reflect verification
+                          await auth.currentUser?.reload();
+                          if (auth.currentUser?.emailVerified) {
+                            showMessage(t("emailVerified") || "Email verified!", "success");
+                            setPostSignupVerifyOpen(false);
+                          } else {
+                            showMessage(
+                              t("notVerifiedYet") || "Still not verified. Check your inbox/spam and click the link.",
+                              "error"
+                            );
+                          }
+                        } catch (err) {
+                          showMessage(err.message, "error");
+                        }
+                      }}
+                    >
+                      {t("iVerified") || "I verified, refresh"}
+                    </button>
+        
+                    <button
+                      className="btn btn-ghost full-width"
+                      onClick={() => setPostSignupVerifyOpen(false)}
+                    >
+                      {t("verifyLater") || "Verify later"}
+                    </button>
+                  </div>
+        
+                  <div className="verify-footnote">
+                    {t("verifyFootnote") ||
+                      "Tip: If you don’t see the email, check Spam/Promotions. The sender is Firebase."}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* LISTING DETAILS MODAL */}
         <AnimatePresence>
           {selectedListing && (
