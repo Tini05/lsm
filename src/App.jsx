@@ -2700,7 +2700,7 @@ export default function App() {
                           </div>
                         )}
         
-                        <div id="recaptcha-container" className="recaptcha"></div>
+                        {/* <div id="recaptcha-container" className="recaptcha"></div> */}
                       </div>
                     )}
                   </>
@@ -2886,7 +2886,7 @@ export default function App() {
                       </>
                     )}
                 
-                    <div id="recaptcha-signup" className="recaptcha" />
+                    {/* <div id="recaptcha-signup" className="recaptcha" /> */}
                   </div>
                 )}
 
@@ -3168,6 +3168,8 @@ export default function App() {
         <footer className="footer">
           <p>© 2024 {t("appName")} • BizCall</p>
         </footer>
+        <div id="recaptcha-signup" style={{ display: "none" }} />
+        <div id="recaptcha-container" style={{ display: "none" }} />
       </div>
     </PayPalScriptProvider>
   );
