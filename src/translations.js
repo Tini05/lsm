@@ -259,7 +259,26 @@ const translations = {
       "Built for cities across North Macedonia, with a focus on local businesses.",
     trustPoint4:
       "Option to report suspicious or abusive listings.",
-  },
+  
+    verifyYourEmail: "Verify your email",
+    verifyEmailHint: "We sent a verification link to your inbox. You can keep browsing, but you can’t submit listings until you verify.",
+    resendEmail: "Resend email",
+    verifyLater: "Verify later",
+    verifying: "Checking…",
+    emailVerified: "Email verified!",
+    notVerifiedYet: "Still not verified. Check your inbox (and spam) and try again.",
+    verifyFootnote: "Tip: it can take a minute. If you used a wrong email, log out and sign up again.",
+    iVerified: "I verified",
+    phoneLoginSubtitle: "Log in quickly with an SMS code on your phone.",
+    selectExtendDuration: "Select extension duration",
+    extendSuccess: "Listing extended successfully.",
+    extendFailed: "Couldn’t extend listing. Please try again.",
+    notOwner: "You can only extend your own listing.",
+    unspecified: "Unspecified",
+    map: "Map",
+    openInMaps: "Open in Maps",
+    listing: "Listing",
+},
 
   sq: {
     // General
@@ -523,7 +542,26 @@ const translations = {
       "Ndërtuar për qytetet e Maqedonisë, me fokus te bizneset lokale.",
     trustPoint4:
       "Mundësi raportimi për listime të dyshimta dhe abuzime.",
-  },
+  
+    verifyYourEmail: "Verifiko email-in",
+    verifyEmailHint: "Të dërguam një link verifikimi në email. Mund të vazhdosh të shfletosh, por nuk mund të postosh listime pa e verifikuar.",
+    resendEmail: "Ridërgo email-in",
+    verifyLater: "Verifiko më vonë",
+    verifying: "Duke kontrolluar…",
+    emailVerified: "Email-i u verifikua!",
+    notVerifiedYet: "Ende nuk është verifikuar. Kontrollo inbox-in (dhe spam-in) dhe provo përsëri.",
+    verifyFootnote: "Këshillë: ndonjëherë merr 1 minutë. Nëse e ke shkruar gabim email-in, dil (logout) dhe regjistrohu sërish.",
+    iVerified: "E verifikova",
+    phoneLoginSubtitle: "Hyr shpejt me një kod SMS në telefon.",
+    selectExtendDuration: "Zgjidh kohëzgjatjen e zgjatjes",
+    extendSuccess: "Listimi u zgjat me sukses.",
+    extendFailed: "Nuk u zgjat dot listimi. Provo përsëri.",
+    notOwner: "Mund të zgjatësh vetëm listimin tënd.",
+    unspecified: "E papërcaktuar",
+    map: "Harta",
+    openInMaps: "Hape në Maps",
+    listing: "Listim",
+},
 
   mk: {
     // General
@@ -792,7 +830,26 @@ const translations = {
       "Изграден за градовите низ Македонија, со фокус на локални бизниси.",
     trustPoint4:
       "Можност за пријавување сомнителни или злоупотребени огласи.",
-  },
+  
+    verifyYourEmail: "Потврди е-пошта",
+    verifyEmailHint: "Испративме линк за потврда на твојата е-пошта. Можеш да разгледуваш, но не можеш да објавуваш огласи без потврда.",
+    resendEmail: "Испрати повторно",
+    verifyLater: "Подоцна",
+    verifying: "Проверувам…",
+    emailVerified: "Е-поштата е потврдена!",
+    notVerifiedYet: "Сѐ уште не е потврдено. Провери инбокс (и спам) и пробај пак.",
+    verifyFootnote: "Совет: понекогаш треба 1 минута. Ако внесовте погрешна е-пошта, одјавете се и регистрирајте се повторно.",
+    iVerified: "Потврдив",
+    phoneLoginSubtitle: "Најави се брзо со SMS код на телефонот.",
+    selectExtendDuration: "Избери траење за продолжување",
+    extendSuccess: "Огласот е продолжен успешно.",
+    extendFailed: "Не успеа продолжувањето. Пробај повторно.",
+    notOwner: "Можеш да продолжиш само свој оглас.",
+    unspecified: "Неодредено",
+    map: "Мапа",
+    openInMaps: "Отвори во Maps",
+    listing: "Оглас",
+},
 };
 
 export const TRANSLATIONS = translations;
