@@ -3190,7 +3190,7 @@ export default function App() {
                     </span>
                     <h3 className="modal-title">{selectedListing.name}</h3>
                   </div>
-                  <button className="icon-btn text-white" 
+                  <button className="icon-btn text-white"
                     onClick={() => {
                       setSelectedListing(null);
                       const url = new URL(window.location.href);
@@ -3203,75 +3203,91 @@ export default function App() {
                 </div>
 
                 <div className="modal-body listing-details-body" style={{ maxHeight: "72vh", overflowY: "auto" }}>
-                  <div className="listing-info-grid">
-                    <div><strong>{t("category")}:</strong> {t(selectedListing.category) || selectedListing.category}</div>
-                    <div><strong>{t("location")}:</strong> {selectedListing.location || (t("unspecified") || "Unspecified")}</div>
-                    <div>
-                      <strong>{t("status")}:</strong>{" "}
-                      <span className={`status-badge ${selectedListing.status === "verified" ? "verified" : "pending"}`}>
+                  <div className="listing-hero">
+                    <div className="hero-left">
+                      <div className="hero-icon-bubble">{categoryIcons[selectedListing.category] || "🏷️"}</div>
+                      <div>
+                        <p className="eyebrow">{t("listing") || "Listing"}</p>
+                        <h3 className="hero-title">{selectedListing.name}</h3>
+                        <div className="chip-row">
+                          <span className="pill">{t(selectedListing.category) || selectedListing.category}</span>
+                          <span className="pill pill-soft">{selectedListing.location || (t("unspecified") || "Unspecified")}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="status-stack">
+                      <span className={`status-pill ${selectedListing.status === "verified" ? "is-verified" : "is-pending"}`}>
                         {selectedListing.status === "verified" ? "✅ " + t("verified") : "⏳ " + t("pending")}
                       </span>
+                      {selectedListing.expiresAt && (
+                        <span className="small-muted">{t("expires")}: {new Date(selectedListing.expiresAt).toLocaleDateString()}</span>
+                      )}
                     </div>
-                    {selectedListing.expiresAt && <div><strong>{t("expires")}:</strong> {new Date(selectedListing.expiresAt).toLocaleDateString()}</div>}
-                    {selectedListing.locationData && (
-                      <>
-                        <div>
-                          <strong>{t("cityLabel")}:</strong> {selectedListing.locationData.city}
-                        </div>
-                        <div>
-                          <strong>{t("areaLabel")}:</strong> {selectedListing.locationData.area}
-                        </div>
-                        <div>
-                          <strong>{t("map")}:</strong>{" "}
-                          {selectedListing.locationData.mapsUrl ? (
-                            <a href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">
-                              {t("openInMaps") || "Open in Maps"}
-                            </a>
-                          ) : (
-                            t("unspecified") || "Unspecified"
-                          )}
-                        </div>
-                      </>
+                  </div>
+
+                  <div className="listing-highlight-grid">
+                    <div className="highlight-card">
+                      <p className="highlight-label">{t("status")}</p>
+                      <p className="highlight-value">{selectedListing.status === "verified" ? t("verified") : t("pendingVerification")}</p>
+                    </div>
+                    <div className="highlight-card">
+                      <p className="highlight-label">{t("postedOn") || "Posted on"}</p>
+                      <p className="highlight-value">{selectedListing.createdAt ? new Date(selectedListing.createdAt).toLocaleDateString() : t("unspecified") || "Unspecified"}</p>
+                    </div>
+                    <div className="highlight-card">
+                      <p className="highlight-label">{t("priceRangeLabel") || t("priceLabel")}</p>
+                      <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
+                    </div>
+                    <div className="highlight-card">
+                      <p className="highlight-label">{t("locationDetails") || "Location"}</p>
+                      <p className="highlight-value">
+                        {buildLocationString(selectedListing.locationData?.city || selectedListing.location, selectedListing.locationData?.area || selectedListing.locationExtra) || t("unspecified") || "Unspecified"}
+                      </p>
+                      {selectedListing.locationData?.mapsUrl && (
+                        <a className="map-link" href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">{t("openInMaps") || "Open in Maps"}</a>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedListing.imagePreview && <img src={selectedListing.imagePreview} alt="preview" className="listing-hero-image" />}
+
+                  <div className="listing-section">
+                    <div className="section-heading">
+                      <h4>{t("aboutListing") || "About this listing"}</h4>
+                      <span className="pill muted">{t("category")}: {t(selectedListing.category) || selectedListing.category}</span>
+                    </div>
+                    <p className="listing-description-full">{selectedListing.description}</p>
+                    {selectedListing.tags && (
+                      <div className="tag-chip-row">
+                        {(selectedListing.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                          <span className="tag-chip" key={tag}>{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                    {selectedListing.socialLink && (
+                      <a className="link-badge" href={selectedListing.socialLink} target="_blank" rel="noreferrer">{t("websiteLabel")}: {selectedListing.socialLink}</a>
                     )}
                   </div>
 
-                  {selectedListing.imagePreview && <img src={selectedListing.imagePreview} alt="preview" style={{ width: "100%", borderRadius: 12, border: "1px solid #e5e7eb", marginBottom: 10 }} />}
-
-                  <p className="listing-description-full">{selectedListing.description}</p>
-
-                  {selectedListing.contact && (
-                    <div className="listing-contact-info">
-                      <p><strong>{t("contact")}:</strong> {selectedListing.contact}</p>
+                  <div className="contact-panel">
+                    <div>
+                      <p className="panel-title">{t("contact")}</p>
+                      <p className="panel-subtitle">{selectedListing.contact || (t("unspecified") || "Unspecified")}</p>
+                      <p className="panel-hint">{t("contactAutofill") || "We use your account phone for trust and safety."}</p>
                     </div>
-                  )}
-
-                  <div className="listing-contact-info" style={{ marginTop: 10 }}>
-                    <p>
-                      <strong>{t("priceLabel")}:</strong>{" "}
-                      {selectedListing.offerprice || t("unspecified") || "Unspecified"}
-                    </p>
-                    <p>
-                      <strong>{t("tagsLabel")}:</strong>{" "}
-                      {selectedListing.tags || t("unspecified") || "Unspecified"}
-                    </p>
-                    <p>
-                      <strong>{t("websiteLabel")}:</strong>{" "}
-                      {selectedListing.socialLink ? (
-                        <a href={selectedListing.socialLink} target="_blank" rel="noreferrer">
-                          {selectedListing.socialLink}
-                        </a>
-                      ) : (
-                        t("unspecified") || "Unspecified"
-                      )}
-                    </p>
+                    <div className="quick-actions">
+                      <div className="quick-actions-header">
+                        <p className="highlight-label">{t("quickActions") || "Quick actions"}</p>
+                        <p className="small-muted">{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
+                      </div>
+                      <div className="quick-action-buttons">
+                        <button className="quick-action-btn" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
+                        <button className="quick-action-btn" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
+                        <button className="quick-action-btn ghost" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
+                        <button className="quick-action-btn ghost" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="modal-actions">
-                  <button className="btn small" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
-                  <button className="btn small" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
-                  <button className="btn btn-ghost small" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
-                  <button className="btn btn-ghost small" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
                 </div>
               </motion.div>
             </motion.div>
