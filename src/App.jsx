@@ -1,9 +1,10 @@
 // src/App.jsx
-const API_BASE = "https://lsm-wozo.onrender.com" || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://lsm-wozo.onrender.com";
 
 import logo from "./assets/logo.png";
 import React, { useEffect, useMemo, useState } from "react";
-import { auth, db, createRecaptcha } from "./firebase";
+import { auth, db, createRecaptcha, isConfigured } from "./firebase";
+import { Menu, X, Home, List, User, LogOut, Search, MapPin, Filter, Plus, Heart, Share2, Phone, Mail, Copy, Edit, Trash2, Clock, Check, AlertCircle } from "lucide-react";
 import { ref as dbRef, set, update, onValue, remove } from "firebase/database";
 import {
   signInWithEmailAndPassword,
@@ -733,13 +734,11 @@ export default function App() {
     <header className="header">
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
-          {/* <span className="brand-emoji"> */}
-            <img 
-              src={logo} 
-              alt="BizCall logo"
-              className="brand-logo"
-            />
-          {/* </span> */}
+          <img 
+            src={logo} 
+            alt="BizCall logo"
+            className="brand-logo"
+          />
           <h1 className="brand-title">BizCall</h1>
         </button>
 
@@ -753,32 +752,41 @@ export default function App() {
           {user ? (
             <>
               <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  // setSelectedTab("myListings");
-                  setSidebarOpen(true);
-                }}
+                className="btn btn-ghost header-menu-btn"
+                onClick={() => setSidebarOpen(true)}
               >
-                ☰ {t("dashboard")}
+                <Menu size={18} />
+                <span className="hide-mobile">{t("dashboard")}</span>
               </button>
               <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
-                {t("logout")}
+                <LogOut size={18} />
+                <span className="hide-mobile">{t("logout")}</span>
               </button>
             </>
           ) : (
             <button
-              className="btn"
+              className="btn btn-primary"
               onClick={() => {
                 setShowAuthModal(true);
                 setMessage({ text: "", type: "info" });
               }}
             >
+              <User size={18} />
               {t("login")}
             </button>
           )}
         </div>
       </div>
     </header>
+  );
+
+  const ConfigWarning = () => (
+    !isConfigured && (
+      <div className="config-warning">
+        <AlertCircle size={20} />
+        <span>Firebase not configured. Add your Firebase credentials to enable authentication and database features.</span>
+      </div>
+    )
   );
 
   const previewLocation = buildLocationString(form.locationCity, form.locationExtra);
@@ -789,6 +797,7 @@ export default function App() {
 
       <div className="app">
         <Header />
+        <ConfigWarning />
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
         <AnimatePresence>
