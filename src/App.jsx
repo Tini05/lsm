@@ -397,10 +397,10 @@ export default function App() {
     [user?.phoneNumber, userProfile]
   );
 
-  useEffect(() => {
-    if (!accountPhone) return;
-    setForm((f) => ({ ...f, contact: accountPhone }));
-  }, [accountPhone]);
+  // useEffect(() => {
+  //   if (!accountPhone) return;
+  //   setForm((f) => ({ ...f, contact: accountPhone }));
+  // }, [accountPhone]);
 
   const normalizePhoneForStorage = (raw) => {
     if (!raw) return raw;
@@ -414,10 +414,10 @@ export default function App() {
     return "+389" + cleaned;
   }
 
-  const accountPhone = useMemo(
-    () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
-    [user?.phoneNumber, userProfile]
-  );
+  // const accountPhone = useMemo(
+  //   () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
+  //   [user?.phoneNumber, userProfile]
+  // );
 
   useEffect(() => {
     if (!accountPhone) return;
