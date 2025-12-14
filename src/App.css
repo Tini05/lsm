@@ -128,7 +128,7 @@ body {
 }
 
 .main-grid {
-  display: grid;
+  display: block;
   grid-template-columns: 1fr 1.3fr;
   gap: 30px;
   width: 100%;
