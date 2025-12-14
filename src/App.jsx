@@ -133,6 +133,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [selectedListing, setSelectedListing] = useState(null);
   const [initialListingId, setInitialListingId] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   /* Dashboard/UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -243,6 +244,19 @@ export default function App() {
   /* Auth state & DB subscription */
   useEffect(() => auth.onAuthStateChanged((u) => setUser(u)), []);
   useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      return undefined;
+    }
+
+    const profileRef = dbRef(db, `users/${user.uid}`);
+    const unsubscribe = onValue(profileRef, (snapshot) => {
+      setUserProfile(snapshot.val() || null);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+  useEffect(() => {
     const listingsRef = dbRef(db, "listings");
     onValue(listingsRef, (snapshot) => {
       const val = snapshot.val() || {};
@@ -272,7 +286,8 @@ export default function App() {
 
   const handleChangeEmail = async (e) => {
     e.preventDefault();
-    if (!user) return showMessage(t("loginRequired"), "error");
+    const currentUser = auth.currentUser;
+    if (!currentUser) return showMessage(t("loginRequired"), "error");
 
     if (!validateEmail(emailForm.newEmail)) {
       showMessage(t("enterValidEmail"), "error");
@@ -282,7 +297,7 @@ export default function App() {
       showMessage(t("enterCurrentPassword"), "error");
       return;
     }
-    if (!user.email) {
+    if (!currentUser.email) {
       showMessage(t("emailChangeNotAvailable"), "error");
       return;
     }
@@ -290,16 +305,19 @@ export default function App() {
     setSavingEmail(true);
     try {
       const cred = EmailAuthProvider.credential(
-        user.email,
+        currentUser.email,
         emailForm.currentPassword
       );
-      await reauthenticateWithCredential(user, cred);
-      await updateEmail(user, emailForm.newEmail);
+      await reauthenticateWithCredential(currentUser, cred);
+      await updateEmail(currentUser, emailForm.newEmail);
       try {
-        await sendEmailVerification(user);
+        await sendEmailVerification(currentUser);
       } catch {
         // not critical if verification email fails, email is still changed
       }
+      await update(dbRef(db, `users/${currentUser.uid}`), { email: emailForm.newEmail });
+      await currentUser.reload();
+      setUser(auth.currentUser);
       showMessage(t("emailUpdateSuccess"), "success");
       setEmailForm({ newEmail: "", currentPassword: "" });
     } catch (err) {
@@ -311,7 +329,8 @@ export default function App() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (!user) return showMessage(t("loginRequired"), "error");
+    const currentUser = auth.currentUser;
+    if (!currentUser) return showMessage(t("loginRequired"), "error");
 
     const { currentPassword, newPassword, repeatNewPassword } = passwordForm;
 
@@ -327,16 +346,18 @@ export default function App() {
       showMessage(t("passwordsDontMatch"), "error");
       return;
     }
-    if (!user.email) {
+    if (!currentUser.email) {
       showMessage(t("passwordChangeNotAvailable"), "error");
       return;
     }
 
     setSavingPassword(true);
     try {
-      const cred = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, cred);
-      await updatePassword(user, newPassword);
+      const cred = EmailAuthProvider.credential(currentUser.email, currentPassword);
+      await reauthenticateWithCredential(currentUser, cred);
+      await updatePassword(currentUser, newPassword);
+      await currentUser.reload();
+      setUser(auth.currentUser);
       showMessage(t("passwordUpdateSuccess"), "success");
       setPasswordForm({
         currentPassword: "",
@@ -370,6 +391,16 @@ export default function App() {
   };
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
+
+  const accountPhone = useMemo(
+    () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
+    [user?.phoneNumber, userProfile]
+  );
+
+  useEffect(() => {
+    if (!accountPhone) return;
+    setForm((f) => ({ ...f, contact: accountPhone }));
+  }, [accountPhone]);
 
   const normalizePhoneForStorage = (raw) => {
     if (!raw) return raw;
@@ -438,10 +469,15 @@ export default function App() {
     const finalLocation = buildLocationString(form.locationCity, form.locationExtra);
 
     // basic validation across all steps
-    const requiredOk = form.name && form.category && finalLocation && form.description && form.contact;
+    const phoneForListing = accountPhone || form.contact;
+    const requiredOk = form.name && form.category && finalLocation && form.description && phoneForListing;
     if (!requiredOk) return showMessage(t("fillAllFields"), "error");
 
-    const normalizedContact = normalizePhoneForStorage(form.contact);
+    if (!phoneForListing) {
+      return showMessage(t("addPhoneInAccount") || "Please add your phone number in your account first.", "error");
+    }
+
+    const normalizedContact = normalizePhoneForStorage(phoneForListing);
     if (!validatePhone(normalizedContact)) return showMessage(t("enterValidPhone"), "error");
 
     // refresh offerprice string from range fields
@@ -502,7 +538,7 @@ export default function App() {
       });
       const json = await resp.json();
       if (json.ok) {
-        const normalizedContact = normalizePhoneForStorage(form.contact);
+        const normalizedContact = normalizePhoneForStorage(accountPhone || form.contact);
         const offerpriceStr = formatOfferPrice(form.offerMin, form.offerMax, form.offerCurrency);
         const finalLocation = buildLocationString(form.locationCity, form.locationExtra);
 
@@ -1012,57 +1048,89 @@ export default function App() {
                           </p>
 
                           <div className="account-main">
-                            {/* LEFT: basic info */}
-                            <div className="account-info">
-                              <div className="account-row">
-                                <span className="account-label">{t("emailLabel")}</span>
-                                <span className="account-value">{user?.email || "—"}</span>
-                              </div>
-
-                              <div className="account-row">
-                                <span className="account-label">{t("verifiedLabel")}</span>
-                                <span className="account-value">
-                                  {user?.emailVerified ? (
-                                    <span className="badge verified">✅ {t("verified")}</span>
-                                  ) : (
-                                    <span className="badge not-verified">
-                                      ⏳ {t("pendingVerification")}
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-
-                              <div className="account-row">
-                                <span className="account-label">{t("accountSince")}</span>
-                                <span className="account-value">
-                                  {user?.metadata?.creationTime
-                                    ? new Date(user.metadata.creationTime).toLocaleDateString()
-                                    : "—"}
-                                </span>
-                              </div>
-
-                              {!user?.emailVerified && (
+                            {/* LEFT: overview + stats */}
+                            <div className="account-overview">
+                              <div className="account-info">
                                 <div className="account-row">
-                                  <button
-                                    className="btn small"
-                                    onClick={async () => {
-                                      try {
-                                        if (user) {
-                                          await sendEmailVerification(user);
-                                          showMessage(t("verificationSent"), "success");
-                                        }
-                                      } catch (err) {
-                                        showMessage(
-                                          t("verificationError") + " " + err.message,
-                                          "error"
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    {t("resendVerificationEmail")}
-                                  </button>
+                                  <span className="account-label">{t("emailLabel")}</span>
+                                  <span className="account-value">{user?.email || "—"}</span>
                                 </div>
-                              )}
+
+                                <div className="account-row">
+                                  <span className="account-label">{t("phoneNumber")}</span>
+                                  <span className="account-value">{accountPhone || t("addPhoneInAccount") || "—"}</span>
+                                </div>
+
+                                <div className="account-row">
+                                  <span className="account-label">{t("verifiedLabel")}</span>
+                                  <span className="account-value">
+                                    {user?.emailVerified ? (
+                                      <span className="badge verified">✅ {t("verified")}</span>
+                                    ) : (
+                                      <span className="badge not-verified">
+                                        ⏳ {t("pendingVerification")}
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="account-row">
+                                  <span className="account-label">{t("accountSince")}</span>
+                                  <span className="account-value">
+                                    {user?.metadata?.creationTime
+                                      ? new Date(user.metadata.creationTime).toLocaleDateString()
+                                      : "—"}
+                                  </span>
+                                </div>
+
+                                {!user?.emailVerified && (
+                                  <div className="account-row">
+                                    <button
+                                      className="btn small"
+                                      onClick={async () => {
+                                        try {
+                                          if (user) {
+                                            await sendEmailVerification(user);
+                                            showMessage(t("verificationSent"), "success");
+                                          }
+                                        } catch (err) {
+                                          showMessage(
+                                            t("verificationError") + " " + err.message,
+                                            "error"
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {t("resendVerificationEmail")}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="account-stats">
+                                <div className="stat-pill">
+                                  <span className="stat-label">{t("myListings")}</span>
+                                  <span className="stat-value">{myListings.length}</span>
+                                </div>
+                                <div className="stat-pill">
+                                  <span className="stat-label">{t("favorites") || "Favorites"}</span>
+                                  <span className="stat-value">{favorites.length}</span>
+                                </div>
+                                <div className="stat-pill">
+                                  <span className="stat-label">{t("plan") || "Plan"}</span>
+                                  <span className="stat-value">{plan} {t("months")}</span>
+                                </div>
+                              </div>
+
+                              <div className="account-tips">
+                                <div>
+                                  <h4>{t("postingReady") || "Posting ready"}</h4>
+                                  <p>{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
+                                </div>
+                                <button className="btn small" onClick={() => setShowPostForm(true)}>
+                                  {t("submitListing")}
+                                </button>
+                              </div>
                             </div>
 
                             {/* RIGHT: security / settings */}
@@ -1768,11 +1836,12 @@ export default function App() {
                         className="form"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          if (!form.description || !form.contact)
-                            return showMessage(t("fillAllFields"), "error");
-                          if (!validatePhone(form.contact))
+                          const phoneForListing = accountPhone || form.contact;
+                          if (!form.description || !phoneForListing)
+                            return showMessage(t("addPhoneInAccount") || t("fillAllFields"), "error");
+                          if (!validatePhone(phoneForListing))
                             return showMessage(t("enterValidPhone"), "error");
-                          setForm({ ...form, step: 3 });
+                          setForm({ ...form, contact: phoneForListing, step: 3 });
                         }}
                       >
                         <textarea
@@ -1789,35 +1858,33 @@ export default function App() {
                           required
                         />
                 
-                        <div className="phone-input-group">
-                          <select
-                            className="select phone-country"
-                            value={countryCode}
-                            onChange={(e) => setCountryCode(e.target.value)}
-                          >
-                            {countryCodes.map((c) => (
-                              <option key={c.code} value={c.code}>
-                                {c.name} ({c.code})
-                              </option>
-                            ))}
-                          </select>
-                
-                          <input
-                            className="input phone-number"
-                            type="tel"
-                            required
-                            pattern="[0-9]{8,15}"
-                            placeholder={t("enterPhone")}
-                            value={form.contact}
-                            onChange={(e) =>
-                              setForm({
-                                ...form,
-                                contact: e.target.value.replace(/\D/g, ""),
-                              })
-                            }
-                            maxLength="15"
-                            inputMode="numeric"
-                          />
+                        <div className="contact-summary">
+                          <div className="contact-summary-main">
+                            <span className="field-label">{t("contact")}</span>
+                            <p className="contact-number">
+                              {accountPhone || t("addPhoneInAccount") || "Add a phone number in your account"}
+                            </p>
+                            <p className="contact-hint">
+                              {t("contactAutofill") || "We use your account phone for trust and safety."}
+                            </p>
+                          </div>
+                          <div className="contact-summary-actions">
+                            <button
+                              type="button"
+                              className="btn btn-ghost small"
+                              onClick={() => {
+                                if (accountPhone) {
+                                  setForm((f) => ({ ...f, contact: accountPhone }));
+                                  showMessage(t("phoneSynced") || "Using your account phone number.", "success");
+                                } else {
+                                  setSelectedTab("account");
+                                  showMessage(t("addPhoneInAccount") || "Add your phone in account settings first.", "error");
+                                }
+                              }}
+                            >
+                              {accountPhone ? t("useAccountPhone") || "Use account phone" : t("goToAccount") || "Go to account"}
+                            </button>
+                          </div>
                         </div>
                 
                         {/* Offer price range + currency */}
@@ -3133,7 +3200,7 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="modal-body listing-details-body" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                <div className="modal-body listing-details-body" style={{ maxHeight: "72vh", overflowY: "auto" }}>
                   <div className="listing-info-grid">
                     <div><strong>{t("category")}:</strong> {t(selectedListing.category) || selectedListing.category}</div>
                     <div><strong>{t("location")}:</strong> {selectedListing.location || (t("unspecified") || "Unspecified")}</div>
