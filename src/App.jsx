@@ -1,5 +1,9 @@
 // src/App.jsx
-const API_BASE = "https://lsm-wozo.onrender.com" || "http://localhost:5000";
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://lsm-wozo.onrender.com");
 
 import logo from "./assets/logo.png";
 import React, { useEffect, useMemo, useState } from "react";
@@ -1396,7 +1400,7 @@ export default function App() {
             </div>
           ) : (
             /* Home (Submit + Quick Browse) */
-            <div className="main-grid" style={{display: "block"}}>
+            <div className="main-grid">
               {/* ====== SUBMIT SECTION ====== */}
               {user && user.emailVerified && !showPostForm && (
                 <button
@@ -1463,15 +1467,56 @@ export default function App() {
                   ))}
                 </div>
                 
-                <div className="quick-filters" style={{marginBottom: ".5rem", display: "flex", flexWrap: "wrap"}}>
-                  <input className="input" placeholder={t("searchPlaceholder") || "Search"} value={q} onChange={(e) => setQ(e.target.value)} style={{flex: "1"}}/>
-                  <select className="select category-dropdown" value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
-                    <option value="">{t("allCategories")}</option>
-                    {categories.map((cat) => (<option key={cat} value={t(cat)}>{t(cat)}</option>))}
-                  </select>
+                <div className="quick-filters">
+                  <div className="searchbar">
+                    <input
+                      className="input"
+                      placeholder={t("searchPlaceholder") || "Search"}
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="filter-row">
+                    <select
+                      className="select category-dropdown"
+                      value={catFilter}
+                      onChange={(e) => setCatFilter(e.target.value)}
+                    >
+                      <option value="">{t("allCategories")}</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={t(cat)}>
+                          {t(cat)}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="select location-dropdown"
+                      value={locFilter}
+                      onChange={(e) => setLocFilter(e.target.value)}
+                    >
+                      <option value="">{t("allLocations")}</option>
+                      {allLocations.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="select sort-dropdown"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="newest">{t("sortNewest")}</option>
+                      <option value="expiring">{t("sortExpiring")}</option>
+                      <option value="az">{t("sortAZ")}</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="listing-grid" style={{display: "block"}}>
+                <div className="listing-grid">
                   {filtered.length === 0 ? (
                     <div className="empty">
                       <div className="empty-icon">📭</div>
