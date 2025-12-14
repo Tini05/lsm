@@ -1,9 +1,4 @@
 // src/App.jsx
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "https://lsm-wozo.onrender.com");
 
 import logo from "./assets/logo.png";
 import React, { useEffect, useMemo, useState } from "react";
@@ -35,6 +30,12 @@ import "./App.css";
 import Sidebar from "./Sidebar";
 import { TRANSLATIONS } from "./translations";
 import { MK_CITIES } from "./mkCities";
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://lsm-wozo.onrender.com");
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
@@ -98,6 +99,19 @@ const buildLocationString = (city, extra) => {
   if (!c && !e) return "";
   if (c && e) return `${c} - ${e}`;
   return c || e;
+};
+
+/* Helper: normalize phone numbers before storing */
+const normalizePhoneForStorage = (raw) => {
+  if (!raw) return raw;
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("+")) return trimmed.replace(/\s+/g, "");
+  const cleaned = trimmed.replace(/\D/g, "");
+  if (cleaned === "") return trimmed;
+  if (cleaned.length > 8 && cleaned.startsWith("00")) return "+" + cleaned.replace(/^0{2}/, "");
+  const known = countryCodes.map((c) => c.code.replace("+", ""));
+  for (const pre of known) if (cleaned.startsWith(pre)) return "+" + cleaned;
+  return "+389" + cleaned;
 };
 
 export default function App() {
@@ -396,28 +410,6 @@ export default function App() {
     () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
     [user?.phoneNumber, userProfile]
   );
-
-  // useEffect(() => {
-  //   if (!accountPhone) return;
-  //   setForm((f) => ({ ...f, contact: accountPhone }));
-  // }, [accountPhone]);
-
-  const normalizePhoneForStorage = (raw) => {
-    if (!raw) return raw;
-    const trimmed = raw.trim();
-    if (trimmed.startsWith("+")) return trimmed.replace(/\s+/g, "");
-    const cleaned = trimmed.replace(/\D/g, "");
-    if (cleaned === "") return trimmed;
-    if (cleaned.length > 8 && cleaned.startsWith("00")) return "+" + cleaned.replace(/^0{2}/, "");
-    const known = countryCodes.map((c) => c.code.replace("+", ""));
-    for (const pre of known) if (cleaned.startsWith(pre)) return "+" + cleaned;
-    return "+389" + cleaned;
-  }
-
-  // const accountPhone = useMemo(
-  //   () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
-  //   [user?.phoneNumber, userProfile]
-  // );
 
   useEffect(() => {
     if (!accountPhone) return;
@@ -749,34 +741,34 @@ export default function App() {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handleShareListing = (listing) => {
-  const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
-  const text = `${listing.name || ""} • ${listing.location || ""} – ${
-    t("shareText") || BizCall || "Tregu Lokal i Ndihmës"
-  }`;
+    const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
+    const text = `${listing.name || ""} • ${listing.location || ""} – ${
+      t("shareText") || "BizCall" || "Tregu Lokal i Ndihmës"
+    }`;
 
-  if (navigator.share) {
-    navigator
-      .share({
-        title: listing.name || t("appName") || "Listing",
-        text,
-        url,
-      })
-      .catch(() => {
-        // user canceled or share failed silently; no need to spam them
-      });
-  } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(url);
-    showMessage(
-      t("shareCopied") || "Linku i listimit u kopjua në clipboard ✅",
-      "success"
-    );
-  } else {
-    showMessage(
-      t("shareNotSupported") || "Ky pajisje nuk e përkrah ndarjen direkt.",
-      "error"
-    );
-  }
-};
+    if (navigator.share) {
+      navigator
+        .share({
+          title: listing.name || t("appName") || "Listing",
+          text,
+          url,
+        })
+        .catch(() => {
+          // user canceled or share failed silently; no need to spam them
+        });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      showMessage(
+        t("shareCopied") || "Linku i listimit u kopjua në clipboard ✅",
+        "success"
+      );
+    } else {
+      showMessage(
+        t("shareNotSupported") || "Ky pajisje nuk e përkrah ndarjen direkt.",
+        "error"
+      );
+    }
+  };
   
   /* Header */
   const Header = () => (
