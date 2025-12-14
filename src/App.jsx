@@ -392,7 +392,17 @@ export default function App() {
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
 
-  function normalizePhoneForStorage(raw) {
+  const accountPhone = useMemo(
+    () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
+    [user?.phoneNumber, userProfile]
+  );
+
+  useEffect(() => {
+    if (!accountPhone) return;
+    setForm((f) => ({ ...f, contact: accountPhone }));
+  }, [accountPhone]);
+
+  const normalizePhoneForStorage = (raw) => {
     if (!raw) return raw;
     const trimmed = raw.trim();
     if (trimmed.startsWith("+")) return trimmed.replace(/\s+/g, "");
