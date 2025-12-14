@@ -1398,7 +1398,7 @@ export default function App() {
             /* Home (Submit + Quick Browse) */
             <div className="main-grid" style={{display: "block"}}>
               {/* ====== SUBMIT SECTION ====== */}
-              {user && user.emailVerified && (
+              {user && user.emailVerified && !showPostForm (
                 <button
                   type="button"
                   className="floating-post-btn"
