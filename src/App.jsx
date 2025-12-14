@@ -412,7 +412,17 @@ export default function App() {
     const known = countryCodes.map((c) => c.code.replace("+", ""));
     for (const pre of known) if (cleaned.startsWith(pre)) return "+" + cleaned;
     return "+389" + cleaned;
-  };
+  }
+
+  const accountPhone = useMemo(
+    () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
+    [user?.phoneNumber, userProfile]
+  );
+
+  useEffect(() => {
+    if (!accountPhone) return;
+    setForm((f) => ({ ...f, contact: accountPhone }));
+  }, [accountPhone]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
