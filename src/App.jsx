@@ -394,6 +394,17 @@ export default function App() {
   const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
 
   function normalizePhoneForStorage(raw) {
+  const accountPhone = useMemo(
+    () => normalizePhoneForStorage(user?.phoneNumber || userProfile?.phone || ""),
+    [user?.phoneNumber, userProfile]
+  );
+
+  useEffect(() => {
+    if (!accountPhone) return;
+    setForm((f) => ({ ...f, contact: accountPhone }));
+  }, [accountPhone]);
+
+  const normalizePhoneForStorage = (raw) => {
     if (!raw) return raw;
     const trimmed = raw.trim();
     if (trimmed.startsWith("+")) return trimmed.replace(/\s+/g, "");
@@ -1120,6 +1131,14 @@ export default function App() {
                                 <div className="stat-pill">
                                   <span className="stat-label">{t("plan") || "Plan"}</span>
                                   <span className="stat-value">{plan} {t("months")}</span>
+                                </div>
+                              </div>
+
+                              <div className="account-tips">
+                                <div>
+                                  <h4>{t("postingReady") || "Posting ready"}</h4>
+                                  <p>{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
+                                </div>
                                 </div>
                               </div>
 

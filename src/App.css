@@ -128,7 +128,7 @@ body {
 }
 
 .main-grid {
-  display: grid;
+  display: block;
   grid-template-columns: 1fr 1.3fr;
   gap: 30px;
   width: 100%;
@@ -250,7 +250,7 @@ body {
 }
 
 .listing-grid {
-  display: grid;
+  display: block;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
   width: 100%;
