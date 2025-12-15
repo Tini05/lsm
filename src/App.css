@@ -1035,7 +1035,7 @@ body {
 .modal {
   background: #fff;
   border-radius: 1.25rem;
-  max-width: 480px;
+  max-width: 80%;
   width: 100%;
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
   animation: fadeIn 0.3s ease;
