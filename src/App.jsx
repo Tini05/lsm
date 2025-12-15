@@ -748,6 +748,14 @@ export default function App() {
   }, [verifiedListings, q, catFilter, locFilter, sortBy]);
 
   const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
+  const myVerifiedCount = useMemo(
+    () => myListings.filter((l) => l.status === "verified").length,
+    [myListings]
+  );
+  const myPendingCount = useMemo(
+    () => myListings.filter((l) => l.status !== "verified").length,
+    [myListings]
+  );
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -952,6 +960,38 @@ export default function App() {
                           </span>
                         </div>
 
+                        <div className="my-listings-toolbar">
+                          <div className="my-listings-stats">
+                            <div className="stat-chip positive">
+                              <span className="stat-label">✅ {t("verified")}</span>
+                              <span className="stat-value">{myVerifiedCount}</span>
+                            </div>
+                            <div className="stat-chip subtle">
+                              <span className="stat-label">⏳ {t("pending")}</span>
+                              <span className="stat-value">{myPendingCount}</span>
+                            </div>
+                          </div>
+                          <div className="my-listings-actions">
+                            <button
+                              className="btn btn-ghost small"
+                              onClick={() => setSelectedTab("allListings")}
+                              type="button"
+                            >
+                              🔍 {t("allListings") || "Browse listings"}
+                            </button>
+                            <button
+                              className="btn small"
+                              onClick={() => {
+                                setSelectedTab("myListings");
+                                setShowPostForm(true);
+                              }}
+                              type="button"
+                            >
+                              ➕ {t("submitListing") || "Create listing"}
+                            </button>
+                          </div>
+                        </div>
+
                         {myListings.length === 0 ? (
                           <div className="empty">
                             <div className="empty-icon">📭</div>
@@ -978,22 +1018,24 @@ export default function App() {
                                   </div>
 
                                   <div className="listing-header-side">
-                                    <span
-                                      className={`status-chip ${
-                                        l.status === "verified" ? "status-chip-verified" : "status-chip-pending"
-                                      }`}
-                                    >
-                                      {l.status === "verified" ? `✅ ${t("verified")}` : `⏳ ${t("pending")}`}
-                                    </span>
+                                    <div className="status-stack">
+                                      <span
+                                        className={`status-chip ${
+                                          l.status === "verified" ? "status-chip-verified" : "status-chip-pending"
+                                        }`}
+                                      >
+                                        {l.status === "verified" ? `✅ ${t("verified")}` : `⏳ ${t("pending")}`}
+                                      </span>
 
-                                    <div className="plan-expiry-row">
-                                      <span className="plan-chip">
-                                        {l.plan} {t("months")}
-                                      </span>
-                                      <span className="expiry-chip">
-                                        {t("expires")}:{" "}
-                                        {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
-                                      </span>
+                                      <div className="plan-expiry-row">
+                                        <span className="plan-chip">
+                                          ⏱️ {l.plan} {t("months")}
+                                        </span>
+                                        <span className="expiry-chip">
+                                          {t("expires")}:{" "}
+                                          {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
                                 </header>
@@ -1002,20 +1044,19 @@ export default function App() {
                                   {l.description}
                                 </p>
 
-                                <div className="my-listing-footer">
-                                  <div className="my-listing-extra">
-                                    {l.offerprice && (
-                                      <span className="pill pill-offerprice">
-                                        💶 {l.offerprice}
-                                      </span>
-                                    )}
-                                    {l.tags && (
-                                      <span className="pill pill-tags">
-                                        🏷️ {l.tags}
-                                      </span>
-                                    )}
-                                  </div>
+                                <div className="my-listing-highlights">
+                                  {l.offerprice && (
+                                    <span className="pill pill-offerprice">💶 {l.offerprice}</span>
+                                  )}
+                                  {l.tags && (
+                                    <span className="pill pill-tags">🏷️ {l.tags}</span>
+                                  )}
+                                  {l.contact && (
+                                    <span className="pill pill-contact">📞 {l.contact}</span>
+                                  )}
+                                </div>
 
+                                <div className="my-listing-footer">
                                   <div className="listing-actions listing-actions-compact">
                                     <button
                                       className="btn btn-ghost small"
