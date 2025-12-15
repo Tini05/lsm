@@ -957,12 +957,82 @@ export default function App() {
     ? buildLocationString(editForm.locationCity, editForm.locationExtra)
     : "";
 
+  const activeListingCount = listings.length;
+  const verifiedListingCount = listings.filter((l) => l.isVerified).length;
+  const phoneVerifiedCount = listings.filter((l) => l.phoneVerified).length;
+
   return (
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR", locale: "en_MK" }}>
       {message.text && <div className={`notification ${message.type}`}>{message.text}</div>}
 
       <div className="app">
         <Header />
+
+        {selectedTab === "main" && (
+          <section className="page-hero">
+            <div className="container hero-grid">
+              <div className="hero-copy">
+                <p className="eyebrow hero-eyebrow">{t("community") || "Community marketplace"}</p>
+                <h2 className="hero-heading">
+                  {t("heroTitle") || "Find and share trustworthy local services"}
+                </h2>
+                <p className="hero-subtitle">
+                  {t("heroSubtitle") ||
+                    "List your service in seconds, verify your profile, and connect with people who need you most."}
+                </p>
+
+                <div className="hero-actions">
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setSelectedTab("main");
+                      setShowPostForm(true);
+                    }}
+                  >
+                    🚀 {t("submitListing") || "Start a listing"}
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setSelectedTab("allListings")}
+                  >
+                    🔍 {t("explore") || "Browse the marketplace"}
+                  </button>
+                </div>
+
+                <div className="hero-stats">
+                  <div className="stat-card">
+                    <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
+                    <span className="stat-number">{activeListingCount}</span>
+                  </div>
+                  <div className="stat-card">
+                    <span className="stat-label">{t("verified") || "Verified"}</span>
+                    <span className="stat-number">{verifiedListingCount}</span>
+                  </div>
+                  <div className="stat-card">
+                    <span className="stat-label">{t("phoneVerified") || "Phone verified"}</span>
+                    <span className="stat-number">{phoneVerifiedCount}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hero-panel card glass-card">
+                <div className="panel-heading">
+                  <p className="eyebrow">{t("quickStart") || "Get started fast"}</p>
+                  <h3 className="panel-title">{t("heroPanelTitle") || "Post with confidence"}</h3>
+                  <p className="panel-subtitle">
+                    {t("heroPanelSubtitle") ||
+                      "Keep your listing accurate with verified contact details and flexible plan durations."}
+                  </p>
+                </div>
+                <ul className="panel-list">
+                  <li>✅ {t("heroPointOne") || "Choose a category and location"}</li>
+                  <li>✅ {t("heroPointTwo") || "Verify email or phone for trust"}</li>
+                  <li>✅ {t("heroPointThree") || "Set a duration that matches your goals"}</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
         <AnimatePresence>
