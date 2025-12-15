@@ -1023,8 +1023,8 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  backdrop-filter: blur(6px);
-  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px) saturate(120%);
+  background-color: rgba(9, 9, 11, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1033,20 +1033,23 @@ body {
 }
 
 .modal {
-  background: #fff;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 40%, #ffffff 100%);
   border-radius: 1.25rem;
   max-width: 80%;
   width: 100%;
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.2);
   animation: fadeIn 0.3s ease;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem;
-  border-bottom: 1px solid #eee;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(120deg, #eef2ff, #fff);
 }
 
 .modal-title {
@@ -1055,7 +1058,7 @@ body {
 }
 
 .modal-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
   color: #333;
   line-height: 1.6;
 }
@@ -1064,8 +1067,9 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid #eee;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
 }
 
 .modal-actions .btn {
@@ -1446,6 +1450,63 @@ body {
   gap: 1rem;
 }
 
+.my-listings-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(90deg, #f8fafc, #f1f5f9);
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.my-listings-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.my-listings-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.stat-chip .stat-label {
+  font-size: 0.78rem;
+  color: #4b5563;
+}
+
+.stat-chip .stat-value {
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-chip.positive {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.stat-chip.subtle {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #92400e;
+}
+
 .section-header-row {
   display: flex;
   align-items: center;
@@ -1485,6 +1546,15 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  border: 1.5px solid #e5e7eb;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.my-listing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.15);
 }
 
 .my-listing-header {
@@ -1576,6 +1646,13 @@ body {
   gap: 0.15rem;
 }
 
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-end;
+}
+
 .plan-chip {
   padding: 0.12rem 0.5rem;
   border-radius: 999px;
@@ -1606,10 +1683,10 @@ body {
   margin-top: 0.2rem;
 }
 
-.my-listing-extra {
+.my-listing-highlights {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 .listing-actions-compact {
@@ -1621,6 +1698,12 @@ body {
 .listing-actions-compact .btn.small {
   padding-inline: 0.55rem;
   font-size: 0.78rem;
+}
+
+.pill-contact {
+  background: #e0f2fe;
+  border-color: #bfdbfe;
+  color: #0f172a;
 }
 
 /* Edit modal for listing */
