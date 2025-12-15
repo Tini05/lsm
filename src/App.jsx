@@ -162,6 +162,8 @@ export default function App() {
   const [extendTarget, setExtendTarget] = useState(null);
   const [extendPlan, setExtendPlan] = useState("1");
 
+  const [showEditMapPicker, setShowEditMapPicker] = useState(false);
+
   /* Auth modal */
   const [showAuthModal, setShowAuthModal] = useState(false);
   // OLD: const [authTab, setAuthTab] = useState("email");
@@ -678,14 +680,26 @@ export default function App() {
 
   /* Editing helpers (restored) */
   const openEdit = (listing) => {
+    const rawLocation = (listing.location || "").trim();
+    const guessedCity =
+      listing.locationCity || MK_CITIES.find((city) => rawLocation.startsWith(city)) || "";
+    const guessedExtra =
+      listing.locationExtra ||
+      (guessedCity ? rawLocation.replace(guessedCity, "").replace(/^\s*-\s*/, "").trim() : "");
+
+    const lockedContact = normalizePhoneForStorage(
+      listing.contact || accountPhone || userProfile?.phone || ""
+    );
+
     setEditingListing(listing);
     setEditForm({
       name: listing.name || "",
       category: listing.category || "",
-      location: listing.location || "",
+      locationCity: guessedCity,
+      locationExtra: guessedExtra,
       locationData: listing.locationData || null,
       description: listing.description || "",
-      contact: (listing.contact || "").replace(/\D/g, ""),
+      contact: lockedContact,
       plan: listing.plan || "1",
       price: listing.price || priceMap[listing.plan] || "",         // plan price
       offerprice: listing.offerprice || "",                         // business offer price (already formatted)
@@ -696,14 +710,24 @@ export default function App() {
   };
   const saveEdit = async () => {
     if (!editingListing || !editForm) return;
-    if (!editForm.name || editForm.name.trim().length < 3) return showMessage(t("fillAllFields"), "error");
-    if (!editForm.description || editForm.description.trim().length < 10) return showMessage(t("fillAllFields"), "error");
-    const normalizedContact = normalizePhoneForStorage(editForm.contact);
+
+    const finalLocation = buildLocationString(editForm.locationCity, editForm.locationExtra);
+    const phoneForListing = editForm.contact || accountPhone || editingListing.contact;
+
+    if (!phoneForListing) return showMessage(t("addPhoneInAccount") || t("fillAllFields"), "error");
+
+    if (!editForm.name || !editForm.category || !editForm.locationCity || !editForm.description)
+      return showMessage(t("fillAllFields"), "error");
+
+    const normalizedContact = normalizePhoneForStorage(phoneForListing);
     if (!validatePhone(normalizedContact)) return showMessage(t("enterValidPhone"), "error");
+
     const updates = {
       name: stripDangerous(editForm.name),
       category: editForm.category,
-      location: stripDangerous(editForm.location),
+      location: finalLocation,
+      locationCity: editForm.locationCity,
+      locationExtra: editForm.locationExtra,
       locationData: editForm.locationData || null,
       description: stripDangerous(editForm.description),
       contact: normalizedContact,
@@ -877,6 +901,9 @@ export default function App() {
   );
 
   const previewLocation = buildLocationString(form.locationCity, form.locationExtra);
+  const editLocationPreview = editForm
+    ? buildLocationString(editForm.locationCity, editForm.locationExtra)
+    : "";
 
   return (
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR", locale: "en_MK" }}>
@@ -2302,6 +2329,52 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {showEditMapPicker && editForm && (
+            <motion.div
+              className="modal-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEditMapPicker(false)}
+            >
+              <motion.div
+                className="modal map-modal"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
+                <div className="modal-header">
+                  <h3 className="modal-title">
+                    {t("chooseOnMap") || "Choose location on map"}
+                  </h3>
+                  <button
+                    className="icon-btn"
+                    onClick={() => setShowEditMapPicker(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="modal-body" style={{ maxHeight: "70vh", overflow: "hidden" }}>
+                  <NorthMacedoniaMap
+                    selectedCity={editForm.locationCity}
+                    onSelectCity={(cityName) => {
+                      setEditForm((f) => ({ ...f, locationCity: cityName }));
+                      showMessage(
+                        `${t("locationSetTo") || "Location set to"} ${cityName}`,
+                        "success"
+                      );
+                      setShowEditMapPicker(false);
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ===== EDIT MODAL (restored, resized) ===== */}
         <AnimatePresence>
           {editingListing && editForm && (
@@ -2313,6 +2386,7 @@ export default function App() {
               onClick={() => {
                 setEditingListing(null);
                 setEditForm(null);
+                setShowEditMapPicker(false);
               }}
             >
               <motion.div
@@ -2329,6 +2403,7 @@ export default function App() {
                     onClick={() => {
                       setEditingListing(null);
                       setEditForm(null);
+                      setShowEditMapPicker(false);
                     }}
                   >
                     ✕
@@ -2344,7 +2419,7 @@ export default function App() {
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
-                          name: stripDangerous(e.target.value),
+                          name: stripDangerous(e.target.value).slice(0, 100),
                         })
                       }
                     />
@@ -2370,33 +2445,70 @@ export default function App() {
                   <div className="field-row-2">
                     <div className="field-group">
                       <label className="field-label">{t("location")}</label>
-                      <input
-                        className="input"
-                        value={editForm.location}
+                      <select
+                        className="select"
+                        value={editForm.locationCity}
                         onChange={(e) =>
                           setEditForm({
                             ...editForm,
-                            location: stripDangerous(e.target.value),
-                            locationData: null,
+                            locationCity: e.target.value,
                           })
                         }
+                      >
+                        <option value="">{t("selectCity") || "Select city"}</option>
+                        {MK_CITIES.map((city) => (
+                          <option key={city} value={city}>
+                            {city}
+                          </option>
+                        ))}
+                      </select>
+
+                      <input
+                        className="input"
+                        placeholder={t("locationExtra") || "Town / village / neighborhood"}
+                        value={editForm.locationExtra || ""}
+                        onChange={(e) => {
+                          const extra = stripDangerous(e.target.value).slice(0, 100);
+                          setEditForm({
+                            ...editForm,
+                            locationExtra: extra,
+                          });
+                        }}
                       />
+
+                      <button
+                        type="button"
+                        className="btn btn-ghost small"
+                        onClick={() => setShowEditMapPicker(true)}
+                        style={{ marginTop: 6 }}
+                      >
+                        {t("chooseOnMap")}
+                      </button>
+
+                      <p className="field-hint">
+                        📍 {editLocationPreview || t("selectCity")}
+                      </p>
                     </div>
+
                     <div className="field-group">
                       <label className="field-label">{t("contact")}</label>
                       <input
                         className="input"
                         type="tel"
-                        value={editForm.contact}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            contact: e.target.value.replace(/\D/g, ""),
-                          })
-                        }
-                        maxLength="15"
-                        inputMode="numeric"
+                        value={editForm.contact || ""}
+                        disabled
+                        readOnly
                       />
+                      <p className="field-hint">
+                        {t("contactEditLocked") || "Update your phone number in Account settings."}
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-ghost small"
+                        onClick={() => setSelectedTab("account")}
+                      >
+                        {t("goToAccount") || "Go to account"}
+                      </button>
                     </div>
                   </div>
 
@@ -2409,7 +2521,7 @@ export default function App() {
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
-                          description: stripDangerous(e.target.value),
+                          description: stripDangerous(e.target.value).slice(0, 1000),
                         })
                       }
                     />
@@ -2443,7 +2555,7 @@ export default function App() {
                         onChange={(e) =>
                           setEditForm({
                             ...editForm,
-                            tags: stripDangerous(e.target.value),
+                            tags: stripDangerous(e.target.value).slice(0, 64),
                           })
                         }
                       />
@@ -2461,7 +2573,7 @@ export default function App() {
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
-                          socialLink: stripDangerous(e.target.value),
+                          socialLink: stripDangerous(e.target.value).slice(0, 200),
                         })
                       }
                     />
@@ -2512,6 +2624,7 @@ export default function App() {
                     onClick={() => {
                       setEditingListing(null);
                       setEditForm(null);
+                      setShowEditMapPicker(false);
                     }}
                   >
                     {t("cancel")}
