@@ -1004,7 +1004,7 @@ export default function App() {
                               onClick={() => setSelectedTab("allListings")}
                               type="button"
                             >
-                              🔍 {t("allListings") || "Browse listings"}
+                              🔍 {t("explore") || "Browse listings"}
                             </button>
                             <button
                               className="btn small"
@@ -2335,6 +2335,7 @@ export default function App() {
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              style={{zIndex: 55 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowEditMapPicker(false)}
             >
