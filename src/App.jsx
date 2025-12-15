@@ -219,6 +219,17 @@ export default function App() {
   });
   useEffect(() => localStorage.setItem("favorites", JSON.stringify(favorites)), [favorites]);
 
+  /* Local feedback per listing (rating + comments) */
+  const [feedbackStore, setFeedbackStore] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("listingFeedback") || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
+  useEffect(() => localStorage.setItem("listingFeedback", JSON.stringify(feedbackStore)), [feedbackStore]);
+
   /* Close sidebar with ESC */
   useEffect(() => {
     const onEsc = (e) => {
@@ -739,6 +750,40 @@ export default function App() {
   const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
+  const feedbackStats = useMemo(() => {
+    if (!selectedListing) return { entries: [], avg: null };
+    const entries = getFeedbackForListing(selectedListing.id);
+    const total = entries.reduce((sum, e) => sum + (Number(e.rating) || 0), 0);
+    const avg = entries.length ? (total / entries.length).toFixed(1) : null;
+    return { entries, avg };
+  }, [feedbackStore, selectedListing]);
+
+  useEffect(() => {
+    if (!selectedListing) return;
+    const lastRating = getFeedbackForListing(selectedListing.id)[0]?.rating || 4;
+    setFeedbackDraft({ rating: lastRating, comment: "" });
+  }, [selectedListing, feedbackStore]);
+
+  const handleFeedbackSubmit = (listingId) => {
+    if (!listingId) return;
+    const rating = Math.min(Math.max(Number(feedbackDraft.rating) || 0, 1), 5);
+    const comment = (feedbackDraft.comment || "").trim();
+
+    setFeedbackStore((prev) => {
+      const existing = prev[listingId]?.entries || [];
+      const next = [
+        { rating, comment, createdAt: Date.now() },
+        ...existing,
+      ].slice(0, 25);
+
+      return { ...prev, [listingId]: { entries: next } };
+    });
+
+    setFeedbackDraft((d) => ({ ...d, comment: "" }));
+    showMessage(t("feedbackSaved") || "Saved", "success");
+  };
 
   const handleShareListing = (listing) => {
     const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
@@ -3203,90 +3248,194 @@ export default function App() {
                 </div>
 
                 <div className="modal-body listing-details-body" style={{ maxHeight: "72vh", overflowY: "auto" }}>
-                  <div className="listing-hero">
-                    <div className="hero-left">
-                      <div className="hero-icon-bubble">{categoryIcons[selectedListing.category] || "🏷️"}</div>
-                      <div>
-                        <p className="eyebrow">{t("listing") || "Listing"}</p>
-                        <h3 className="hero-title">{selectedListing.name}</h3>
-                        <div className="chip-row">
-                          <span className="pill">{t(selectedListing.category) || selectedListing.category}</span>
-                          <span className="pill pill-soft">{selectedListing.location || (t("unspecified") || "Unspecified")}</span>
+                  <div className="listing-layout">
+                    <div className="listing-main">
+                      <div className="listing-hero">
+                        <div className="hero-left">
+                          <div className="hero-icon-bubble">{categoryIcons[selectedListing.category] || "🏷️"}</div>
+                          <div>
+                            <p className="eyebrow">{t("listing") || "Listing"}</p>
+                            <h3 className="hero-title">{selectedListing.name}</h3>
+                            <div className="chip-row">
+                              <span className="pill">{t(selectedListing.category) || selectedListing.category}</span>
+                              <span className="pill pill-soft">{selectedListing.location || (t("unspecified") || "Unspecified")}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="status-stack">
+                          <span className={`status-pill ${selectedListing.status === "verified" ? "is-verified" : "is-pending"}`}>
+                            {selectedListing.status === "verified" ? "✅ " + t("verified") : "⏳ " + t("pending")}
+                          </span>
+                          {selectedListing.expiresAt && (
+                            <span className="small-muted">{t("expires")}: {new Date(selectedListing.expiresAt).toLocaleDateString()}</span>
+                          )}
+                          <span className="rating-chip">
+                            ⭐ {feedbackStats.avg || "–"} / 5
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="listing-highlight-grid">
+                        <div className="highlight-card">
+                          <p className="highlight-label">{t("status")}</p>
+                          <p className="highlight-value">{selectedListing.status === "verified" ? t("verified") : t("pendingVerification")}</p>
+                        </div>
+                        <div className="highlight-card">
+                          <p className="highlight-label">{t("listedOn") || t("postedOn") || "Posted on"}</p>
+                          <p className="highlight-value">{selectedListing.createdAt ? new Date(selectedListing.createdAt).toLocaleDateString() : t("unspecified") || "Unspecified"}</p>
+                        </div>
+                        <div className="highlight-card">
+                          <p className="highlight-label">{t("priceRangeLabel") || t("priceLabel")}</p>
+                          <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
+                        </div>
+                        <div className="highlight-card">
+                          <p className="highlight-label">{t("locationDetails") || "Location"}</p>
+                          <p className="highlight-value">
+                            {buildLocationString(selectedListing.locationData?.city || selectedListing.location, selectedListing.locationData?.area || selectedListing.locationExtra) || t("unspecified") || "Unspecified"}
+                          </p>
+                          {selectedListing.locationData?.mapsUrl && (
+                            <a className="map-link" href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">{t("openInMaps") || "Open in Maps"}</a>
+                          )}
+                        </div>
+                        <div className="highlight-card">
+                          <p className="highlight-label">{t("reputation") || "Reputation"}</p>
+                          <p className="highlight-value">{feedbackStats.avg ? `${feedbackStats.avg}/5` : t("noFeedback") || "No feedback yet"}</p>
+                          <p className="small-muted">{t("recentFeedback") || "Recent notes"}: {feedbackStats.entries.length}</p>
+                        </div>
+                      </div>
+
+                      {selectedListing.imagePreview && <img src={selectedListing.imagePreview} alt="preview" className="listing-hero-image" />}
+
+                      <div className="listing-section">
+                        <div className="section-heading">
+                          <h4>{t("aboutListing") || "About this listing"}</h4>
+                          <span className="pill muted">{t("category")}: {t(selectedListing.category) || selectedListing.category}</span>
+                        </div>
+                        <p className="listing-description-full">{selectedListing.description}</p>
+                        <div className="soft-grid">
+                          <div>
+                            <p className="highlight-label">{t("pricing") || t("priceLabel")}</p>
+                            <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
+                          </div>
+                          <div>
+                            <p className="highlight-label">{t("contactEmail") || "Email"}</p>
+                            <p className="highlight-value">{selectedListing.userEmail || t("unspecified") || "Unspecified"}</p>
+                          </div>
+                        </div>
+                        {selectedListing.tags && (
+                          <div className="tag-chip-row">
+                            {(selectedListing.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                              <span className="tag-chip" key={tag}>{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                        {selectedListing.socialLink && (
+                          <a className="link-badge" href={selectedListing.socialLink} target="_blank" rel="noreferrer">{t("websiteLabel")}: {selectedListing.socialLink}</a>
+                        )}
+                      </div>
+
+                      <div className="contact-panel">
+                        <div>
+                          <p className="panel-title">{t("contact")}</p>
+                          <p className="panel-subtitle">{selectedListing.contact || (t("unspecified") || "Unspecified")}</p>
+                          <p className="panel-hint">{t("contactAutofill") || "We use your account phone for trust and safety."}</p>
+                        </div>
+                        <div className="quick-actions">
+                          <div className="quick-actions-header">
+                            <p className="highlight-label">{t("quickActions") || "Quick actions"}</p>
+                            <p className="small-muted">{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
+                          </div>
+                          <div className="quick-action-buttons">
+                            <button className="quick-action-btn" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
+                            <button className="quick-action-btn" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
+                            <button className="quick-action-btn ghost" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
+                            <button className="quick-action-btn ghost" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="listing-section feedback-card">
+                        <div className="section-heading">
+                          <h4>{t("reputation") || "Reputation"}</h4>
+                          <div className="rating-display">
+                            <div className="rating-stars" aria-label="rating">
+                              {"★★★★★".slice(0, Math.round(feedbackDraft.rating || 0))}
+                            </div>
+                            <span className="pill pill-soft">{feedbackStats.avg || "–"}/5</span>
+                          </div>
+                        </div>
+                        <p className="small-muted">{t("localSaveNote") || "Saved locally on this device."}</p>
+                        <div className="rating-input-row">
+                          <label>{t("ratingLabel") || "Your rating"}</label>
+                          <input
+                            type="range"
+                            min="1"
+                            max="5"
+                            step="1"
+                            value={feedbackDraft.rating}
+                            onChange={(e) => setFeedbackDraft((d) => ({ ...d, rating: Number(e.target.value) }))}
+                          />
+                          <span className="rating-value">{feedbackDraft.rating}/5</span>
+                        </div>
+                        <textarea
+                          className="feedback-textarea"
+                          rows={3}
+                          value={feedbackDraft.comment}
+                          placeholder={t("commentPlaceholderDetailed") || "Share your experience or expectation"}
+                          onChange={(e) => setFeedbackDraft((d) => ({ ...d, comment: e.target.value }))}
+                        />
+                        <div className="modal-actions" style={{ padding: 0 }}>
+                          <button className="btn" onClick={() => handleFeedbackSubmit(selectedListing.id)}>
+                            💾 {t("saveFeedback") || "Save feedback"}
+                          </button>
+                          <span className="small-muted">{t("recentFeedback")}: {feedbackStats.entries.length}</span>
+                        </div>
+                        <div className="feedback-list">
+                          {feedbackStats.entries.length === 0 && (
+                            <p className="small-muted">{t("noFeedback") || "No feedback yet"}</p>
+                          )}
+                          {feedbackStats.entries.map((entry, idx) => (
+                            <div className="feedback-item" key={idx}>
+                              <div className="feedback-meta">
+                                <span className="pill pill-soft">{entry.rating}/5</span>
+                                <span className="small-muted">{new Date(entry.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              {entry.comment && <p className="feedback-comment">{entry.comment}</p>}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                    <div className="status-stack">
-                      <span className={`status-pill ${selectedListing.status === "verified" ? "is-verified" : "is-pending"}`}>
-                        {selectedListing.status === "verified" ? "✅ " + t("verified") : "⏳ " + t("pending")}
-                      </span>
-                      {selectedListing.expiresAt && (
-                        <span className="small-muted">{t("expires")}: {new Date(selectedListing.expiresAt).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="listing-highlight-grid">
-                    <div className="highlight-card">
-                      <p className="highlight-label">{t("status")}</p>
-                      <p className="highlight-value">{selectedListing.status === "verified" ? t("verified") : t("pendingVerification")}</p>
-                    </div>
-                    <div className="highlight-card">
-                      <p className="highlight-label">{t("postedOn") || "Posted on"}</p>
-                      <p className="highlight-value">{selectedListing.createdAt ? new Date(selectedListing.createdAt).toLocaleDateString() : t("unspecified") || "Unspecified"}</p>
-                    </div>
-                    <div className="highlight-card">
-                      <p className="highlight-label">{t("priceRangeLabel") || t("priceLabel")}</p>
-                      <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
-                    </div>
-                    <div className="highlight-card">
-                      <p className="highlight-label">{t("locationDetails") || "Location"}</p>
-                      <p className="highlight-value">
-                        {buildLocationString(selectedListing.locationData?.city || selectedListing.location, selectedListing.locationData?.area || selectedListing.locationExtra) || t("unspecified") || "Unspecified"}
-                      </p>
-                      {selectedListing.locationData?.mapsUrl && (
-                        <a className="map-link" href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">{t("openInMaps") || "Open in Maps"}</a>
-                      )}
-                    </div>
-                  </div>
-
-                  {selectedListing.imagePreview && <img src={selectedListing.imagePreview} alt="preview" className="listing-hero-image" />}
-
-                  <div className="listing-section">
-                    <div className="section-heading">
-                      <h4>{t("aboutListing") || "About this listing"}</h4>
-                      <span className="pill muted">{t("category")}: {t(selectedListing.category) || selectedListing.category}</span>
-                    </div>
-                    <p className="listing-description-full">{selectedListing.description}</p>
-                    {selectedListing.tags && (
-                      <div className="tag-chip-row">
-                        {(selectedListing.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                          <span className="tag-chip" key={tag}>{tag}</span>
-                        ))}
+                    <aside className="listing-sidebar">
+                      <div className="sidebar-card">
+                        <p className="sidebar-title">{t("quickFacts") || "Quick facts"}</p>
+                        <ul className="fact-list">
+                          <li><span>{t("statusLabel") || t("status") || "Status"}</span><strong>{selectedListing.status === "verified" ? t("verified") : t("pendingVerification")}</strong></li>
+                          <li><span>{t("listedOn") || t("postedOn") || "Listed"}</span><strong>{selectedListing.createdAt ? new Date(selectedListing.createdAt).toLocaleDateString() : t("unspecified") || "Unspecified"}</strong></li>
+                          <li><span>{t("locationLabelFull") || t("location") || "Location"}</span><strong>{selectedListing.location || t("unspecified") || "Unspecified"}</strong></li>
+                          <li><span>{t("pricing") || t("priceLabel") || "Price"}</span><strong>{selectedListing.offerprice || t("unspecified") || "Unspecified"}</strong></li>
+                        </ul>
                       </div>
-                    )}
-                    {selectedListing.socialLink && (
-                      <a className="link-badge" href={selectedListing.socialLink} target="_blank" rel="noreferrer">{t("websiteLabel")}: {selectedListing.socialLink}</a>
-                    )}
-                  </div>
 
-                  <div className="contact-panel">
-                    <div>
-                      <p className="panel-title">{t("contact")}</p>
-                      <p className="panel-subtitle">{selectedListing.contact || (t("unspecified") || "Unspecified")}</p>
-                      <p className="panel-hint">{t("contactAutofill") || "We use your account phone for trust and safety."}</p>
-                    </div>
-                    <div className="quick-actions">
-                      <div className="quick-actions-header">
-                        <p className="highlight-label">{t("quickActions") || "Quick actions"}</p>
-                        <p className="small-muted">{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
+                      <div className="sidebar-card">
+                        <p className="sidebar-title">{t("shareListing") || t("share") || "Share"}</p>
+                        <div className="sidebar-actions">
+                          <button className="quick-action-btn" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
+                          <button className="quick-action-btn ghost" onClick={() => toggleFav(selectedListing.id)}>
+                            {favorites.includes(selectedListing.id) ? "★" : "☆"} {t("favorite") || "Favorite"}
+                          </button>
+                          {selectedListing.locationData?.mapsUrl && (
+                            <button className="quick-action-btn ghost" onClick={() => window.open(selectedListing.locationData.mapsUrl, "_blank")}>🗺️ {t("openInMaps") || "Open in Maps"}</button>
+                          )}
+                        </div>
                       </div>
-                      <div className="quick-action-buttons">
-                        <button className="quick-action-btn" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
-                        <button className="quick-action-btn" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
-                        <button className="quick-action-btn ghost" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
-                        <button className="quick-action-btn ghost" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
+
+                      <div className="sidebar-card muted-card">
+                        <p className="sidebar-title">{t("localSaveNote") || "Local notes"}</p>
+                        <p className="small-muted">{t("feedbackSidebarBlurb") || "Ratings and notes stay on this device so you can compare later."}</p>
                       </div>
-                    </div>
+                    </aside>
                   </div>
                 </div>
               </motion.div>
