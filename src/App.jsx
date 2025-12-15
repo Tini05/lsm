@@ -3,7 +3,7 @@
 import logo from "./assets/logo.png";
 import React, { useEffect, useMemo, useState } from "react";
 import { auth, db, createRecaptcha } from "./firebase";
-import { ref as dbRef, set, update, onValue, remove } from "firebase/database";
+import { ref as dbRef, set, update, onValue, remove, push } from "firebase/database";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -208,7 +208,7 @@ export default function App() {
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState("");
   const [locFilter, setLocFilter] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("topRated");
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   /* Favorites */
@@ -221,16 +221,10 @@ export default function App() {
   });
   useEffect(() => localStorage.setItem("favorites", JSON.stringify(favorites)), [favorites]);
 
-  /* Local feedback per listing (rating + comments) */
-  const [feedbackStore, setFeedbackStore] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("listingFeedback") || "{}");
-    } catch {
-      return {};
-    }
-  });
+  /* Feedback per listing (rating + comments) */
+  const [feedbackStore, setFeedbackStore] = useState({});
   const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
-  useEffect(() => localStorage.setItem("listingFeedback", JSON.stringify(feedbackStore)), [feedbackStore]);
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
 
   /* Close sidebar with ESC */
   useEffect(() => {
@@ -291,6 +285,33 @@ export default function App() {
       const valid = arr.filter((i) => !i.expiresAt || i.expiresAt > Date.now());
       setListings(valid);
     });
+  }, []);
+
+  useEffect(() => {
+    const feedbackRef = dbRef(db, "feedback");
+    const unsubscribe = onValue(feedbackRef, (snapshot) => {
+      const val = snapshot.val() || {};
+      const normalized = {};
+
+      Object.entries(val).forEach(([listingId, entriesObj]) => {
+        const entries = Object.values(entriesObj || {})
+          .map((entry) => ({
+            rating: Number(entry.rating) || 0,
+            comment: entry.comment || "",
+            createdAt: entry.createdAt || 0,
+            userId: entry.userId || null,
+            author: entry.author || null,
+          }))
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+          .slice(0, 50);
+
+        normalized[listingId] = { entries };
+      });
+
+      setFeedbackStore(normalized);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   /* Email-link sign-in (preserved) */
@@ -753,6 +774,18 @@ export default function App() {
     () => Array.from(new Set(verifiedListings.map((l) => (l.location || "").trim()).filter(Boolean))),
     [verifiedListings]
   );
+  const feedbackAverages = useMemo(() => {
+    const map = {};
+
+    Object.entries(feedbackStore).forEach(([listingId, data]) => {
+      const entries = data?.entries || [];
+      const total = entries.reduce((sum, e) => sum + (Number(e.rating) || 0), 0);
+      const count = entries.length;
+      map[listingId] = { count, avg: count ? Number((total / count).toFixed(1)) : null };
+    });
+
+    return map;
+  }, [feedbackStore]);
   const filtered = useMemo(() => {
     let arr = [...verifiedListings];
     if (q.trim()) {
@@ -765,11 +798,24 @@ export default function App() {
     }
     if (catFilter) arr = arr.filter((l) => (t(l.category) || l.category) === catFilter);
     if (locFilter) arr = arr.filter((l) => l.location === locFilter);
+    if (sortBy === "topRated") {
+      arr.sort((a, b) => {
+        const aStats = feedbackAverages[a.id] || {};
+        const bStats = feedbackAverages[b.id] || {};
+        const bAvg = bStats.avg ?? -1;
+        const aAvg = aStats.avg ?? -1;
+        if (bAvg !== aAvg) return bAvg - aAvg;
+        const bCount = bStats.count || 0;
+        const aCount = aStats.count || 0;
+        if (bCount !== aCount) return bCount - aCount;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+    }
     if (sortBy === "newest") arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     if (sortBy === "expiring") arr.sort((a, b) => (a.expiresAt || 0) - (b.expiresAt || 0));
     if (sortBy === "az") arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     return arr;
-  }, [verifiedListings, q, catFilter, locFilter, sortBy]);
+  }, [verifiedListings, q, catFilter, locFilter, sortBy, feedbackAverages]);
 
   const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
   const myVerifiedCount = useMemo(
@@ -784,13 +830,13 @@ export default function App() {
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
+
   const feedbackStats = useMemo(() => {
-    if (!selectedListing) return { entries: [], avg: null };
+    if (!selectedListing) return { entries: [], avg: null, count: 0 };
     const entries = getFeedbackForListing(selectedListing.id);
-    const total = entries.reduce((sum, e) => sum + (Number(e.rating) || 0), 0);
-    const avg = entries.length ? (total / entries.length).toFixed(1) : null;
-    return { entries, avg };
-  }, [feedbackStore, selectedListing]);
+    const stats = feedbackAverages[selectedListing.id];
+    return { entries, avg: stats?.avg ?? null, count: stats?.count ?? 0 };
+  }, [feedbackAverages, selectedListing, feedbackStore]);
 
   useEffect(() => {
     if (!selectedListing) return;
@@ -798,23 +844,29 @@ export default function App() {
     setFeedbackDraft({ rating: lastRating, comment: "" });
   }, [selectedListing, feedbackStore]);
 
-  const handleFeedbackSubmit = (listingId) => {
+  const handleFeedbackSubmit = async (listingId) => {
     if (!listingId) return;
     const rating = Math.min(Math.max(Number(feedbackDraft.rating) || 0, 1), 5);
     const comment = (feedbackDraft.comment || "").trim();
 
-    setFeedbackStore((prev) => {
-      const existing = prev[listingId]?.entries || [];
-      const next = [
-        { rating, comment, createdAt: Date.now() },
-        ...existing,
-      ].slice(0, 25);
+    const entry = {
+      rating,
+      comment,
+      createdAt: Date.now(),
+      userId: user?.uid || null,
+      author: user?.email || user?.phoneNumber || null,
+    };
 
-      return { ...prev, [listingId]: { entries: next } };
-    });
-
-    setFeedbackDraft((d) => ({ ...d, comment: "" }));
-    showMessage(t("feedbackSaved") || "Saved", "success");
+    setFeedbackSaving(true);
+    try {
+      await push(dbRef(db, `feedback/${listingId}`), entry);
+      setFeedbackDraft((d) => ({ ...d, comment: "" }));
+      showMessage(t("feedbackSaved") || "Saved", "success");
+    } catch (error) {
+      showMessage(t("feedbackSaveError") || "Could not save feedback", "error");
+    } finally {
+      setFeedbackSaving(false);
+    }
   };
 
   const handleShareListing = (listing) => {
@@ -1454,6 +1506,7 @@ export default function App() {
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
                               >
+                                <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
                                 <option value="newest">{t("sortNewest")}</option>
                                 <option value="expiring">{t("sortExpiring")}</option>
                                 <option value="az">{t("sortAZ")}</option>
@@ -3425,7 +3478,7 @@ export default function App() {
                             <span className="small-muted">{t("expires")}: {new Date(selectedListing.expiresAt).toLocaleDateString()}</span>
                           )}
                           <span className="rating-chip">
-                            ⭐ {feedbackStats.avg || "–"} / 5
+                            ⭐ {feedbackStats.avg ?? "–"} / 5
                           </span>
                         </div>
                       </div>
@@ -3454,8 +3507,8 @@ export default function App() {
                         </div>
                         <div className="highlight-card">
                           <p className="highlight-label">{t("reputation") || "Reputation"}</p>
-                          <p className="highlight-value">{feedbackStats.avg ? `${feedbackStats.avg}/5` : t("noFeedback") || "No feedback yet"}</p>
-                          <p className="small-muted">{t("recentFeedback") || "Recent notes"}: {feedbackStats.entries.length}</p>
+                          <p className="highlight-value">{feedbackStats.avg != null ? `${feedbackStats.avg}/5` : t("noFeedback") || "No feedback yet"}</p>
+                          <p className="small-muted">{t("recentFeedback") || "Recent notes"}: {feedbackStats.count}</p>
                         </div>
                       </div>
 
@@ -3509,57 +3562,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="listing-section feedback-card">
-                        <div className="section-heading">
-                          <h4>{t("reputation") || "Reputation"}</h4>
-                          <div className="rating-display">
-                            <div className="rating-stars" aria-label="rating">
-                              {"★★★★★".slice(0, Math.round(feedbackDraft.rating || 0))}
-                            </div>
-                            <span className="pill pill-soft">{feedbackStats.avg || "–"}/5</span>
-                          </div>
-                        </div>
-                        <p className="small-muted">{t("localSaveNote") || "Saved locally on this device."}</p>
-                        <div className="rating-input-row">
-                          <label>{t("ratingLabel") || "Your rating"}</label>
-                          <input
-                            type="range"
-                            min="1"
-                            max="5"
-                            step="1"
-                            value={feedbackDraft.rating}
-                            onChange={(e) => setFeedbackDraft((d) => ({ ...d, rating: Number(e.target.value) }))}
-                          />
-                          <span className="rating-value">{feedbackDraft.rating}/5</span>
-                        </div>
-                        <textarea
-                          className="feedback-textarea"
-                          rows={3}
-                          value={feedbackDraft.comment}
-                          placeholder={t("commentPlaceholderDetailed") || "Share your experience or expectation"}
-                          onChange={(e) => setFeedbackDraft((d) => ({ ...d, comment: e.target.value }))}
-                        />
-                        <div className="modal-actions" style={{ padding: 0 }}>
-                          <button className="btn" onClick={() => handleFeedbackSubmit(selectedListing.id)}>
-                            💾 {t("saveFeedback") || "Save feedback"}
-                          </button>
-                          <span className="small-muted">{t("recentFeedback")}: {feedbackStats.entries.length}</span>
-                        </div>
-                        <div className="feedback-list">
-                          {feedbackStats.entries.length === 0 && (
-                            <p className="small-muted">{t("noFeedback") || "No feedback yet"}</p>
-                          )}
-                          {feedbackStats.entries.map((entry, idx) => (
-                            <div className="feedback-item" key={idx}>
-                              <div className="feedback-meta">
-                                <span className="pill pill-soft">{entry.rating}/5</span>
-                                <span className="small-muted">{new Date(entry.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              {entry.comment && <p className="feedback-comment">{entry.comment}</p>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
                     </div>
 
                     <aside className="listing-sidebar">
@@ -3587,10 +3589,85 @@ export default function App() {
                       </div>
 
                       <div className="sidebar-card muted-card">
-                        <p className="sidebar-title">{t("localSaveNote") || "Local notes"}</p>
-                        <p className="small-muted">{t("feedbackSidebarBlurb") || "Ratings and notes stay on this device so you can compare later."}</p>
+                        <p className="sidebar-title">{t("cloudFeedbackNote") || "Shared feedback"}</p>
+                        <p className="small-muted">{t("feedbackSidebarBlurb") || "Ratings and notes help everyone see the most trusted listings."}</p>
                       </div>
                     </aside>
+                  </div>
+
+                  <div className="feedback-section">
+                    <div className="feedback-header">
+                      <div>
+                        <p className="eyebrow">{t("reputation") || "Reputation"}</p>
+                        <h4>{t("communityFeedback") || "Community feedback"}</h4>
+                        <p className="small-muted">{t("cloudFeedbackNote") || "Ratings and comments are stored securely so everyone can see them."}</p>
+                      </div>
+                      <div className="feedback-summary">
+                        <div className="score-circle">{feedbackStats.avg ?? "–"}</div>
+                        <div>
+                          <p className="summary-label">{feedbackStats.count || 0} {t("reviews") || "reviews"}</p>
+                          <p className="small-muted">{t("averageRating") || "Average rating"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="feedback-grid">
+                      <div className="feedback-form-card">
+                        <div className="rating-input-row">
+                          <label>{t("ratingLabel") || "Your rating"}</label>
+                          <input
+                            type="range"
+                            min="1"
+                            max="5"
+                            step="1"
+                            value={feedbackDraft.rating}
+                            onChange={(e) => setFeedbackDraft((d) => ({ ...d, rating: Number(e.target.value) }))}
+                          />
+                          <span className="rating-value">{feedbackDraft.rating}/5</span>
+                        </div>
+                        <textarea
+                          className="feedback-textarea"
+                          rows={3}
+                          value={feedbackDraft.comment}
+                          placeholder={t("commentPlaceholderDetailed") || "Share your experience or expectation"}
+                          onChange={(e) => setFeedbackDraft((d) => ({ ...d, comment: e.target.value }))}
+                        />
+                        <div className="feedback-form-actions">
+                          <button
+                            className="btn"
+                            onClick={() => handleFeedbackSubmit(selectedListing.id)}
+                            disabled={feedbackSaving}
+                          >
+                            {feedbackSaving
+                              ? `⏳ ${t("saving") || "Saving..."}`
+                              : `💾 ${t("saveFeedback") || "Save feedback"}`}
+                          </button>
+                          <span className="small-muted">{t("recentFeedback")}: {feedbackStats.count}</span>
+                        </div>
+                      </div>
+
+                      <div className="feedback-list-card">
+                        <div className="feedback-list-header">
+                          <p className="sidebar-title">{t("recentFeedback") || "Recent feedback"}</p>
+                          <span className="pill pill-soft">⭐ {feedbackStats.avg ?? "–"} / 5</span>
+                        </div>
+                        <div className="feedback-scroll">
+                          {feedbackStats.entries.length === 0 ? (
+                            <p className="small-muted">{t("noFeedback") || "No feedback yet"}</p>
+                          ) : (
+                            feedbackStats.entries.map((entry, idx) => (
+                              <div className="feedback-item" key={idx}>
+                                <div className="feedback-meta">
+                                  <span className="pill pill-soft">{entry.rating}/5</span>
+                                  <span className="small-muted">{new Date(entry.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                {entry.comment && <p className="feedback-comment">{entry.comment}</p>}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
