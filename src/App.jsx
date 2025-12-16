@@ -868,6 +868,18 @@ export default function App() {
     () => myListings.filter((l) => l.status !== "verified").length,
     [myListings]
   );
+
+  const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
+  const getAverageRating = useCallback(
+    (listingId) => {
+      const entries = getFeedbackForListing(listingId);
+      if (!entries.length) return null;
+      const total = entries.reduce((sum, entry) => sum + (Number(entry.rating) || 0), 0);
+      return Number((total / entries.length).toFixed(1));
+    },
+    [feedbackStore]
+  );
+
   const featuredByCategory = useMemo(() => {
     const verified = listings.filter((l) => l.status === "verified");
     const map = {};
@@ -897,17 +909,6 @@ export default function App() {
   );
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
-  const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
-  const getAverageRating = useCallback(
-    (listingId) => {
-      const entries = getFeedbackForListing(listingId);
-      if (!entries.length) return null;
-      const total = entries.reduce((sum, entry) => sum + (Number(entry.rating) || 0), 0);
-      return Number((total / entries.length).toFixed(1));
-    },
-    [feedbackStore]
-  );
 
   const feedbackStats = useMemo(() => {
     if (!selectedListing) return { entries: [], avg: null, count: 0 };
