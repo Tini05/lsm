@@ -45,6 +45,8 @@ const translations = {
     cityShortcuts: "Popular cities",
     categorySpotlight: "Popular categories",
     neighborhoodFriendly: "Neighbourhood-friendly navigation",
+    exploreHeroTitle: "Explore trusted local listings",
+    exploreHeroSubtitle: "Use quick filters to keep cards tidy and open details when you're ready.",
 
     // Form / Listings
     submitListing: "Submit Your Listing",
@@ -80,6 +82,11 @@ const translations = {
     sortNewest: "Newest",
     sortExpiring: "Expiring soon",
     sortAZ: "A → Z",
+    resultsSummary: "Sorted by rating with trimmed descriptions for easy scanning.",
+    refineResults: "Refine results",
+    filterHelper: "Narrow down by name, city, category, or sort preference.",
+    resetFilters: "Reset filters",
+    quickFilters: "Quick filters",
 
     // Authentication
     login: "Login",
@@ -379,6 +386,8 @@ const translations = {
     cityShortcuts: "Qytetet kryesore",
     categorySpotlight: "Kategoritë e preferuara",
     neighborhoodFriendly: "Navigim i lehtë për lagjen",
+    exploreHeroTitle: "Eksploro listimet e besuara lokale",
+    exploreHeroSubtitle: "Përdor filtrat e shpejtë që kartat të jenë të rregullta dhe hap detajet kur të duash.",
 
     // Form / Listings
     submitListing: "Dërgo listimin tënd",
@@ -414,6 +423,11 @@ const translations = {
     sortNewest: "Më të rejat",
     sortExpiring: "Afati më i afërt",
     sortAZ: "A → Zh",
+    resultsSummary: "Të renditura sipas vlerësimeve me përshkrime të shkurtra.",
+    refineResults: "Përpuno rezultatet",
+    filterHelper: "Ngushto sipas emrit, qytetit, kategorisë ose mënyrës së renditjes.",
+    resetFilters: "Rifillo filtrat",
+    quickFilters: "Filtra të shpejtë",
 
     // Authentication
     login: "Hyrje",
@@ -715,7 +729,9 @@ const translations = {
     mkRibbonSubtitle: "Локален изглед, пријателски јазик и градови што ги познаваш.",
     cityShortcuts: "Популарни градови",
     categorySpotlight: "Популарни категории",
-    neighborhoodFriendly: "Маалска навигација",    
+    neighborhoodFriendly: "Маалска навигација",
+    exploreHeroTitle: "Истражи доверливи локални огласи",
+    exploreHeroSubtitle: "Користи брзи филтри за уредни картички и отвори детали кога ти треба.",
 
     // Form / Listings
     submitListing: "Испрати твој оглас",
@@ -751,6 +767,11 @@ const translations = {
     sortNewest: "Најново",
     sortExpiring: "Скоро истекува",
     sortAZ: "А → Ш",
+    resultsSummary: "Подредени по рејтинг со скратени описи за лесно прелистување.",
+    refineResults: "Прецизирај резултати",
+    filterHelper: "Сузи по име, град, категорија или тип на сортирање.",
+    resetFilters: "Ресетирај филтрите",
+    quickFilters: "Брзи филтри",
 
     // Authentication
     login: "Најава",

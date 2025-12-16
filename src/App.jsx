@@ -122,6 +122,12 @@ const chunkArray = (items = [], size = 1) => {
   return chunks;
 };
 
+const getDescriptionPreview = (text = "", limit = 160) => {
+  const clean = stripDangerous(text || "").trim();
+  if (!clean) return "";
+  return clean.length > limit ? `${clean.slice(0, limit).trim()}…` : clean;
+};
+
 /* Helper: normalize phone numbers before storing */
 const normalizePhoneForStorage = (raw) => {
   if (!raw) return raw;
@@ -1179,6 +1185,16 @@ export default function App() {
     return t("dashboard") || "Dashboard";
   }, [selectedTab, t]);
 
+  const sortLabelMap = useMemo(
+    () => ({
+      topRated: t("sortTopRated") || "Highest rated",
+      newest: t("sortNewest"),
+      expiring: t("sortExpiring"),
+      az: t("sortAZ"),
+    }),
+    [t]
+  );
+
   const authModeTabs = useMemo(
     () => [
       { id: "login", label: t("login") || "Login" },
@@ -1402,30 +1418,32 @@ export default function App() {
                                 window.history.replaceState({}, "", url.toString());
                               }}
                             >
-                              <header className="spotlight-header">
-                                <div>
-                                  <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
-                                  <h3 className="listing-title">{l.name}</h3>
-                                </div>
-                                {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
-                              </header>
-
-                              <p className="listing-description listing-description-clamp spotlight-description">
-                                {l.description}
-                              </p>
-
-                              {(() => {
-                                const stats = getListingStats(l);
-                                return (
-                                  <div className="listing-stats">
-                                    <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
-                                    <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                                    <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                              <div className="spotlight-body">
+                                <header className="spotlight-header">
+                                  <div>
+                                    <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
+                                    <h3 className="listing-title">{l.name}</h3>
                                   </div>
-                                );
-                              })()}
+                                  {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
+                                </header>
 
-                              <div className="listing-footer-row">
+                                <p className="listing-description listing-description-clamp spotlight-description">
+                                  {getDescriptionPreview(l.description, 140)}
+                                </p>
+
+                                {(() => {
+                                  const stats = getListingStats(l);
+                                  return (
+                                    <div className="listing-stats">
+                                      <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                      <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                      <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+
+                              <div className="listing-footer-row spotlight-footer">
                                 <div className="listing-footer-left">
                                   {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
                                   {l.tags && (
@@ -1963,8 +1981,7 @@ export default function App() {
                     )}
 
                     {selectedTab === "allListings" && (
-                      <div className="section">
-                        {/* Header with title + count */}
+                      <div className="section explore-section">
                         <div className="listings-header">
                           <div className="listings-header-text">
                             <h2 className="section-title">🏪 {t("browse")}</h2>
@@ -1983,203 +2000,290 @@ export default function App() {
                             </span>
                           </div>
                         </div>
-                    
-                        {/* Filters */}
-                        <div className="filters filters-dashboard">
-                          <div className="searchbar">
-                            <input
-                              className="input"
-                              placeholder={t("searchPlaceholder") || "Search by name or description"}
-                              value={q}
-                              onChange={(e) => setQ(e.target.value)}
-                              style={{ width: "90%" }}
-                            />
-                            {q && (
-                              <button
-                                className="btn btn-ghost small"
-                                type="button"
-                                onClick={() => setQ("")}
-                              >
-                                ✕
-                              </button>
-                            )}
-                            <button className="btn btn-ghost" type="button">
-                              {t("search")}
-                            </button>
+
+                        <div className="explore-hero card glass-card">
+                          <div className="explore-hero-copy">
+                            <p className="eyebrow">{t("explore")}</p>
+                            <h3 className="explore-hero-title">
+                              {t("exploreHeroTitle") || "Explore trusted listings across every city"}
+                            </h3>
+                            <p className="explore-hero-subtitle">
+                              {t("exploreHeroSubtitle") ||
+                                t("allListingsHint") ||
+                                "Filter by category, city, and price to discover the best local options."}
+                            </p>
+                            <div className="explore-hero-badges">
+                              <span className="badge count">{activeListingCount} {t("listingsLabel") || "listings"}</span>
+                              <span className="badge soft">{verifiedListings.length} {t("verified")}</span>
+                              <span className="pill pill-tags">{mkSpotlightCities[0]} • {t("cityShortcuts")}</span>
+                            </div>
                           </div>
-                    
-                          <div className="filter-row">
-                            <div className="filter-group">
-                              <label className="filter-label">{t("category")}</label>
-                              <select
-                                className="select category-dropdown"
-                                value={catFilter}
-                                onChange={(e) => setCatFilter(e.target.value)}
-                              >
-                                <option value="">{t("allCategories")}</option>
-                                {categories.map((cat) => (
-                                  <option key={cat} value={t(cat)}>
-                                    {t(cat)}
-                                  </option>
+
+                          <div className="explore-hero-meta">
+                            <div className="meta-card">
+                              <p className="meta-label">{t("categorySpotlight")}</p>
+                              <div className="chip-row compact">
+                                {featuredCategories.slice(0, 4).map((cat) => (
+                                  <span key={cat} className="chip chip-ghost">
+                                    {categoryIcons[cat]} {t(cat)}
+                                  </span>
                                 ))}
-                              </select>
+                              </div>
                             </div>
-                    
-                            <div className="filter-group">
-                              <label className="filter-label">{t("location")}</label>
-                              <select
-                                className="select"
-                                value={locFilter}
-                                onChange={(e) => setLocFilter(e.target.value)}
-                              >
-                                <option value="">{t("allLocations")}</option>
-                                {allLocations.map((l) => (
-                                  <option key={l} value={l}>
-                                    {l}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                    
-                            <div className="filter-group">
-                              <label className="filter-label">{t("sortBy")}</label>
-                              <select
-                                className="select"
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                              >
-                                <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
-                                <option value="newest">{t("sortNewest")}</option>
-                                <option value="expiring">{t("sortExpiring")}</option>
-                                <option value="az">{t("sortAZ")}</option>
-                              </select>
+                            <div className="meta-card">
+                              <p className="meta-label">{t("resultsLabel")}</p>
+                              <p className="meta-number">{filtered.length}</p>
+                              <p className="meta-note-text">{t("resultsSummary") || "Sorted by rating with previews for quick scanning."}</p>
                             </div>
                           </div>
                         </div>
-                    
-                        {/* Listings grid */}
-                        <div
-                          className="listing-grid listing-grid-dashboard"
-                          style={{ display: "block" }}
-                        >
-                          {filtered.map((l) => (
-                            <article
-                              key={l.id}
-                              className="listing-card"
-                              onClick={() => {
-                                setSelectedListing(l);
-                                const url = new URL(window.location.href);
-                                url.searchParams.set("listing", l.id);
-                                window.history.replaceState({}, "", url.toString());
-                              }}
 
-                              style={{marginBottom: "3%"}}
-                            >
-                              <header className="listing-header">
-                                <div className="listing-title-wrap">
-                                  <div className="listing-title-row">
-                                    <span className="category-icon">
-                                      {categoryIcons[l.category] || "🏷️"}
-                                    </span>
-                                    <h3 className="listing-title">{l.name}</h3>
-                                  </div>
-                                  <div className="listing-meta">
-                                    {t(l.category) || l.category} • {l.location}
-                                  </div>
-                                </div>
-                    
-                                <div className="listing-badges">
-                                  <span className="badge verified">✓ {t("verified")}</span>
-                                </div>
-                              </header>
-                    
-                              <p className="listing-description listing-description-clamp">
-                                {l.description}
-                              </p>
-
-                              {(() => {
-                                const stats = getListingStats(l);
-                                return (
-                                  <div className="listing-stats">
-                                    <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
-                                    <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                                    <span className="stat-chip subtle">🔥 {stats.engagement}</span>
-                                  </div>
-                                );
-                              })()}
-
-                              <div
-                                className="listing-footer-row"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="listing-footer-left">
-                                  {l.offerprice && (
-                                    <span className="pill pill-price">{l.offerprice}</span>
-                                  )}
-                                  {l.tags && (
-                                    <span className="pill pill-tags">
-                                      {l.tags.split(",")[0]?.trim()}
-                                      {l.tags.split(",").length > 1 ? " +" : ""}
-                                    </span>
-                                  )}
-                                </div>
-                    
-                                <div className="listing-actions compact">
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={() => window.open(`tel:${l.contact}`)}
-                                  >
-                                    📞
-                                  </button>
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={() =>
-                                      window.open(
-                                        `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
-                                          l.name || ""
-                                        )}`
-                                      )
-                                    }
-                                  >
-                                    ✉️
-                                  </button>
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={() => {
-                                      navigator.clipboard?.writeText(l.contact || "");
-                                      showMessage(t("copied"), "success");
-                                    }}
-                                  >
-                                    📋
-                                  </button>
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={() => handleShareListing(l)}
-                                  >
-                                    🔗
-                                  </button>
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={() => toggleFav(l.id)}
-                                  >
-                                    {favorites.includes(l.id) ? "★" : "☆"}
-                                  </button>
-                                </div>
+                        <div className="explore-layout">
+                          <aside className="explore-filters card">
+                            <div className="filter-panel-head">
+                              <div>
+                                <p className="eyebrow subtle">{t("refineResults") || "Refine results"}</p>
+                                <p className="filter-panel-subtitle">
+                                  {t("filterHelper") || "Narrow down by name, category, location, or sort order."}
+                                </p>
                               </div>
-                            </article>
-                          ))}
-                    
-                          {filtered.length === 0 && (
-                            <div className="empty">
-                              <div className="empty-icon">📭</div>
-                              <p className="empty-text">{t("noListingsYet")}</p>
+                              <button
+                                type="button"
+                                className="btn btn-ghost small"
+                                onClick={() => {
+                                  setQ("");
+                                  setCatFilter("");
+                                  setLocFilter("");
+                                  setSortBy("topRated");
+                                }}
+                              >
+                                {t("resetFilters") || "Reset"}
+                              </button>
                             </div>
-                          )}
+
+                            <label className="filter-label">{t("search")}</label>
+                            <div className="searchbar searchbar-stacked">
+                              <input
+                                className="input"
+                                placeholder={t("searchPlaceholder") || "Search by name or description"}
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                              />
+                              <div className="search-actions">
+                                {q && (
+                                  <button
+                                    className="btn btn-ghost small"
+                                    type="button"
+                                    onClick={() => setQ("")}
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                                <button className="btn btn-ghost" type="button">
+                                  {t("search")}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="filter-stack">
+                              <div className="filter-group full">
+                                <label className="filter-label">{t("category")}</label>
+                                <select
+                                  className="select category-dropdown"
+                                  value={catFilter}
+                                  onChange={(e) => setCatFilter(e.target.value)}
+                                >
+                                  <option value="">{t("allCategories")}</option>
+                                  {categories.map((cat) => (
+                                    <option key={cat} value={t(cat)}>
+                                      {t(cat)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="filter-group full">
+                                <label className="filter-label">{t("location")}</label>
+                                <select
+                                  className="select"
+                                  value={locFilter}
+                                  onChange={(e) => setLocFilter(e.target.value)}
+                                >
+                                  <option value="">{t("allLocations")}</option>
+                                  {allLocations.map((l) => (
+                                    <option key={l} value={l}>
+                                      {l}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="filter-group full">
+                                <label className="filter-label">{t("sortBy")}</label>
+                                <select
+                                  className="select"
+                                  value={sortBy}
+                                  onChange={(e) => setSortBy(e.target.value)}
+                                >
+                                  <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
+                                  <option value="newest">{t("sortNewest")}</option>
+                                  <option value="expiring">{t("sortExpiring")}</option>
+                                  <option value="az">{t("sortAZ")}</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="quick-filters">
+                              <p className="filter-label subtle">{t("quickFilters") || "Quick filters"}</p>
+                              <div className="chip-row">
+                                {featuredCategories.slice(0, 6).map((cat) => {
+                                  const label = t(cat);
+                                  const active = catFilter === label;
+                                  return (
+                                    <button
+                                      key={cat}
+                                      type="button"
+                                      className={`chip ${active ? "chip-active" : "chip-ghost"}`}
+                                      onClick={() => setCatFilter(active ? "" : label)}
+                                    >
+                                      {categoryIcons[cat]} {label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </aside>
+
+                          <div className="explore-results">
+                            <div className="explore-results-bar">
+                              <div>
+                                <p className="results-title">{t("resultsLabel")}: {filtered.length}</p>
+                                <p className="results-subtitle">{t("resultsSummary") || "Consistent card sizes keep browsing smooth."}</p>
+                              </div>
+                              <div className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</div>
+                            </div>
+
+                            <div className="listing-grid listing-grid-dashboard">
+                              {filtered.map((l) => (
+                                <article
+                                  key={l.id}
+                                  className="listing-card"
+                                  onClick={() => {
+                                    setSelectedListing(l);
+                                    const url = new URL(window.location.href);
+                                    url.searchParams.set("listing", l.id);
+                                    window.history.replaceState({}, "", url.toString());
+                                  }}
+                                >
+                                  <header className="listing-header">
+                                    <div className="listing-title-wrap">
+                                      <div className="listing-title-row">
+                                        <span className="category-icon">
+                                          {categoryIcons[l.category] || "🏷️"}
+                                        </span>
+                                        <h3 className="listing-title">{l.name}</h3>
+                                      </div>
+                                      <div className="listing-meta">
+                                        {t(l.category) || l.category} • {l.location}
+                                      </div>
+                                    </div>
+
+                                    <div className="listing-badges">
+                                      <span className="badge verified">✓ {t("verified")}</span>
+                                    </div>
+                                  </header>
+
+                                  <div className="listing-card-body">
+                                    <p className="listing-description listing-description-clamp listing-description-preview">
+                                      {getDescriptionPreview(l.description, 180)}
+                                    </p>
+
+                                    {(() => {
+                                      const stats = getListingStats(l);
+                                      return (
+                                        <div className="listing-stats">
+                                          <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                          <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                          <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  <div
+                                    className="listing-footer-row"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="listing-footer-left">
+                                      {l.offerprice && (
+                                        <span className="pill pill-price">{l.offerprice}</span>
+                                      )}
+                                      {l.tags && (
+                                        <span className="pill pill-tags">
+                                          {l.tags.split(",")[0]?.trim()}
+                                          {l.tags.split(",").length > 1 ? " +" : ""}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="listing-actions compact">
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => window.open(`tel:${l.contact}`)}
+                                      >
+                                        📞
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() =>
+                                          window.open(
+                                            `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                              l.name || ""
+                                            )}`
+                                          )
+                                        }
+                                      >
+                                        ✉️
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard?.writeText(l.contact || "");
+                                          showMessage(t("copied"), "success");
+                                        }}
+                                      >
+                                        📋
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => handleShareListing(l)}
+                                      >
+                                        🔗
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => toggleFav(l.id)}
+                                      >
+                                        {favorites.includes(l.id) ? "★" : "☆"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </article>
+                              ))}
+
+                              {filtered.length === 0 && (
+                                <div className="empty">
+                                  <div className="empty-icon">📭</div>
+                                  <p className="empty-text">{t("noListingsYet")}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
