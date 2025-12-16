@@ -1177,23 +1177,79 @@ body {
 }
 
 .tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+  flex-wrap: wrap;
+}
+
+.tabs-full {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  width: 100%;
+}
+
+.tabs-compact {
+  padding: 4px;
+  gap: 6px;
 }
 
 .tab {
-  background: #f3f4f6;
+  background: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  color: #1f2937;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.tabs-full .tab {
+  flex: 1;
+  justify-content: center;
+}
+
+.tab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
 }
 
 .tab.active {
-  background: #667eea;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
   color: #fff;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+.tab-icon {
+  font-size: 1.1rem;
+}
+
+.tab-badge {
+  background: rgba(15, 23, 42, 0.06);
+  color: #111827;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.tab.active .tab-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.tab-panel {
+  width: 100%;
 }
 
 /* =============== SIDEBAR PANEL =============== */
@@ -2357,26 +2413,6 @@ body {
   justify-content: center;
 }
 
-/* Tabs better spaced */
-.auth-tabs {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0 1.25rem 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.auth-tabs .tab {
-  flex: 1;
-  text-align: center;
-  border-radius: 999px;
-  padding: 0.5rem 0.75rem;
-}
-
-.auth-tabs .tab.active {
-  background: #4f46e5;
-  color: #fff;
-}
-
 /* Recaptcha spacing */
 .recaptcha {
   margin-top: 0.75rem;
@@ -2526,56 +2562,22 @@ body {
   transform: translateY(-1px);
 }
 
-/* Top-level: Login / Register */
-.auth-mode-tabs {
-  display: flex;
-  margin: 10px 16px 0;
-  padding: 2px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.15);
-}
-
-.auth-mode-tabs .tab {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  color: #475569;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.auth-mode-tabs .tab.active {
-  background: #ffffff;
-  color: #1d4ed8;
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
-}
-
-/* Inner tabs: Email / Phone */
+.auth-mode-tabs,
 .auth-tabs {
-  display: flex;
-  margin: 10px 16px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-.auth-tabs .tab {
-  flex: 1;
-  border: none;
+  margin: 10px 16px 6px;
   background: transparent;
-  padding: 8px 4px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  color: #64748b;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+  box-shadow: none;
 }
 
-.auth-tabs .tab.active {
+.auth-tabs .tab,
+.auth-mode-tabs .tab {
+  font-size: 0.95rem;
+}
+
+.auth-tabs .tab.active,
+.auth-mode-tabs .tab.active {
   color: #fff;
-  border-color: #2563eb;
 }
 
 .auth-body {
