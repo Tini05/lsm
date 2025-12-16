@@ -76,6 +76,19 @@ const countryCodes = [
 
 const currencyOptions = ["EUR", "MKD"];
 
+const mkSpotlightCities = [
+  "Skopje",
+  "Tetovë",
+  "Gostivar",
+  "Ohër",
+  "Kumanovë",
+  "Manastir",
+  "Prilep",
+  "Kërçovë",
+];
+
+const featuredCategories = ["services", "homeRepair", "tech", "food", "education", "car"];
+
 /* Helper: strip obvious garbage like tags */
 const stripDangerous = (v = "") => v.replace(/[<>]/g, "");
 
@@ -969,69 +982,110 @@ export default function App() {
         <Header />
 
         {selectedTab === "main" && (
-          <section className="page-hero">
-            <div className="container hero-grid">
-              <div className="hero-copy">
-                <p className="eyebrow hero-eyebrow">{t("community") || "Community marketplace"}</p>
-                <h2 className="hero-heading">
-                  {t("heroTitle") || "Find and share trustworthy local services"}
-                </h2>
-                <p className="hero-subtitle">
-                  {t("heroSubtitle") ||
-                    "List your service in seconds, verify your profile, and connect with people who need you most."}
-                </p>
-
-                <div className="hero-actions">
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      setSelectedTab("main");
-                      setShowPostForm(true);
-                    }}
-                  >
-                    🚀 {t("submitListing") || "Start a listing"}
-                  </button>
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => setSelectedTab("allListings")}
-                  >
-                    🔍 {t("explore") || "Browse the marketplace"}
-                  </button>
+          <>
+            <section className="local-ribbon">
+              <div className="container ribbon-inner">
+                <div className="ribbon-copy">
+                  <p className="ribbon-eyebrow">🇲🇰 {t("mkRibbonTitle")}</p>
+                  <h2 className="ribbon-title">{t("neighborhoodFriendly") || "Built for neighbourhoods"}</h2>
+                  <p className="ribbon-subtitle">{t("mkRibbonSubtitle")}</p>
                 </div>
-
-                <div className="hero-stats">
-                  <div className="stat-card">
-                    <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
-                    <span className="stat-number">{activeListingCount}</span>
-                  </div>
-                  <div className="stat-card">
-                    <span className="stat-label">{t("verified") || "Verified"}</span>
-                    <span className="stat-number">{verifiedListingCount}</span>
-                  </div>
-                  <div className="stat-card">
-                    <span className="stat-label">{t("phoneVerified") || "Phone verified"}</span>
-                    <span className="stat-number">{phoneVerifiedCount}</span>
-                  </div>
+                <div className="ribbon-chips" aria-label={t("cityShortcuts")}>
+                  {mkSpotlightCities.map((city) => (
+                    <button
+                      key={city}
+                      className="chip"
+                      onClick={() => {
+                        setLocFilter(city);
+                        setSelectedTab("allListings");
+                      }}
+                    >
+                      📍 {city}
+                    </button>
+                  ))}
                 </div>
               </div>
+            </section>
 
-              <div className="hero-panel card glass-card">
-                <div className="panel-heading">
-                  <p className="eyebrow">{t("quickStart") || "Get started fast"}</p>
-                  <h3 className="panel-title">{t("heroPanelTitle") || "Post with confidence"}</h3>
-                  <p className="panel-subtitle">
-                    {t("heroPanelSubtitle") ||
-                      "Keep your listing accurate with verified contact details and flexible plan durations."}
+            <section className="page-hero">
+              <div className="container hero-grid">
+                <div className="hero-copy">
+                  <p className="eyebrow hero-eyebrow">{t("community") || "Community marketplace"}</p>
+                  <h2 className="hero-heading">
+                    {t("heroTitle") || "Find and share trustworthy local services"}
+                  </h2>
+                  <p className="hero-subtitle">
+                    {t("heroSubtitle") ||
+                      "List your service in seconds, verify your profile, and connect with people who need you most."}
                   </p>
+
+                  <div className="hero-actions">
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        setSelectedTab("main");
+                        setShowPostForm(true);
+                      }}
+                    >
+                      🚀 {t("submitListing") || "Start a listing"}
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setSelectedTab("allListings")}>
+                      🔍 {t("explore") || "Browse the marketplace"}
+                    </button>
+                  </div>
+
+                  <div className="hero-stats">
+                    <div className="stat-card">
+                      <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
+                      <span className="stat-number">{activeListingCount}</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-label">{t("verified") || "Verified"}</span>
+                      <span className="stat-number">{verifiedListingCount}</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-label">{t("phoneVerified") || "Phone verified"}</span>
+                      <span className="stat-number">{phoneVerifiedCount}</span>
+                    </div>
+                  </div>
                 </div>
-                <ul className="panel-list">
-                  <li>✅ {t("heroPointOne") || "Choose a category and location"}</li>
-                  <li>✅ {t("heroPointTwo") || "Verify email or phone for trust"}</li>
-                  <li>✅ {t("heroPointThree") || "Set a duration that matches your goals"}</li>
-                </ul>
+
+                <div className="hero-panel card glass-card">
+                  <div className="panel-heading">
+                    <p className="eyebrow">{t("quickStart") || "Get started fast"}</p>
+                    <h3 className="panel-title">{t("heroPanelTitle") || "Post with confidence"}</h3>
+                    <p className="panel-subtitle">
+                      {t("heroPanelSubtitle") ||
+                        "Keep your listing accurate with verified contact details and flexible plan durations."}
+                    </p>
+                  </div>
+                  <ul className="panel-list">
+                    <li>✅ {t("heroPointOne") || "Choose a category and location"}</li>
+                    <li>✅ {t("heroPointTwo") || "Verify email or phone for trust"}</li>
+                    <li>✅ {t("heroPointThree") || "Set a duration that matches your goals"}</li>
+                  </ul>
+
+                  <div className="hero-panel-footer">
+                    <p className="panel-subtitle subtle">{t("categorySpotlight")}</p>
+                    <div className="chip-row">
+                      {featuredCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          className={`chip ${catFilter === t(cat) ? "chip-active" : ""}`}
+                          onClick={() => {
+                            setCatFilter(t(cat));
+                            setSelectedTab("allListings");
+                          }}
+                        >
+                          {categoryIcons[cat]} {t(cat) || cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </>
         )}
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
