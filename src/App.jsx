@@ -947,14 +947,27 @@ export default function App() {
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
           {/* <span className="brand-emoji"> */}
-            <img 
-              src={logo} 
+            <img
+              src={logo}
               alt="BizCall logo"
               className="brand-logo"
             />
           {/* </span> */}
           <h1 className="brand-title">BizCall</h1>
         </button>
+
+        <nav className="header-nav desktop-nav" aria-label="Primary navigation">
+          {primaryNav.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-chip ${selectedTab === item.id ? "active" : ""}`}
+              onClick={() => setSelectedTab(item.id)}
+            >
+              <span className="nav-chip-label">{item.icon} {item.label}</span>
+              {item.badge !== undefined && <span className="nav-chip-badge">{item.badge}</span>}
+            </button>
+          ))}
+        </nav>
 
         <div className="header-actions">
           <select className="lang-select" value={lang} onChange={(e) => setLang(e.target.value)}>
@@ -965,15 +978,23 @@ export default function App() {
 
           {user ? (
             <>
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  // setSelectedTab("myListings");
-                  setSidebarOpen(true);
-                }}
-              >
-                ☰ {t("dashboard")}
-              </button>
+              <div className="mobile-only">
+                <button
+                  className="icon-btn"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label={t("dashboard")}
+                >
+                  ☰
+                </button>
+              </div>
+              <div className="desktop-only">
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setSelectedTab("myListings")}
+                >
+                  {t("dashboard")}
+                </button>
+              </div>
               <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
                 {t("logout")}
               </button>
@@ -1010,6 +1031,20 @@ export default function App() {
       { id: "allListings", label: t("explore") || "Explore", icon: "🌍", badge: listings.length },
     ],
     [t, myListings.length, listings.length]
+  );
+
+  const primaryNav = useMemo(
+    () => [
+      { id: "main", label: t("homepage") || "Home", icon: "🏠" },
+      { id: "allListings", label: t("explore") || "Explore", icon: "🧭", badge: listings.length },
+      ...(user
+        ? [
+            { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListings.length },
+            { id: "account", label: t("account") || "Account", icon: "👤" },
+          ]
+        : []),
+    ],
+    [t, listings.length, myListings.length, user]
   );
 
   const authModeTabs = useMemo(
@@ -1200,27 +1235,26 @@ export default function App() {
           {/* Routes */}
           {selectedTab !== "main" ? (
             <div className="dashboard">
-              {/* Desktop sidebar */}
-              <aside className="sidebar desktop-only">
-                <Sidebar
-                  t={t}
-                  selected={selectedTab}
-                  onSelect={(tab) => setSelectedTab(tab)}
-                  onLogout={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}
-                />
-              </aside>
-
               {/* Dashboard content */}
               <main className="dashboard-content">
                 <div className="panel">
-                  <TabBar
-                    items={dashboardTabs}
-                    value={selectedTab}
-                    onChange={(tab) => setSelectedTab(tab)}
-                    fullWidth
-                    className="dashboard-tabs"
-                  />
-                  <div className="tab-panel">
+                  <div className="dashboard-topbar">
+                    <div className="dashboard-meta">
+                      <p className="eyebrow subtle">{t("dashboard")}</p>
+                      <h2 className="dashboard-heading">{t("manageListings") || "Manage everything in one place"}</h2>
+                    </div>
+                    <div className="topbar-tabs">
+                      <TabBar
+                        items={dashboardTabs}
+                        value={selectedTab}
+                        onChange={(tab) => setSelectedTab(tab)}
+                        className="dashboard-tabs"
+                        size="compact"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="tab-panel unified-panel">
                     {selectedTab === "myListings" && (
                       <div className="section my-listings-section">
                         <div className="section-header-row">
