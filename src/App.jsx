@@ -1080,7 +1080,7 @@ export default function App() {
               className={`nav-chip ${selectedTab === item.id ? "active" : ""}`}
               onClick={() => setSelectedTab(item.id)}
             >
-              <span className="nav-chip-label">{item.icon} {item.label}</span>
+              <span className="nav-chip-label" style={{color: "#000"}}>{item.icon} {item.label}</span>
               {item.badge !== undefined && <span className="nav-chip-badge">{item.badge}</span>}
             </button>
           ))}
