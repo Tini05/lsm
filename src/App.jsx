@@ -2158,180 +2158,43 @@ export default function App() {
                 </div>
               )}
 
-                {/* ====== BROWSE SECTION ====== */}
-               <section className="card listings-section">
-                <div className="listings-header">
-                  <div>
-                    <h2 className="section-title">🏪 {t("browse")}</h2>
-                    <p className="section-subtitle-small">
-                      {t("allListingsHint") || "Browse verified local businesses and services."}
+              {/* ====== DISCOVER SECTION ====== */}
+              <section className="card explore-highlight">
+                <div className="explore-highlight__copy">
+                  <p className="eyebrow subtle">{t("browse") || "Browse"}</p>
+                  <h2 className="section-title">🔍 {t("explore") || "Explore the marketplace"}</h2>
+                  <p className="section-subtitle-small">
+                    {t("allListingsHint") || "Visit the Explore tab to see every verified local listing."}
+                  </p>
+                  <div className="explore-highlight__actions">
+                    <button className="btn" onClick={() => setSelectedTab("allListings")}>
+                      {t("openExplore") || "Open Explore"}
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => { setCatFilter(""); setLocFilter(""); }}>
+                      {t("clearFilters") || "Reset filters"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="explore-highlight__meta">
+                  <div className="stat-pill">
+                    <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
+                    <span className="stat-value">{activeListingCount}</span>
+                  </div>
+                  <div className="stat-pill">
+                    <span className="stat-label">{t("verified") || "Verified"}</span>
+                    <span className="stat-value">{verifiedListingCount}</span>
+                  </div>
+                  <div className="stat-pill">
+                    <span className="stat-label">{t("favorites") || "Favorites"}</span>
+                    <span className="stat-value">{favorites.length}</span>
+                  </div>
+                  <div className="meta-note">
+                    <span className="pill pill-soft">✨ {t("featured") || "Featured"}</span>
+                    <p className="meta-note-text">
+                      {t("featuredHint") || "Featured listings are curated here. Open Explore for the full feed."}
                     </p>
                   </div>
-                  <div className="listings-header-actions">
-                    <span className="badge count">
-                      {verifiedListings.length} {(t("verified") || "Verified").toLowerCase?.() || "verified"}
-                    </span>
-                  </div>
-                </div>
-                 
-                <div className="category-chips">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      className={`chip ${catFilter === t(cat) ? "chip-active" : ""}`}
-                      onClick={() =>
-                        setCatFilter((prev) => (prev === t(cat) ? "" : t(cat)))
-                      }
-                    >
-                      <span className="chip-icon">
-                        {categoryIcons[cat] || "🏷️"}
-                      </span>
-                      <span className="chip-label">{t(cat)}</span>
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="quick-filters">
-                  <div className="searchbar">
-                    <input
-                      className="input"
-                      placeholder={t("searchPlaceholder") || "Search"}
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="filter-row">
-                    <select
-                      className="select category-dropdown"
-                      value={catFilter}
-                      onChange={(e) => setCatFilter(e.target.value)}
-                    >
-                      <option value="">{t("allCategories")}</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={t(cat)}>
-                          {t(cat)}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="select location-dropdown"
-                      value={locFilter}
-                      onChange={(e) => setLocFilter(e.target.value)}
-                    >
-                      <option value="">{t("allLocations")}</option>
-                      {allLocations.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      className="select sort-dropdown"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value="newest">{t("sortNewest")}</option>
-                      <option value="expiring">{t("sortExpiring")}</option>
-                      <option value="az">{t("sortAZ")}</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="listing-grid">
-                  {filtered.length === 0 ? (
-                    <div className="empty">
-                      <div className="empty-icon">📭</div>
-                      <p className="empty-text">{t("noListingsYet")}</p>
-                    </div>
-                  ) : (
-                    filtered.map((l) => (
-                      <article key={l.id} className="listing-card" 
-                        onClick={() => {
-                          setSelectedListing(l);
-                          const url = new URL(window.location.href);
-                          url.searchParams.set("listing", l.id);
-                          window.history.replaceState({}, "", url.toString());
-                        }}
-                        style={{marginBottom: "3%"}}>
-                        <header className="listing-header">
-                          <h3 className="listing-title">{l.name}</h3>
-                          {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
-                        </header>
-                        <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
-                       <p className="listing-description listing-description-clamp">
-                          {l.description}
-                        </p>
-                        
-                        <div
-                          className="listing-footer-row"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="listing-footer-left">
-                            {l.offerprice && (
-                              <span className="pill pill-price">{l.offerprice}</span>
-                            )}
-                            {l.tags && (
-                              <span className="pill pill-tags">
-                                {l.tags.split(",")[0]?.trim()}
-                                {l.tags.split(",").length > 1 ? " +" : ""}
-                              </span>
-                            )}
-                          </div>
-                        
-                          <div className="listing-actions compact">
-                            <button
-                              className="icon-btn"
-                              type="button"
-                              onClick={() => window.open(`tel:${l.contact}`)}
-                            >
-                              📞
-                            </button>
-                            <button
-                              className="icon-btn"
-                              type="button"
-                              onClick={() =>
-                                window.open(
-                                  `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
-                                    l.name || ""
-                                  )}`
-                                )
-                              }
-                            >
-                              ✉️
-                            </button>
-                            <button
-                              className="icon-btn"
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard?.writeText(l.contact || "");
-                                showMessage(t("copied"), "success");
-                              }}
-                            >
-                              📋
-                            </button>
-                            <button
-                              className="icon-btn"
-                              type="button"
-                              onClick={() => handleShareListing(l)}
-                            >
-                              🔗
-                            </button>
-                            <button
-                              className="icon-btn"
-                              type="button"
-                              onClick={() => toggleFav(l.id)}
-                            >
-                              {favorites.includes(l.id) ? "★" : "☆"}
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    ))
-                  )}
                 </div>
               </section>
             </div>
