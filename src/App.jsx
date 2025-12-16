@@ -85,7 +85,7 @@ const mkSpotlightCities = [
   "Kërçovë",
 ];
 
-const featuredCategories = ["services", "homeRepair", "tech", "food", "education", "car"];
+const featuredCategories = ["tech", "services", "homeRepair", "food", "education", "car"];
 const FEATURED_SLIDE_SIZE = 5;
 const FEATURED_MAX_ITEMS = FEATURED_SLIDE_SIZE * 3;
 
