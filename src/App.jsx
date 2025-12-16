@@ -86,6 +86,8 @@ const mkSpotlightCities = [
 ];
 
 const featuredCategories = ["services", "homeRepair", "tech", "food", "education", "car"];
+const FEATURED_SLIDE_SIZE = 5;
+const FEATURED_MAX_ITEMS = FEATURED_SLIDE_SIZE * 3;
 
 /* Helper: strip obvious garbage like tags */
 const stripDangerous = (v = "") => v.replace(/[<>]/g, "");
@@ -110,6 +112,14 @@ const buildLocationString = (city, extra) => {
   if (!c && !e) return "";
   if (c && e) return `${c} - ${e}`;
   return c || e;
+};
+
+const chunkArray = (items = [], size = 1) => {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
 };
 
 /* Helper: normalize phone numbers before storing */
@@ -267,6 +277,7 @@ export default function App() {
 
   /* Featured carousel */
   const [activeFeaturedCategory, setActiveFeaturedCategory] = useState(featuredCategories[0]);
+  const [featuredSlide, setFeaturedSlide] = useState(0);
 
   /* Close sidebar with ESC */
   useEffect(() => {
@@ -895,7 +906,7 @@ export default function App() {
           if ((b.avgRating || 0) !== (a.avgRating || 0)) return (b.avgRating || 0) - (a.avgRating || 0);
           return (b.createdAt || 0) - (a.createdAt || 0);
         })
-        .slice(0, 5);
+        .slice(0, FEATURED_MAX_ITEMS);
 
       if (top.length) map[category] = top;
     });
@@ -907,6 +918,27 @@ export default function App() {
     () => featuredCategories.filter((cat) => featuredByCategory[cat]?.length),
     [featuredByCategory]
   );
+
+  const featuredSlides = useMemo(() => {
+    const slides = {};
+    Object.entries(featuredByCategory).forEach(([cat, items]) => {
+      slides[cat] = chunkArray(items, FEATURED_SLIDE_SIZE);
+    });
+    return slides;
+  }, [featuredByCategory]);
+
+  const changeFeaturedSlide = useCallback(
+    (delta) => {
+      const total = featuredSlides[activeFeaturedCategory]?.length || 1;
+      setFeaturedSlide((current) => {
+        const normalizedTotal = total || 1;
+        const next = (current + delta) % normalizedTotal;
+        return next < 0 ? normalizedTotal + next : next;
+      });
+    },
+    [activeFeaturedCategory, featuredSlides]
+  );
+
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -931,6 +963,16 @@ export default function App() {
   }, [activeFeaturedCategory, featuredCategoryOrder]);
 
   useEffect(() => {
+    const slides = featuredSlides[activeFeaturedCategory] || [];
+    if (!slides.length) {
+      setFeaturedSlide(0);
+      return;
+    }
+
+    setFeaturedSlide((prev) => (prev >= slides.length ? 0 : prev));
+  }, [activeFeaturedCategory, featuredSlides]);
+
+  useEffect(() => {
     if (featuredCategoryOrder.length <= 1) return undefined;
 
     const id = setInterval(() => {
@@ -943,6 +985,17 @@ export default function App() {
 
     return () => clearInterval(id);
   }, [featuredCategoryOrder]);
+
+  useEffect(() => {
+    const slides = featuredSlides[activeFeaturedCategory] || [];
+    if (slides.length <= 1) return undefined;
+
+    const id = setInterval(() => {
+      setFeaturedSlide((current) => (current + 1) % slides.length);
+    }, 5000);
+
+    return () => clearInterval(id);
+  }, [activeFeaturedCategory, featuredSlides]);
 
   const handleFeedbackSubmit = async (listingId) => {
     if (!listingId) return;
@@ -1079,6 +1132,10 @@ export default function App() {
   const activeListingCount = listings.length;
   const verifiedListingCount = listings.filter((l) => l.isVerified).length;
   const phoneVerifiedCount = listings.filter((l) => l.phoneVerified).length;
+  const featuredSlidesForActive = featuredSlides[activeFeaturedCategory] || [];
+  const featuredSlideCount = featuredSlidesForActive.length || 1;
+  const featuredItemsForSlide =
+    featuredSlidesForActive[featuredSlide] || featuredSlidesForActive[0] || [];
 
   const primaryNav = useMemo(
     () => [
@@ -1263,83 +1320,123 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <button
-                      className="btn btn-ghost small"
-                      type="button"
-                      onClick={() => setSelectedTab("allListings")}
-                    >
-                      🔍 {t("explore") || "Open explore"}
-                    </button>
+                    <div className="featured-actions">
+                      {featuredSlideCount > 1 && (
+                        <div className="carousel-nav" aria-label="Featured navigation">
+                          <button
+                            type="button"
+                            className="nav-chip"
+                            onClick={() => changeFeaturedSlide(-1)}
+                          >
+                            ←
+                          </button>
+                          <div className="carousel-counter">
+                            <span className="counter-label">{t("featured") || "Featured"}</span>
+                            <span className="counter-value">
+                              {featuredSlide + 1} / {featuredSlideCount}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="nav-chip"
+                            onClick={() => changeFeaturedSlide(1)}
+                          >
+                            →
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        className="btn btn-ghost small"
+                        type="button"
+                        onClick={() => setSelectedTab("allListings")}
+                      >
+                        🔍 {t("explore") || "Open explore"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="featured-carousel">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeFeaturedCategory}
-                      initial={{ opacity: 0, x: 24 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -24 }}
-                      transition={{ duration: 0.35 }}
-                      className="featured-grid"
-                    >
-                      {(featuredByCategory[activeFeaturedCategory] || []).length === 0 ? (
-                        <div className="empty">
-                          <div className="empty-icon">🧭</div>
-                          <p className="empty-text">{t("noListingsYet")}</p>
-                        </div>
-                      ) : (
-                        (featuredByCategory[activeFeaturedCategory] || []).map((l) => (
-                          <article
-                            key={l.id}
-                            className="listing-card featured-card"
-                            onClick={() => {
-                              setSelectedListing(l);
-                              setSelectedTab("allListings");
-                              const url = new URL(window.location.href);
-                              url.searchParams.set("listing", l.id);
-                              window.history.replaceState({}, "", url.toString());
-                            }}
-                          >
-                            <header className="listing-header">
-                              <h3 className="listing-title">{l.name}</h3>
-                              {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
-                            </header>
-                            <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
-                            <p className="listing-description listing-description-clamp">
-                              {l.description}
-                            </p>
+                  <div className="featured-carousel">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeFeaturedCategory}
+                        initial={{ opacity: 0, x: 24 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -24 }}
+                        transition={{ duration: 0.35 }}
+                        className="featured-grid"
+                      >
+                        {featuredItemsForSlide.length === 0 ? (
+                          <div className="empty">
+                            <div className="empty-icon">🧭</div>
+                            <p className="empty-text">{t("noListingsYet")}</p>
+                          </div>
+                        ) : (
+                          featuredItemsForSlide.map((l) => (
+                            <article
+                              key={l.id}
+                              className="listing-card featured-card"
+                              onClick={() => {
+                                setSelectedListing(l);
+                                setSelectedTab("allListings");
+                                const url = new URL(window.location.href);
+                                url.searchParams.set("listing", l.id);
+                                window.history.replaceState({}, "", url.toString());
+                              }}
+                            >
+                              <header className="listing-header">
+                                <h3 className="listing-title">{l.name}</h3>
+                                {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
+                              </header>
+                              <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
+                              <p className="listing-description listing-description-clamp">
+                                {l.description}
+                              </p>
 
-                            <div className="listing-footer-row">
-                              <div className="listing-footer-left">
-                                {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
-                                {l.tags && (
-                                  <span className="pill pill-tags">
-                                    {l.tags.split(",")[0]?.trim()}
-                                    {l.tags.split(",").length > 1 ? " +" : ""}
-                                  </span>
-                                )}
-                              </div>
+                              <div className="listing-footer-row">
+                                <div className="listing-footer-left">
+                                  {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
+                                  {l.tags && (
+                                    <span className="pill pill-tags">
+                                      {l.tags.split(",")[0]?.trim()}
+                                      {l.tags.split(",").length > 1 ? " +" : ""}
+                                    </span>
+                                  )}
+                                </div>
 
-                              <div className="listing-actions compact">
-                                <span className="rating-chip">⭐ {l.avgRating?.toFixed(1) || "0.0"}</span>
-                                <button
-                                  className="icon-btn"
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleFav(l.id);
-                                  }}
-                                >
-                                  {favorites.includes(l.id) ? "★" : "☆"}
-                                </button>
+                                <div className="listing-actions compact">
+                                  <span className="rating-chip">⭐ {l.avgRating?.toFixed(1) || "0.0"}</span>
+                                  <button
+                                    className="icon-btn"
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFav(l.id);
+                                    }}
+                                  >
+                                    {favorites.includes(l.id) ? "★" : "☆"}
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </article>
-                        ))
-                      )}
+                            </article>
+                          ))
+                        )}
                     </motion.div>
                   </AnimatePresence>
+                  {featuredSlideCount > 1 && (
+                    <div className="featured-dots" role="tablist" aria-label="Featured slides">
+                      {featuredSlidesForActive.map((_, idx) => (
+                        <button
+                          key={`${activeFeaturedCategory}-${idx}`}
+                          className={`dot ${idx === featuredSlide ? "active" : ""}`}
+                          onClick={() => setFeaturedSlide(idx)}
+                          aria-label={`Go to featured slide ${idx + 1}`}
+                          role="tab"
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
