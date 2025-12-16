@@ -3,6 +3,7 @@
 const translations = {
   en: {
     // General
+    ",": ",",
     title: "Local Support Market",
     appName: "Local Support Market",
     welcome: "Welcome!",
@@ -22,6 +23,25 @@ const translations = {
     account: "Account",
     explore: "Explore",
     homepage: "Home",
+    community: "Community marketplace",
+
+    // Hero / Landing
+    heroTitle: "Find and share trustworthy services across North Macedonia",
+    heroSubtitle:
+      "From Skopje to Ohrid, discover locals who can help you today or showcase your own expertise.",
+    quickStart: "Quick start",
+    heroPanelTitle: "Post with confidence",
+    heroPanelSubtitle:
+      "Add your details, pick your plan, and let neighbours reach you with verified contact info.",
+    heroPointOne: "Choose a category, city, and a short description.",
+    heroPointTwo: "Verify your email or phone for extra trust.",
+    heroPointThree: "Highlight your offer and duration to stay visible.",
+    phoneVerified: "Phone verified",
+    mkRibbonTitle: "Made for North Macedonia",
+    mkRibbonSubtitle: "Local-first layout, Macedonian-friendly language, and city shortcuts you know.",
+    cityShortcuts: "Popular cities",
+    categorySpotlight: "Popular categories",
+    neighborhoodFriendly: "Neighbourhood-friendly navigation",
 
     // Form / Listings
     submitListing: "Submit Your Listing",
@@ -317,6 +337,7 @@ const translations = {
 
   sq: {
     // General
+    ",": ",",
     title: "Tregu Lokal i Ndihmës",
     appName: "Tregu Lokal i Ndihmës",
     welcome: "Mirë se erdhët!",
@@ -336,6 +357,25 @@ const translations = {
     account: "Llogaria",
     explore: "Eksploro",
     homepage: "Kreu",
+    community: "Marketplace i komunitetit",
+
+    // Hero / Landing
+    heroTitle: "Gjej dhe shpërndaj shërbime të besueshme në gjithë Maqedoninë",
+    heroSubtitle:
+      "Nga Shkupi në Ohër, gjej vendas që të ndihmojnë sot ose prezanto aftësitë e tua.",
+    quickStart: "Nis shpejt",
+    heroPanelTitle: "Posto me besim",
+    heroPanelSubtitle:
+      "Shto detajet, zgjidh planin dhe lejo fqinjët të të kontaktojnë me të dhënat e verifikuara.",
+    heroPointOne: "Zgjidh kategorinë, qytetin dhe një përshkrim të shkurtër.",
+    heroPointTwo: "Verifiko emailin ose telefonin për më shumë besim.",
+    heroPointThree: "Thekso ofertën dhe kohëzgjatjen për të mbetur i dukshëm.",
+    phoneVerified: "Telefon i verifikuar",
+    mkRibbonTitle: "Krijuar për Maqedoninë e Veriut",
+    mkRibbonSubtitle: "Pamje lokale, gjuhë miqësore dhe shkurtore qytetesh që i njeh.",
+    cityShortcuts: "Qytetet kryesore",
+    categorySpotlight: "Kategoritë e preferuara",
+    neighborhoodFriendly: "Navigim i lehtë për lagjen",
 
     // Form / Listings
     submitListing: "Dërgo listimin tënd",
