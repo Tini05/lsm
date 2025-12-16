@@ -21,7 +21,7 @@ import {
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 import NorthMacedoniaMap from "./NorthMacedoniaMap";
 import "./App.css";
@@ -86,7 +86,7 @@ const mkSpotlightCities = [
 ];
 
 const featuredCategories = ["tech", "services", "homeRepair", "food", "electronics", "car"];
-const FEATURED_SLIDE_SIZE = 5;
+const FEATURED_SLIDE_SIZE = 3;
 const FEATURED_MAX_ITEMS = FEATURED_SLIDE_SIZE * 3;
 
 /* Helper: strip obvious garbage like tags */
@@ -868,7 +868,7 @@ export default function App() {
     if (sortBy === "expiring") arr.sort((a, b) => (a.expiresAt || 0) - (b.expiresAt || 0));
     if (sortBy === "az") arr.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     return arr;
-  }, [verifiedListings, q, catFilter, locFilter, sortBy, feedbackAverages]);
+  }, [verifiedListings, q, catFilter, locFilter, sortBy, feedbackAverages, t]);
 
   const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
   const myVerifiedCount = useMemo(
@@ -880,7 +880,11 @@ export default function App() {
     [myListings]
   );
 
-  const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
+  const getFeedbackForListing = useCallback(
+    (listingId) => feedbackStore[listingId]?.entries || [],
+    [feedbackStore]
+  );
+
   const getAverageRating = useCallback(
     (listingId) => {
       const entries = getFeedbackForListing(listingId);
@@ -888,7 +892,19 @@ export default function App() {
       const total = entries.reduce((sum, entry) => sum + (Number(entry.rating) || 0), 0);
       return Number((total / entries.length).toFixed(1));
     },
-    [feedbackStore]
+    [getFeedbackForListing]
+  );
+
+  const getListingStats = useCallback(
+    (listing) => {
+      const stats = feedbackAverages[listing.id] || {};
+      const feedbackCount = listing.feedbackCount ?? stats.count ?? 0;
+      const avgRating = listing.avgRating ?? stats.avg ?? 0;
+      const engagement = feedbackCount + (favorites.includes(listing.id) ? 1 : 0);
+
+      return { feedbackCount, avgRating, engagement };
+    },
+    [favorites, feedbackAverages]
   );
 
   const featuredByCategory = useMemo(() => {
@@ -898,10 +914,14 @@ export default function App() {
     categories.forEach((category) => {
       const top = verified
         .filter((l) => l.category === category)
-        .map((listing) => ({
-          ...listing,
-          avgRating: getAverageRating(listing.id) ?? 0,
-        }))
+        .map((listing) => {
+          const stats = feedbackAverages[listing.id] || {};
+          return {
+            ...listing,
+            avgRating: stats.avg ?? getAverageRating(listing.id) ?? 0,
+            feedbackCount: stats.count || 0,
+          };
+        })
         .sort((a, b) => {
           if ((b.avgRating || 0) !== (a.avgRating || 0)) return (b.avgRating || 0) - (a.avgRating || 0);
           return (b.createdAt || 0) - (a.createdAt || 0);
@@ -912,7 +932,7 @@ export default function App() {
     });
 
     return map;
-  }, [getAverageRating, listings]);
+  }, [feedbackAverages, getAverageRating, listings]);
 
   const featuredCategoryOrder = useMemo(
     () => featuredCategories.filter((cat) => featuredByCategory[cat]?.length),
@@ -947,13 +967,13 @@ export default function App() {
     const entries = getFeedbackForListing(selectedListing.id);
     const stats = feedbackAverages[selectedListing.id];
     return { entries, avg: stats?.avg ?? null, count: stats?.count ?? 0 };
-  }, [feedbackAverages, selectedListing, feedbackStore]);
+  }, [feedbackAverages, selectedListing, getFeedbackForListing]);
 
   useEffect(() => {
     if (!selectedListing) return;
     const lastRating = getFeedbackForListing(selectedListing.id)[0]?.rating || 4;
     setFeedbackDraft({ rating: lastRating, comment: "" });
-  }, [selectedListing, feedbackStore]);
+  }, [getFeedbackForListing, selectedListing]);
 
   useEffect(() => {
     if (!featuredCategoryOrder.length) return;
@@ -1260,6 +1280,15 @@ export default function App() {
                       <span className="stat-number">{phoneVerifiedCount}</span>
                     </div>
                   </div>
+
+                  <div className="hero-digest card">
+                    <div className="digest-label">{t("homeDigest") || "Live snapshot"}</div>
+                    <div className="digest-row">
+                      <span>🧭 {categories.length} {t("categories")}</span>
+                      <span>🌟 {featuredCategoryOrder.length} {t("featured") || "Featured lanes"}</span>
+                      <span>📍 {mkSpotlightCities[0]} {t("city") || "city spotlight"}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="hero-panel card glass-card">
@@ -1298,17 +1327,18 @@ export default function App() {
               </div>
             </section>
 
-            <section className="featured-showcase">
+            <section className="home-spotlight">
               <div className="container">
-                <div className="featured-header">
+                <div className="spotlight-header">
                   <div>
                     <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
-                    <h3 className="featured-title">{t("topRatedShowcase") || "Top rated in every category"}</h3>
+                    <h3 className="featured-title">{t("todaySpotlight") || "Today's spotlight board"}</h3>
                     <p className="featured-subtitle">
-                      {t("featuredHint") || "Only a handful of listings appear here. Visit Explore to see the full marketplace."}
+                      {t("spotlightHint") ||
+                        "A tight carousel of trusted listings that stays visible without endless scrolling."}
                     </p>
                   </div>
-                  <div className="featured-controls">
+                  <div className="spotlight-controls">
                     <div className="featured-pills">
                       {featuredCategoryOrder.map((cat) => (
                         <button
@@ -1321,32 +1351,8 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <div className="featured-actions">
-                      {featuredSlideCount > 1 && (
-                        <div className="carousel-nav" aria-label="Featured navigation">
-                          <button
-                            type="button"
-                            className="nav-chip"
-                            onClick={() => changeFeaturedSlide(-1)}
-                          >
-                            ←
-                          </button>
-                          <div className="carousel-counter">
-                            <span className="counter-label">{t("featured") || "Featured"}</span>
-                            <span className="counter-value">
-                              {featuredSlide + 1} / {featuredSlideCount}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            className="nav-chip"
-                            onClick={() => changeFeaturedSlide(1)}
-                          >
-                            →
-                          </button>
-                        </div>
-                      )}
 
+                    <div className="featured-actions">
                       <button
                         className="btn btn-ghost small"
                         type="button"
@@ -1357,16 +1363,26 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                <div className="spotlight-rail">
+                  <button
+                    type="button"
+                    className="rail-btn"
+                    onClick={() => changeFeaturedSlide(-1)}
+                    disabled={featuredSlideCount <= 1}
+                    aria-label="Previous featured slide"
+                  >
+                    ←
+                  </button>
 
-                  <div className="featured-carousel">
+                  <div className="rail-window">
                     <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeFeaturedCategory}
+                      <Motion.div
+                        key={`${activeFeaturedCategory}-${featuredSlide}`}
                         initial={{ opacity: 0, x: 24 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -24 }}
-                        transition={{ duration: 0.35 }}
-                        className="featured-grid"
+                        transition={{ duration: 0.25 }}
+                        className="rail-track"
                       >
                         {featuredItemsForSlide.length === 0 ? (
                           <div className="empty">
@@ -1377,7 +1393,7 @@ export default function App() {
                           featuredItemsForSlide.map((l) => (
                             <article
                               key={l.id}
-                              className="listing-card featured-card"
+                              className="listing-card spotlight-card"
                               onClick={() => {
                                 setSelectedListing(l);
                                 setSelectedTab("allListings");
@@ -1386,14 +1402,28 @@ export default function App() {
                                 window.history.replaceState({}, "", url.toString());
                               }}
                             >
-                              <header className="listing-header">
-                                <h3 className="listing-title">{l.name}</h3>
+                              <header className="spotlight-header">
+                                <div>
+                                  <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
+                                  <h3 className="listing-title">{l.name}</h3>
+                                </div>
                                 {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
                               </header>
-                              <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
-                              <p className="listing-description listing-description-clamp">
+
+                              <p className="listing-description listing-description-clamp spotlight-description">
                                 {l.description}
                               </p>
+
+                              {(() => {
+                                const stats = getListingStats(l);
+                                return (
+                                  <div className="listing-stats">
+                                    <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                    <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                    <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                  </div>
+                                );
+                              })()}
 
                               <div className="listing-footer-row">
                                 <div className="listing-footer-left">
@@ -1423,22 +1453,34 @@ export default function App() {
                             </article>
                           ))
                         )}
-                    </motion.div>
-                  </AnimatePresence>
-                  {featuredSlideCount > 1 && (
-                    <div className="featured-dots" role="tablist" aria-label="Featured slides">
-                      {featuredSlidesForActive.map((_, idx) => (
-                        <button
-                          key={`${activeFeaturedCategory}-${idx}`}
-                          className={`dot ${idx === featuredSlide ? "active" : ""}`}
-                          onClick={() => setFeaturedSlide(idx)}
-                          aria-label={`Go to featured slide ${idx + 1}`}
-                          role="tab"
-                        />
-                      ))}
-                    </div>
-                  )}
+                      </Motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="rail-btn"
+                    onClick={() => changeFeaturedSlide(1)}
+                    disabled={featuredSlideCount <= 1}
+                    aria-label="Next featured slide"
+                  >
+                    →
+                  </button>
                 </div>
+
+                {featuredSlideCount > 1 && (
+                  <div className="rail-dots" role="tablist" aria-label="Featured slides">
+                    {featuredSlidesForActive.map((_, idx) => (
+                      <button
+                        key={`${activeFeaturedCategory}-${idx}`}
+                        className={`dot ${idx === featuredSlide ? "active" : ""}`}
+                        onClick={() => setFeaturedSlide(idx)}
+                        aria-label={`Go to featured slide ${idx + 1}`}
+                        role="tab"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           </>
@@ -1448,14 +1490,14 @@ export default function App() {
         <AnimatePresence>
           {sidebarOpen && (
             <>
-              <motion.div
+              <Motion.div
                 className="sidebar-overlay"
                 onClick={() => setSidebarOpen(false)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               />
-              <motion.aside
+              <Motion.aside
                 className="sidebar mobile-drawer"
                 initial={{ x: "-100%" }}
                 animate={{ x: 0 }}
@@ -1481,7 +1523,7 @@ export default function App() {
                     setSidebarOpen(false);
                   }}
                 />
-              </motion.aside>
+              </Motion.aside>
             </>
           )}
         </AnimatePresence>
@@ -1611,6 +1653,17 @@ export default function App() {
                                 <p className="listing-description clamp-3">
                                   {l.description}
                                 </p>
+
+                                {(() => {
+                                  const stats = getListingStats(l);
+                                  return (
+                                    <div className="listing-stats">
+                                      <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                      <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                      <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                    </div>
+                                  );
+                                })()}
 
                                 <div className="my-listing-highlights">
                                   {l.offerprice && (
@@ -2043,7 +2096,18 @@ export default function App() {
                               <p className="listing-description listing-description-clamp">
                                 {l.description}
                               </p>
-                    
+
+                              {(() => {
+                                const stats = getListingStats(l);
+                                return (
+                                  <div className="listing-stats">
+                                    <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                    <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                    <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                  </div>
+                                );
+                              })()}
+
                               <div
                                 className="listing-footer-row"
                                 onClick={(e) => e.stopPropagation()}
@@ -2203,14 +2267,14 @@ export default function App() {
 
         <AnimatePresence>
           {showPostForm && user && user.emailVerified && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowPostForm(false)}
             >
-              <motion.aside
+              <Motion.aside
                 className="modal post-form-drawer"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ x: "100%", opacity: 0 }}
@@ -2682,22 +2746,22 @@ export default function App() {
                   </section>
                 )}
                 </div>
-              </motion.aside>
-            </motion.div>
+              </Motion.aside>
+            </Motion.div>
           )}
         </AnimatePresence>
     
         {/* MAP PICKER MODAL */}
         <AnimatePresence>
           {showMapPicker && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMapPicker(false)}
             >
-              <motion.div
+              <Motion.div
                 className="modal map-modal"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -2729,14 +2793,14 @@ export default function App() {
                     }}
                   />
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {showEditMapPicker && editForm && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -2744,7 +2808,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               onClick={() => setShowEditMapPicker(false)}
             >
-              <motion.div
+              <Motion.div
                 className="modal map-modal"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -2776,15 +2840,15 @@ export default function App() {
                     }}
                   />
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
         {/* ===== EDIT MODAL (restored, resized) ===== */}
         <AnimatePresence>
           {editingListing && editForm && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -2795,7 +2859,7 @@ export default function App() {
                 setShowEditMapPicker(false);
               }}
             >
-              <motion.div
+              <Motion.div
                 className="modal edit-modal"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ y: 20, opacity: 0 }}
@@ -3036,8 +3100,8 @@ export default function App() {
                     {t("cancel")}
                   </button>
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
@@ -3045,8 +3109,8 @@ export default function App() {
         {/* ===== PAYMENT MODAL (restored) ===== */}
         <AnimatePresence>
           {paymentModalOpen && paymentIntent && (
-            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setPaymentModalOpen(false); setPaymentIntent(null); }}>
-              <motion.div className="modal payment-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
+            <Motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setPaymentModalOpen(false); setPaymentIntent(null); }}>
+              <Motion.div className="modal payment-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.98, opacity: 0 }}>
                 <div className="modal-header">
                   <h3 className="modal-title">
                     {paymentIntent.type === "extend" ? `${t("extend")} • ${extendTarget?.name || ""}` : t("paypalCheckout")}
@@ -3161,22 +3225,22 @@ export default function App() {
                     {t("cancel")}
                   </button>
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
         {/* ===== AUTH MODAL (login + signup, email + phone) ===== */}
         <AnimatePresence>
           {showAuthModal && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAuthModal(false)}
             >
-              <motion.div
+              <Motion.div
                 className="modal auth-modal"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ y: 20, opacity: 0 }}
@@ -3664,21 +3728,21 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {postSignupVerifyOpen && (
-            <motion.div
+            <Motion.div
               className="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setPostSignupVerifyOpen(false)}
             >
-              <motion.div
+              <Motion.div
                 className="modal verify-email-modal"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ y: 20, opacity: 0 }}
@@ -3751,15 +3815,15 @@ export default function App() {
                       "Tip: If you don’t see the email, check Spam/Promotions. The sender is Firebase."}
                   </div>
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
         
         {/* LISTING DETAILS MODAL */}
         <AnimatePresence>
           {selectedListing && (
-            <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            <Motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
               onClick={() => {
                 setSelectedListing(null);
                 const url = new URL(window.location.href);
@@ -3767,7 +3831,7 @@ export default function App() {
                 window.history.replaceState({}, "", url.toString());
               }}
             >
-              <motion.div className="modal listing-details-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.3 }}>
+              <Motion.div className="modal listing-details-modal" onClick={(e) => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.3 }}>
                 <div className="modal-header category-banner" style={{ background: "linear-gradient(135deg, #2563eb, #3b82f6)", color: "#fff" }}>
                   <div className="flex items-center gap-2">
                     <span className="category-icon" style={{ fontSize: "1.5rem" }}>
@@ -4002,8 +4066,8 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
