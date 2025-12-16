@@ -36,6 +36,9 @@ const translations = {
     heroPointOne: "Choose a category, city, and a short description.",
     heroPointTwo: "Verify your email or phone for extra trust.",
     heroPointThree: "Highlight your offer and duration to stay visible.",
+    featured: "Featured",
+    featuredHint: "Only a handful of listings appear here. Visit Explore to see the full marketplace.",
+    topRatedShowcase: "Top rated in every category",
     phoneVerified: "Phone verified",
     mkRibbonTitle: "Made for North Macedonia",
     mkRibbonSubtitle: "Local-first layout, Macedonian-friendly language, and city shortcuts you know.",
@@ -367,6 +370,9 @@ const translations = {
     heroPointOne: "Zgjidh kategorinë, qytetin dhe një përshkrim të shkurtër.",
     heroPointTwo: "Verifiko emailin ose telefonin për më shumë besim.",
     heroPointThree: "Thekso ofertën dhe kohëzgjatjen për të mbetur i dukshëm.",
+    featured: "Të përzgjedhur",
+    featuredHint: "Vetëm disa listime shfaqen këtu. Vizitoni Eksploro për të parë gjithë tregun.",
+    topRatedShowcase: "Më të vlerësuarit në çdo kategori",
     phoneVerified: "Telefon i verifikuar",
     mkRibbonTitle: "Krijuar për Maqedoninë e Veriut",
     mkRibbonSubtitle: "Pamje lokale, gjuhë miqësore dhe shkurtore qytetesh që i njeh.",
@@ -668,6 +674,7 @@ const translations = {
 
   mk: {
     // General
+    ",": ",",
     title: "Локален пазар за поддршка",
     appName: "Локален пазар за поддршка",
     welcome: "Добредојдовте!",
@@ -687,6 +694,28 @@ const translations = {
     account: "Сметка",
     explore: "Истражи",
     homepage: "Почетна",
+    community: "Пазар на заедницата",
+
+    // Hero / Landing
+    heroTitle: "Најди и сподели доверливи услуги низ Македонија",
+    heroSubtitle:
+      "Од Скопје до Охрид, откриј локални луѓе кои можат да помогнат или истакни ја својата експертиза.",
+    quickStart: "Брз почеток",
+    heroPanelTitle: "Објави со сигурност",
+    heroPanelSubtitle:
+      "Додај детали, избери план и дозволи соседите да те контактираат со потврдени податоци.",
+    heroPointOne: "Избери категорија, град и краток опис.",
+    heroPointTwo: "Верификувај е-пошта или телефон за поголема доверба.",
+    heroPointThree: "Истакни ја понудата и траењето за да останеш видлив.",
+    featured: "Избрано",
+    featuredHint: "Тука се прикажуваат само неколку огласи. Посети Истражи за целата понуда.",
+    topRatedShowcase: "Највисоко оценети во секоја категорија",
+    phoneVerified: "Телефон верификуван",
+    mkRibbonTitle: "Создадено за Северна Македонија",
+    mkRibbonSubtitle: "Локален изглед, пријателски јазик и градови што ги познаваш.",
+    cityShortcuts: "Популарни градови",
+    categorySpotlight: "Популарни категории",
+    neighborhoodFriendly: "Маалска навигација",    
 
     // Form / Listings
     submitListing: "Испрати твој оглас",
