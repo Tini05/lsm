@@ -268,6 +268,9 @@ export default function App() {
   const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
   const [feedbackSaving, setFeedbackSaving] = useState(false);
 
+  /* Featured carousel */
+  const [activeFeaturedCategory, setActiveFeaturedCategory] = useState(featuredCategories[0]);
+
   /* Close sidebar with ESC */
   useEffect(() => {
     const onEsc = (e) => {
@@ -868,10 +871,46 @@ export default function App() {
     () => myListings.filter((l) => l.status !== "verified").length,
     [myListings]
   );
+  const featuredByCategory = useMemo(() => {
+    const verified = listings.filter((l) => l.status === "verified");
+    const map = {};
+
+    categories.forEach((category) => {
+      const top = verified
+        .filter((l) => l.category === category)
+        .map((listing) => ({
+          ...listing,
+          avgRating: getAverageRating(listing.id) ?? 0,
+        }))
+        .sort((a, b) => {
+          if ((b.avgRating || 0) !== (a.avgRating || 0)) return (b.avgRating || 0) - (a.avgRating || 0);
+          return (b.createdAt || 0) - (a.createdAt || 0);
+        })
+        .slice(0, 5);
+
+      if (top.length) map[category] = top;
+    });
+
+    return map;
+  }, [getAverageRating, listings]);
+
+  const featuredCategoryOrder = useMemo(
+    () => featuredCategories.filter((cat) => featuredByCategory[cat]?.length),
+    [featuredByCategory]
+  );
   const toggleFav = (id) =>
     setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const getFeedbackForListing = (listingId) => feedbackStore[listingId]?.entries || [];
+  const getAverageRating = useCallback(
+    (listingId) => {
+      const entries = getFeedbackForListing(listingId);
+      if (!entries.length) return null;
+      const total = entries.reduce((sum, entry) => sum + (Number(entry.rating) || 0), 0);
+      return Number((total / entries.length).toFixed(1));
+    },
+    [feedbackStore]
+  );
 
   const feedbackStats = useMemo(() => {
     if (!selectedListing) return { entries: [], avg: null, count: 0 };
@@ -885,6 +924,27 @@ export default function App() {
     const lastRating = getFeedbackForListing(selectedListing.id)[0]?.rating || 4;
     setFeedbackDraft({ rating: lastRating, comment: "" });
   }, [selectedListing, feedbackStore]);
+
+  useEffect(() => {
+    if (!featuredCategoryOrder.length) return;
+    if (!featuredCategoryOrder.includes(activeFeaturedCategory)) {
+      setActiveFeaturedCategory(featuredCategoryOrder[0]);
+    }
+  }, [activeFeaturedCategory, featuredCategoryOrder]);
+
+  useEffect(() => {
+    if (featuredCategoryOrder.length <= 1) return undefined;
+
+    const id = setInterval(() => {
+      setActiveFeaturedCategory((current) => {
+        const idx = featuredCategoryOrder.indexOf(current);
+        const next = featuredCategoryOrder[(idx + 1) % featuredCategoryOrder.length];
+        return next || featuredCategoryOrder[0];
+      });
+    }, 6000);
+
+    return () => clearInterval(id);
+  }, [featuredCategoryOrder]);
 
   const handleFeedbackSubmit = async (listingId) => {
     if (!listingId) return;
@@ -946,14 +1006,19 @@ export default function App() {
     <header className="header">
       <div className="header-inner">
         <button onClick={() => setSelectedTab("main")} className="brand">
-          {/* <span className="brand-emoji"> */}
-            <img
-              src={logo}
-              alt="BizCall logo"
-              className="brand-logo"
-            />
-          {/* </span> */}
-          <h1 className="brand-title">BizCall</h1>
+          <div className="brand-mark">
+            <div className="brand-logo-wrap">
+              <img
+                src={logo}
+                alt="BizCall logo"
+                className="brand-logo"
+              />
+            </div>
+          </div>
+          <div className="brand-text">
+            <h1 className="brand-title">BizCall</h1>
+            <p className="brand-tagline">{t("community") || "Trusted local services"}</p>
+          </div>
         </button>
 
         <nav className="header-nav desktop-nav" aria-label="Primary navigation">
@@ -987,14 +1052,6 @@ export default function App() {
                   ☰
                 </button>
               </div>
-              <div className="desktop-only">
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => setSelectedTab("myListings")}
-                >
-                  {t("dashboard")}
-                </button>
-              </div>
               <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
                 {t("logout")}
               </button>
@@ -1024,15 +1081,6 @@ export default function App() {
   const verifiedListingCount = listings.filter((l) => l.isVerified).length;
   const phoneVerifiedCount = listings.filter((l) => l.phoneVerified).length;
 
-  const dashboardTabs = useMemo(
-    () => [
-      { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListings.length },
-      { id: "account", label: t("account") || "Account", icon: "👤" },
-      { id: "allListings", label: t("explore") || "Explore", icon: "🌍", badge: listings.length },
-    ],
-    [t, myListings.length, listings.length]
-  );
-
   const primaryNav = useMemo(
     () => [
       { id: "main", label: t("homepage") || "Home", icon: "🏠" },
@@ -1046,6 +1094,13 @@ export default function App() {
     ],
     [t, listings.length, myListings.length, user]
   );
+
+  const currentSectionLabel = useMemo(() => {
+    if (selectedTab === "myListings") return t("myListings") || "My listings";
+    if (selectedTab === "account") return t("account") || "Account";
+    if (selectedTab === "allListings") return t("explore") || "Explore";
+    return t("dashboard") || "Dashboard";
+  }, [selectedTab, t]);
 
   const authModeTabs = useMemo(
     () => [
@@ -1185,6 +1240,110 @@ export default function App() {
                 </div>
               </div>
             </section>
+
+            <section className="featured-showcase">
+              <div className="container">
+                <div className="featured-header">
+                  <div>
+                    <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
+                    <h3 className="featured-title">{t("topRatedShowcase") || "Top rated in every category"}</h3>
+                    <p className="featured-subtitle">
+                      {t("featuredHint") || "Only a handful of listings appear here. Visit Explore to see the full marketplace."}
+                    </p>
+                  </div>
+                  <div className="featured-controls">
+                    <div className="featured-pills">
+                      {featuredCategoryOrder.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`pill featured-pill ${activeFeaturedCategory === cat ? "pill-active" : ""}`}
+                          onClick={() => setActiveFeaturedCategory(cat)}
+                        >
+                          {categoryIcons[cat]} {t(cat) || cat}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="btn btn-ghost small"
+                      type="button"
+                      onClick={() => setSelectedTab("allListings")}
+                    >
+                      🔍 {t("explore") || "Open explore"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="featured-carousel">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeFeaturedCategory}
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -24 }}
+                      transition={{ duration: 0.35 }}
+                      className="featured-grid"
+                    >
+                      {(featuredByCategory[activeFeaturedCategory] || []).length === 0 ? (
+                        <div className="empty">
+                          <div className="empty-icon">🧭</div>
+                          <p className="empty-text">{t("noListingsYet")}</p>
+                        </div>
+                      ) : (
+                        (featuredByCategory[activeFeaturedCategory] || []).map((l) => (
+                          <article
+                            key={l.id}
+                            className="listing-card featured-card"
+                            onClick={() => {
+                              setSelectedListing(l);
+                              setSelectedTab("allListings");
+                              const url = new URL(window.location.href);
+                              url.searchParams.set("listing", l.id);
+                              window.history.replaceState({}, "", url.toString());
+                            }}
+                          >
+                            <header className="listing-header">
+                              <h3 className="listing-title">{l.name}</h3>
+                              {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
+                            </header>
+                            <div className="listing-meta">{t(l.category) || l.category} • {l.location}</div>
+                            <p className="listing-description listing-description-clamp">
+                              {l.description}
+                            </p>
+
+                            <div className="listing-footer-row">
+                              <div className="listing-footer-left">
+                                {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
+                                {l.tags && (
+                                  <span className="pill pill-tags">
+                                    {l.tags.split(",")[0]?.trim()}
+                                    {l.tags.split(",").length > 1 ? " +" : ""}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="listing-actions compact">
+                                <span className="rating-chip">⭐ {l.avgRating?.toFixed(1) || "0.0"}</span>
+                                <button
+                                  className="icon-btn"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFav(l.id);
+                                  }}
+                                >
+                                  {favorites.includes(l.id) ? "★" : "☆"}
+                                </button>
+                              </div>
+                            </div>
+                          </article>
+                        ))
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+            </section>
           </>
         )}
 
@@ -1244,13 +1403,16 @@ export default function App() {
                       <h2 className="dashboard-heading">{t("manageListings") || "Manage everything in one place"}</h2>
                     </div>
                     <div className="topbar-tabs">
-                      <TabBar
-                        items={dashboardTabs}
-                        value={selectedTab}
-                        onChange={(tab) => setSelectedTab(tab)}
-                        className="dashboard-tabs"
-                        size="compact"
-                      />
+                      <span className="pill current-view">{currentSectionLabel}</span>
+                      {selectedTab !== "allListings" && (
+                        <button
+                          className="btn btn-ghost small"
+                          type="button"
+                          onClick={() => setSelectedTab("allListings")}
+                        >
+                          🌍 {t("explore") || "Explore"}
+                        </button>
+                      )}
                     </div>
                   </div>
 
