@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global process, Buffer */
 import express from "express";
 import bodyParser from "body-parser";
 import fetch from "node-fetch";
@@ -269,6 +271,7 @@ app.get("/api/paypal/verify-order/:orderId/:listingId", async (req, res) => {
 
     res.status(400).json({ error: "Order not completed", status: data.status });
   } catch (err) {
+    console.error("Order verification failed", err);
     res.status(500).json({ error: "Verification failed" });
   }
 });
