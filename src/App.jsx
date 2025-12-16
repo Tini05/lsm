@@ -6,8 +6,6 @@ import { auth, db, createRecaptcha } from "./firebase";
 import { ref as dbRef, set, update, onValue, remove, push } from "firebase/database";
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink,
   signOut,
@@ -18,12 +16,12 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   PhoneAuthProvider,
-  linkWithPhoneNumber,
   RecaptchaVerifier,
+  linkWithCredential,
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 import NorthMacedoniaMap from "./NorthMacedoniaMap";
 import "./App.css";
@@ -224,7 +222,6 @@ export default function App() {
   // const [signupPhoneConfirmation, setSignupPhoneConfirmation] = useState(null);
 
   const [postSignupVerifyOpen, setPostSignupVerifyOpen] = useState(false);
-  const [signupEmailSentAt, setSignupEmailSentAt] = useState(0);
   
   // For signup phone verification
   // const [signupPhoneLoading, setSignupPhoneLoading] = useState(false);
@@ -965,6 +962,7 @@ export default function App() {
       setFeedbackDraft((d) => ({ ...d, comment: "" }));
       showMessage(t("feedbackSaved") || "Saved", "success");
     } catch (error) {
+      console.error(error);
       showMessage(t("feedbackSaveError") || "Could not save feedback", "error");
     } finally {
       setFeedbackSaving(false);
@@ -974,7 +972,7 @@ export default function App() {
   const handleShareListing = (listing) => {
     const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
     const text = `${listing.name || ""} • ${listing.location || ""} – ${
-      t("shareText") || "BizCall" || "Tregu Lokal i Ndihmës"
+      t("shareText") || "BizCall"
     }`;
 
     if (navigator.share) {
@@ -3175,7 +3173,7 @@ export default function App() {
                           },
                         })
                       }
-                      onApprove={async (data, actions) => {
+                      onApprove={async (data) => {
                         const orderId = data.orderID;
                         try {
                           if (paymentIntent.type === "extend") {
@@ -3746,7 +3744,6 @@ export default function App() {
                           const u = auth.currentUser;
                           if (!u) return showMessage("Not signed in.", "error");
                           await sendEmailVerification(u);
-                          setSignupEmailSentAt(Date.now());
                           showMessage(t("emailLinkSent") || "Verification email sent.", "success");
                         } catch (err) {
                           showMessage(err.message, "error");

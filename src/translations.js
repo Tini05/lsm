@@ -248,7 +248,6 @@ const translations = {
 
     manageListings: "Manage Listings",
 
-    pendingVerification: "Pending verification",
     accountSince: "Account created",
 
     accountTitle: "Account",
@@ -274,8 +273,6 @@ const translations = {
     saving: "Saving...",
     favorite: "Favorite",
 
-    verificationSent: "Verification email sent — check your inbox.",
-    verificationError: "Error sending verification email.",
 
     emailChangeNotAvailable: "Email change is not available for this account.",
     emailUpdateSuccess: "Email updated successfully.",
@@ -582,7 +579,6 @@ const translations = {
 
     manageListings: "Menaxho listimet",
 
-    pendingVerification: "Në pritje të verifikimit",
     accountSince: "Llogaria krijuar",
 
     accountTitle: "Llogaria",
@@ -608,9 +604,6 @@ const translations = {
 
     saving: "Duke ruajtur...",
     favorite: "Prefero",
-
-    verificationSent: "Email-i i verifikimit u dërgua — kontrollo inbox-in.",
-    verificationError: "Gabim gjatë dërgimit të email-it të verifikimit.",
 
     emailChangeNotAvailable:
       "Ndryshimi i email-it nuk është i disponueshëm për këtë llogari.",
@@ -903,7 +896,6 @@ const translations = {
 
     manageListings: "Управувај со огласите",
 
-    pendingVerification: "Во чекор за верификација",
     accountSince: "Сметка креирана",
 
     accountTitle: "Сметка",
@@ -930,10 +922,6 @@ const translations = {
 
     saving: "Се зачувува...",
     favorite: "Омилено",
-
-    verificationSent:
-      "Пратен е верификациски е-пошта — провери го сандачето.",
-    verificationError: "Грешка при праќање на верификациски е-пошта.",
 
     emailChangeNotAvailable:
       "Промена на е-пошта не е достапна за оваа сметка.",

@@ -29,7 +29,7 @@ function ClickHandler({ onMapClick }) {
   return null;
 }
 
-export default function NorthMacedoniaMap({ selectedCity, onSelectCity }) {
+export default function NorthMacedoniaMap({ onSelectCity }) {
   const defaultCenter = [41.6, 21.7]; // roughly center of MK
   const zoom = 8;
 

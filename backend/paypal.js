@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global process */
 // paypal.js
 import checkoutNodeJssdk from "@paypal/checkout-server-sdk";
 import dotenv from "dotenv";
