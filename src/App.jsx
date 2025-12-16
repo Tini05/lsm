@@ -1,7 +1,7 @@
 // src/App.jsx
 
 import logo from "./assets/logo.png";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, db, createRecaptcha } from "./firebase";
 import { ref as dbRef, set, update, onValue, remove, push } from "firebase/database";
 import {
@@ -127,10 +127,39 @@ const normalizePhoneForStorage = (raw) => {
   return "+389" + cleaned;
 };
 
+const TabBar = ({ items = [], value, onChange, className = "", size = "default", fullWidth = false }) => (
+  <div
+    className={[
+      "tabs",
+      size === "compact" ? "tabs-compact" : "",
+      fullWidth ? "tabs-full" : "",
+      className,
+    ].filter(Boolean).join(" ")}
+  >
+    {items.map((item) => (
+      <button
+        key={item.id}
+        type="button"
+        className={`tab ${value === item.id ? "active" : ""}`}
+        onClick={() => onChange?.(item.id)}
+      >
+        {item.icon && <span className="tab-icon">{item.icon}</span>}
+        <span className="tab-label">{item.label}</span>
+        {item.badge !== undefined && (
+          <span className="tab-badge">{item.badge}</span>
+        )}
+      </button>
+    ))}
+  </div>
+);
+
 export default function App() {
   /* i18n */
   const [lang, setLang] = useState(() => localStorage.getItem("lang") || "sq");
-  const t = (k) => TRANSLATIONS[lang]?.[k] ?? TRANSLATIONS.sq?.[k] ?? k;
+  const t = useCallback(
+    (k) => TRANSLATIONS[lang]?.[k] ?? TRANSLATIONS.sq?.[k] ?? k,
+    [lang]
+  );
   useEffect(() => localStorage.setItem("lang", lang), [lang]);
 
   /* Core state */
@@ -974,6 +1003,42 @@ export default function App() {
   const verifiedListingCount = listings.filter((l) => l.isVerified).length;
   const phoneVerifiedCount = listings.filter((l) => l.phoneVerified).length;
 
+  const dashboardTabs = useMemo(
+    () => [
+      { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListings.length },
+      { id: "account", label: t("account") || "Account", icon: "👤" },
+      { id: "allListings", label: t("explore") || "Explore", icon: "🌍", badge: listings.length },
+    ],
+    [t, myListings.length, listings.length]
+  );
+
+  const authModeTabs = useMemo(
+    () => [
+      { id: "login", label: t("login") || "Login" },
+      { id: "signup", label: t("signup") || "Register" },
+    ],
+    [t]
+  );
+
+  const authMethodTabs = useMemo(
+    () => [
+      { id: "email", label: t("emailTab") || "Email", icon: "✉️" },
+      { id: "phone", label: t("signInWithPhone") || "Phone", icon: "📱" },
+    ],
+    [t]
+  );
+
+  const handleAuthModeChange = (mode) => {
+    setAuthMode(mode);
+    setConfirmationResult(null);
+    if (mode === "login") setAuthTab("email");
+  };
+
+  const handleAuthTabChange = (tab) => {
+    setAuthTab(tab);
+    setConfirmationResult(null);
+  };
+
   return (
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR", locale: "en_MK" }}>
       {message.text && <div className={`notification ${message.type}`}>{message.text}</div>}
@@ -1148,6 +1213,13 @@ export default function App() {
               {/* Dashboard content */}
               <main className="dashboard-content">
                 <div className="panel">
+                  <TabBar
+                    items={dashboardTabs}
+                    value={selectedTab}
+                    onChange={(tab) => setSelectedTab(tab)}
+                    fullWidth
+                    className="dashboard-tabs"
+                  />
                   <div className="tab-panel">
                     {selectedTab === "myListings" && (
                       <div className="section my-listings-section">
@@ -2973,47 +3045,28 @@ export default function App() {
                 </div>
         
                 {/* Mode tabs: Login / Register */}
-                <div className="auth-mode-tabs">
-                  <button
-                    className={`tab ${authMode === "login" ? "active" : ""}`}
-                    onClick={() => {
-                      setAuthMode("login");
-                      setAuthTab("email");
-                      setConfirmationResult(null);
-                    }}
-                  >
-                    {t("login") || "Login"}
-                  </button>
-                  <button
-                    className={`tab ${authMode === "signup" ? "active" : ""}`}
-                    onClick={() => {
-                      setAuthMode("signup");
-                      setConfirmationResult(null);
-                    }}
-                  >
-                    {t("signup") || "Register"}
-                  </button>
-                </div>
-        
+                <TabBar
+                  items={authModeTabs}
+                  value={authMode}
+                  onChange={handleAuthModeChange}
+                  className="auth-mode-tabs"
+                  size="compact"
+                  fullWidth
+                />
+
                 {/* =================== LOGIN MODE =================== */}
                 {authMode === "login" && (
                   <>
                     {/* Login method tabs: Email / Phone */}
-                    <div className="auth-tabs">
-                      <button
-                        className={`tab ${authTab === "email" ? "active" : ""}`}
-                        onClick={() => setAuthTab("email")}
-                      >
-                        {t("emailTab") || "Email"}
-                      </button>
-                      <button
-                        className={`tab ${authTab === "phone" ? "active" : ""}`}
-                        onClick={() => setAuthTab("phone")}
-                      >
-                        {t("signInWithPhone") || "Phone"}
-                      </button>
-                    </div>
-        
+                    <TabBar
+                      items={authMethodTabs}
+                      value={authTab}
+                      onChange={handleAuthTabChange}
+                      className="auth-tabs"
+                      size="compact"
+                      fullWidth
+                    />
+
                     {/* EMAIL LOGIN */}
                     {authTab === "email" ? (
                       <div className="modal-body auth-body auth-body-card">
