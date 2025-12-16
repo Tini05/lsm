@@ -28,7 +28,7 @@ body {
 }
 
 /* =============== HEADER =============== */
-.header {
+.header { 
   /* position: sticky; */
   top: 0;
   z-index: 999;
@@ -44,6 +44,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .brand {
@@ -77,6 +78,68 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(124, 58, 237, 0.06));
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  transition: all 0.2s ease;
+}
+
+.nav-chip.active {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.16);
+}
+
+.nav-chip:hover {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+}
+
+.nav-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.nav-chip.active .nav-chip-badge {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.desktop-only {
+  display: inline-flex;
+}
+
+.mobile-only {
+  display: none;
 }
 
 /* =============== HERO =============== */
@@ -1162,18 +1225,22 @@ body {
 
 .dashboard {
   display: flex;
-  gap: 0;
+  flex-direction: column;
+  gap: 18px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .dashboard-content {
   flex: 1;
-  background: #f9fafb;
+  background: #ffffff;
   min-height: 80vh;
-  border-radius: 16px;
-  margin-left: 10px;
-  padding: 20px;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08);
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .tabs {
@@ -1250,6 +1317,42 @@ body {
 
 .tab-panel {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section,
+.panel,
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+.panel,
+.section,
+.card {
+  padding: 16px;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title-inner {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+
+.section-subtitle-small {
+  margin: 4px 0 0;
+  color: #475569;
 }
 
 /* =============== SIDEBAR PANEL =============== */
@@ -1410,6 +1513,38 @@ body {
 .modal-title {
   font-size: 1.2rem;
   font-weight: 600;
+}
+
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-heading {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  color: #0f172a;
+}
+
+.dashboard-meta .eyebrow {
+  color: #475569;
+}
+
+.topbar-tabs {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.unified-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 12px;
 }
 
 .modal-body {
@@ -2174,6 +2309,12 @@ body {
     padding: 15px;
   }
 
+  .header-nav {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
   .sidebar-panel {
     width: 100%;
     border-right: none;
@@ -2232,6 +2373,30 @@ body {
 
   .quick-filters .filter-row {
     flex-direction: column;
+  }
+
+  .desktop-nav,
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .dashboard-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbar-tabs {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .quick-filters .select {
