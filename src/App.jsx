@@ -21,7 +21,7 @@ import {
 } from "firebase/auth";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import "leaflet/dist/leaflet.css";
 import NorthMacedoniaMap from "./NorthMacedoniaMap";
 import "./App.css";
