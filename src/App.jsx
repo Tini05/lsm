@@ -1164,6 +1164,72 @@ export default function App() {
   const featuredItemsForSlide =
     featuredSlidesForActive[featuredSlide] || featuredSlidesForActive[0] || [];
 
+  const homeActionCards = useMemo(
+    () => [
+      {
+        id: "post",
+        title: t("submitListing") || "Post a listing",
+        description:
+          t("heroPanelSubtitle") ||
+          "Publish a service in minutes with contact verification and a mobile-first preview.",
+        icon: "🚀",
+        cta: t("submitListing") || "Start now",
+        onClick: () => {
+          setShowPostForm(true);
+          setForm((f) => ({ ...f, step: 1 }));
+        },
+      },
+      {
+        id: "explore",
+        title: t("explore") || "Explore listings",
+        description:
+          t("allListingsHint") ||
+          "Filter by category, city, and tags without endless scrolling or reloads.",
+        icon: "🧭",
+        cta: t("explore") || "Browse",
+        onClick: () => setSelectedTab("allListings"),
+      },
+      {
+        id: "verify",
+        title: t("verified") || "Stay verified",
+        description:
+          t("heroPointTwo") ||
+          "Keep trust high with verified phone or email and clearly stated price ranges.",
+        icon: "🛡️",
+        cta: t("verifyYourEmail") || "Verify now",
+        onClick: () => setShowAuthModal(true),
+      },
+    ],
+    [t]
+  );
+
+  const mobileHighlights = useMemo(
+    () => [
+      {
+        title: t("quickStart") || "Built for speed",
+        description:
+          t("exploreHeroSubtitle") ||
+          "Actions and stats sit side-by-side so the mobile layout stays within thumb reach.",
+        badge: `${activeListingCount} ${t("listingsLabel") || "listings"}`,
+      },
+      {
+        title: t("verified") || "Trust signals",
+        description:
+          t("heroPanelSubtitle") ||
+          "Badges, chips, and plan details stay visible even when cards stack on smaller screens.",
+        badge: `${phoneVerifiedCount} ${t("phoneVerified") || "phone verified"}`,
+      },
+      {
+        title: t("cityShortcuts") || "Local focus",
+        description:
+          t("mkRibbonSubtitle") ||
+          "City shortcuts, spotlight rails, and action tiles make it easy to hop between towns.",
+        badge: `${mkSpotlightCities.length} ${t("cities") || "cities"}`,
+      },
+    ],
+    [t, activeListingCount, phoneVerifiedCount]
+  );
+
   const primaryNav = useMemo(
     () => [
       { id: "main", label: t("homepage") || "Home", icon: "🏠" },
@@ -1260,29 +1326,23 @@ export default function App() {
               </div>
             </section>
 
-            <section className="page-hero">
-              <div className="container hero-shell">
-                <div className="hero-surface" />
-                <div className="hero-grid">
-                <div className="hero-copy">
-                  <p className="eyebrow hero-eyebrow">{t("community") || "Community marketplace"}</p>
-                  <h2 className="hero-heading">
-                    {t("heroTitle") || "Find and share trustworthy local services"}
-                  </h2>
-                  <p className="hero-subtitle">
-                    {t("heroSubtitle") ||
-                      "List your service in seconds, verify your profile, and connect with people who need you most."}
-                  </p>
-
-                  <div className="hero-pill-row">
-                    <span className="chip chip-ghost">🔒 {t("verified") || "Verified"}</span>
-                    <span className="chip chip-ghost">⚡ {t("quickStart") || "Get started fast"}</span>
-                    <span className="chip chip-ghost">🧭 {t("city") || "City spotlight"}</span>
+            <section className="home-hero">
+              <div className="container home-hero__grid">
+                <div className="home-hero__copy">
+                  <div className="hero-kicker">
+                    <span className="pill pill-soft">🧭 {t("community") || "Community marketplace"}</span>
+                    <span className="pill pill-ghost">{t("quickStart") || "Quick start"}</span>
                   </div>
-
-                  <div className="hero-actions">
+                  <h1 className="home-hero__title">
+                    {t("heroTitle") || "Find and share trustworthy local services"}
+                  </h1>
+                  <p className="home-hero__subtitle">
+                    {t("heroSubtitle") ||
+                      "A refreshed home base with bigger tap targets, faster shortcuts, and cards that adapt to any screen."}
+                  </p>
+                  <div className="home-hero__ctas">
                     <button
-                      className="btn"
+                      className="btn btn-primary-lg"
                       onClick={() => {
                         setSelectedTab("main");
                         setShowPostForm(true);
@@ -1290,58 +1350,71 @@ export default function App() {
                     >
                       🚀 {t("submitListing") || "Start a listing"}
                     </button>
-                    <button className="btn btn-ghost" onClick={() => setSelectedTab("allListings")}>
+                    <button className="btn btn-ghost-lg" onClick={() => setSelectedTab("allListings")}>
                       🔍 {t("explore") || "Browse the marketplace"}
                     </button>
                   </div>
 
-                  <div className="hero-stats">
-                    <div className="stat-card">
-                      <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
-                      <span className="stat-number">{activeListingCount}</span>
+                  <div className="home-hero__stats">
+                    <div className="stat-block">
+                      <p className="stat-label">{t("listingsLabel") || "Active listings"}</p>
+                      <p className="stat-value">{activeListingCount}</p>
+                      <p className="stat-note">{t("homeDigest") || "Live snapshot"}</p>
                     </div>
-                    <div className="stat-card">
-                      <span className="stat-label">{t("verified") || "Verified"}</span>
-                      <span className="stat-number">{verifiedListingCount}</span>
+                    <div className="stat-block">
+                      <p className="stat-label">{t("verified") || "Verified"}</p>
+                      <p className="stat-value">{verifiedListingCount}</p>
+                      <p className="stat-note">{t("heroPointTwo") || "Trust signals everywhere"}</p>
                     </div>
-                    <div className="stat-card">
-                      <span className="stat-label">{t("phoneVerified") || "Phone verified"}</span>
-                      <span className="stat-number">{phoneVerifiedCount}</span>
+                    <div className="stat-block">
+                      <p className="stat-label">{t("city") || "City"}</p>
+                      <p className="stat-value">{mkSpotlightCities.length}</p>
+                      <p className="stat-note">{mkSpotlightCities[0]} • {t("cityShortcuts")}</p>
                     </div>
                   </div>
 
-                  <div className="hero-digest card">
-                    <div className="digest-label">{t("homeDigest") || "Live snapshot"}</div>
-                    <div className="digest-row">
-                      <span>🧭 {categories.length} {t("categories")}</span>
-                      <span>🌟 {featuredCategoryOrder.length} {t("featured") || "Featured lanes"}</span>
-                      <span>📍 {mkSpotlightCities[0]} {t("city") || "city spotlight"}</span>
-                    </div>
+                  <div className="home-hero__highlights">
+                    {mobileHighlights.map((item) => (
+                      <div key={item.title} className="highlight-card">
+                        <div className="highlight-top">
+                          <p className="highlight-title">{item.title}</p>
+                          <span className="pill pill-soft">{item.badge}</span>
+                        </div>
+                        <p className="highlight-desc">{item.description}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="hero-panel card glass-card">
-                  <div className="panel-heading">
-                    <p className="eyebrow">{t("quickStart") || "Get started fast"}</p>
-                    <h3 className="panel-title">{t("heroPanelTitle") || "Post with confidence"}</h3>
-                    <p className="panel-subtitle">
-                      {t("heroPanelSubtitle") ||
-                        "Keep your listing accurate with verified contact details and flexible plan durations."}
-                    </p>
+                <div className="home-hero__panel">
+                  <div className="hero-action-grid">
+                    {homeActionCards.map((card) => (
+                      <button
+                        key={card.id}
+                        type="button"
+                        className="action-tile"
+                        onClick={card.onClick}
+                      >
+                        <div className="action-icon">{card.icon}</div>
+                        <div className="action-body">
+                          <p className="action-title">{card.title}</p>
+                          <p className="action-desc">{card.description}</p>
+                        </div>
+                        <span className="pill pill-ghost">{card.cta}</span>
+                      </button>
+                    ))}
                   </div>
-                  <ul className="panel-list">
-                    <li>✅ {t("heroPointOne") || "Choose a category and location"}</li>
-                    <li>✅ {t("heroPointTwo") || "Verify email or phone for trust"}</li>
-                    <li>✅ {t("heroPointThree") || "Set a duration that matches your goals"}</li>
-                  </ul>
 
-                  <div className="hero-panel-footer">
-                    <p className="panel-subtitle subtle">{t("categorySpotlight")}</p>
-                    <div className="chip-row">
+                  <div className="hero-mini-panel">
+                    <div className="mini-panel__header">
+                      <p className="eyebrow subtle">{t("categorySpotlight") || "Category spotlight"}</p>
+                      <span className="pill soft-pill">{featuredCategoryOrder.length} {t("featured") || "featured"}</span>
+                    </div>
+                    <div className="chip-row wrap">
                       {featuredCategories.map((cat) => (
                         <button
                           key={cat}
-                          className={`chip ${catFilter === t(cat) ? "chip-active" : ""}`}
+                          className={`chip ${catFilter === t(cat) ? "chip-active" : "chip-ghost"}`}
                           onClick={() => {
                             setCatFilter(t(cat));
                             setSelectedTab("allListings");
@@ -1351,8 +1424,14 @@ export default function App() {
                         </button>
                       ))}
                     </div>
+                    <div className="mini-panel__digest">
+                      <div className="digest-row stacked">
+                        <span>🧭 {categories.length} {t("categories")}</span>
+                        <span>🌟 {featuredCategoryOrder.length} {t("featured") || "Featured lanes"}</span>
+                        <span>📍 {mkSpotlightCities[0]} {t("city") || "city spotlight"}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             </section>
