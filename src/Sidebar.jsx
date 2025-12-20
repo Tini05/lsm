@@ -1,4 +1,4 @@
-const Sidebar = ({ t, selected, onSelect, onLogout }) => {
+const Sidebar = ({ t, selected, onSelect, onLogout, onLogin, user }) => {
   const item = (tab, label) => (
     <button
       className={`sidebar-btn ${selected === tab ? "active" : ""}`}
@@ -18,15 +18,21 @@ const Sidebar = ({ t, selected, onSelect, onLogout }) => {
 
       <div className="sidebar-nav">
         {item("main", t("homepage") || "Home")}
-        {item("myListings", t("myListings") || "My Listings")}
-        {item("account", t("account") || "Account")}
+        {user && item("myListings", t("myListings") || "My Listings")}
+        {user && item("account", t("account") || "Account")}
         {item("allListings", t("explore") || "Explore")}
       </div>
 
       <div className="sidebar-footer">
-        <button className="sidebar-logout" onClick={onLogout}>
-          🔒 {t("logout")}
-        </button>
+        {user ? (
+          <button className="sidebar-logout" onClick={onLogout}>
+            🔒 {t("logout")}
+          </button>
+        ) : (
+          <button className="sidebar-logout" onClick={onLogin}>
+            🔑 {t("login")}
+          </button>
+        )}
       </div>
     </div>
   );
