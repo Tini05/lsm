@@ -1424,6 +1424,7 @@ export default function App() {
                             <article
                               key={l.id}
                               className="listing-card spotlight-card"
+                              style={{width: "25%"}}
                               onClick={() => {
                                 setSelectedListing(l);
                                 setSelectedTab("allListings");
