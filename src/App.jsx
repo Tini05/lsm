@@ -1203,6 +1203,60 @@ export default function App() {
     [t]
   );
 
+  const homeGrowthSteps = useMemo(
+    () => [
+      {
+        title: t("growthStepPost") || "Post today",
+        description:
+          t("growthStepPostDesc") ||
+          "Launch a verified offer with city tags and a clear price window.",
+        stat: `${activeListingCount} ${t("listingsLabel") || "listings"}`,
+      },
+      {
+        title: t("growthStepShare") || "Share fast",
+        description:
+          t("shareHint") ||
+          "Send your link to neighbours or socials and collect fresh feedback.",
+        stat: `${favorites.length} ${t("favorites") || "favorites"}`,
+      },
+      {
+        title: t("growthStepRespond") || "Respond anywhere",
+        description:
+          t("growthStepRespondDesc") ||
+          "Tap-friendly actions keep replies quick on any screen size.",
+        stat: `${verifiedListingCount} ${t("verified") || "verified"}`,
+      },
+    ],
+    [t, activeListingCount, favorites.length, verifiedListingCount]
+  );
+
+  const trafficIdeas = useMemo(
+    () => [
+      {
+        icon: "📈",
+        title: t("trafficIdeasTrending") || "Trending carousel",
+        text:
+          t("spotlightHint") ||
+          "Keep one listing refreshed weekly to stay in the featured rail.",
+      },
+      {
+        icon: "💬",
+        title: t("trafficIdeasFeedback") || "Collect replies",
+        text:
+          t("trafficIdeasFeedbackDesc") ||
+          "Highlight reviews and phone verification to boost trust.",
+      },
+      {
+        icon: "🗺️",
+        title: t("trafficIdeasLocal") || "Local focus",
+        text:
+          t("trafficIdeasLocalDesc") ||
+          "Target nearby cities with chips and map-ready contact options.",
+      },
+    ],
+    [t]
+  );
+
   const mobileHighlights = useMemo(
     () => [
       {
@@ -1296,50 +1350,48 @@ export default function App() {
         <Header />
 
         {selectedTab === "main" && (
-          <>
-            <section className="local-ribbon">
-              <div className="container ribbon-inner">
-                <div className="ribbon-copy">
-                  <p className="ribbon-eyebrow">🇲🇰 {t("mkRibbonTitle")}</p>
-                  <h2 className="ribbon-title">{t("neighborhoodFriendly") || "Built for neighbourhoods"}</h2>
-                  <p className="ribbon-subtitle">{t("mkRibbonSubtitle")}</p>
-                  <div className="ribbon-meta">
-                    <span className="pill pill-soft">✨ {t("featured") || "Featured"}: {featuredCategoryOrder.length}</span>
-                    <span className="pill pill-soft">🔒 {t("verified") || "Verified"}: {verifiedListingCount}</span>
-                    <span className="pill pill-soft">📍 {mkSpotlightCities.length} {t("cities") || "cities"}</span>
-                  </div>
-                </div>
-                <div className="ribbon-chips" aria-label={t("cityShortcuts")}>
-                  {mkSpotlightCities.map((city) => (
-                    <button
-                      key={city}
-                      className="chip"
-                      onClick={() => {
-                        setLocFilter(city);
-                        setSelectedTab("allListings");
-                      }}
-                    >
-                      📍 {city}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
+          <div className="home-shell">
+            {user && user.emailVerified && !showPostForm && (
+              <button
+                type="button"
+                className="floating-post-btn"
+                onClick={() => {
+                  setShowPostForm(true);
+                  setForm((f) => ({ ...f, step: 1 }));
+                }}
+              >
+                ➕ {t("submitListing")}
+              </button>
+            )}
 
-            <section className="home-hero">
-              <div className="container home-hero__grid">
-                <div className="home-hero__copy">
+            {user && !user.emailVerified && (
+              <div className="verify-banner">
+                <div>
+                  <strong>{t("verifyYourEmail")}</strong>
+                  <div className="verify-banner-sub">{t("verifyEmailHint")}</div>
+                </div>
+                <button
+                  className="btn btn-ghost small"
+                  onClick={() => {
+                    setShowAuthModal(true);
+                    setAuthMode("verify");
+                  }}
+                >
+                  {t("verifyYourEmail")}
+                </button>
+              </div>
+            )}
+
+            <section className="home-landing">
+              <div className="landing-grid">
+                <div className="landing-copy">
                   <div className="hero-kicker">
                     <span className="pill pill-soft">🧭 {t("community") || "Community marketplace"}</span>
-                    <span className="pill pill-ghost">{t("quickStart") || "Quick start"}</span>
+                    <span className="pill pill-ghost">{t("homepageReboot") || "New responsive hub"}</span>
                   </div>
-                  <h1 className="home-hero__title">
-                    {t("heroTitle") || "Find and share trustworthy local services"}
-                  </h1>
-                  <p className="home-hero__subtitle">
-                    {t("heroSubtitle") ||
-                      "A refreshed home base with bigger tap targets, faster shortcuts, and cards that adapt to any screen."}
-                  </p>
+                  <h1 className="home-hero__title">{t("heroTitle")}</h1>
+                  <p className="home-hero__subtitle">{t("heroSubtitle")}</p>
+
                   <div className="home-hero__ctas">
                     <button
                       className="btn btn-primary-lg"
@@ -1348,53 +1400,47 @@ export default function App() {
                         setShowPostForm(true);
                       }}
                     >
-                      🚀 {t("submitListing") || "Start a listing"}
+                      🚀 {t("submitListing")}
                     </button>
                     <button className="btn btn-ghost-lg" onClick={() => setSelectedTab("allListings")}>
-                      🔍 {t("explore") || "Browse the marketplace"}
+                      🔍 {t("explore")}
+                    </button>
+                    <button className="btn btn-ghost-lg secondary" onClick={() => setSelectedTab("allListings")}>
+                      🎥 {t("ctaWatchDemo") || "See how it looks"}
                     </button>
                   </div>
 
-                  <div className="home-hero__stats">
-                    <div className="stat-block">
-                      <p className="stat-label">{t("listingsLabel") || "Active listings"}</p>
-                      <p className="stat-value">{activeListingCount}</p>
-                      <p className="stat-note">{t("homeDigest") || "Live snapshot"}</p>
-                    </div>
-                    <div className="stat-block">
-                      <p className="stat-label">{t("verified") || "Verified"}</p>
-                      <p className="stat-value">{verifiedListingCount}</p>
-                      <p className="stat-note">{t("heroPointTwo") || "Trust signals everywhere"}</p>
-                    </div>
-                    <div className="stat-block">
-                      <p className="stat-label">{t("city") || "City"}</p>
-                      <p className="stat-value">{mkSpotlightCities.length}</p>
-                      <p className="stat-note">{mkSpotlightCities[0]} • {t("cityShortcuts")}</p>
-                    </div>
-                  </div>
-
-                  <div className="home-hero__highlights">
-                    {mobileHighlights.map((item) => (
-                      <div key={item.title} className="highlight-card">
-                        <div className="highlight-top">
-                          <p className="highlight-title">{item.title}</p>
-                          <span className="pill pill-soft">{item.badge}</span>
-                        </div>
-                        <p className="highlight-desc">{item.description}</p>
+                  <div className="home-hero__stats compact">
+                    {[
+                      {
+                        label: t("listingsLabel") || "Active listings",
+                        value: activeListingCount,
+                        hint: t("homeDigest"),
+                      },
+                      {
+                        label: t("verified") || "Verified",
+                        value: verifiedListingCount,
+                        hint: t("heroPointTwo") || "Trust first",
+                      },
+                      {
+                        label: t("cityShortcuts") || "Cities",
+                        value: mkSpotlightCities.length,
+                        hint: mkSpotlightCities[0],
+                      },
+                    ].map((stat) => (
+                      <div key={stat.label} className="stat-block">
+                        <p className="stat-label">{stat.label}</p>
+                        <p className="stat-value">{stat.value}</p>
+                        <p className="stat-note">{stat.hint}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="home-hero__panel">
+                <div className="landing-panel">
                   <div className="hero-action-grid">
                     {homeActionCards.map((card) => (
-                      <button
-                        key={card.id}
-                        type="button"
-                        className="action-tile"
-                        onClick={card.onClick}
-                      >
+                      <button key={card.id} type="button" className="action-tile" onClick={card.onClick}>
                         <div className="action-icon">{card.icon}</div>
                         <div className="action-body">
                           <p className="action-title">{card.title}</p>
@@ -1404,31 +1450,24 @@ export default function App() {
                       </button>
                     ))}
                   </div>
-
-                  <div className="hero-mini-panel">
-                    <div className="mini-panel__header">
-                      <p className="eyebrow subtle">{t("categorySpotlight") || "Category spotlight"}</p>
-                      <span className="pill soft-pill">{featuredCategoryOrder.length} {t("featured") || "featured"}</span>
+                  <div className="landing-meta">
+                    <div className="landing-meta-card">
+                      <p className="eyebrow subtle">{t("mkRibbonTitle")}</p>
+                      <p className="landing-meta-title">{t("mkRibbonSubtitle")}</p>
+                      <div className="landing-meta-row">
+                        <span className="pill pill-soft">📍 {mkSpotlightCities.length} {t("cities")}</span>
+                        <span className="pill pill-soft">🌟 {featuredCategoryOrder.length} {t("featured")}</span>
+                      </div>
                     </div>
-                    <div className="chip-row wrap">
-                      {featuredCategories.map((cat) => (
-                        <button
-                          key={cat}
-                          className={`chip ${catFilter === t(cat) ? "chip-active" : "chip-ghost"}`}
-                          onClick={() => {
-                            setCatFilter(t(cat));
-                            setSelectedTab("allListings");
-                          }}
-                        >
-                          {categoryIcons[cat]} {t(cat) || cat}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mini-panel__digest">
-                      <div className="digest-row stacked">
-                        <span>🧭 {categories.length} {t("categories")}</span>
-                        <span>🌟 {featuredCategoryOrder.length} {t("featured") || "Featured lanes"}</span>
-                        <span>📍 {mkSpotlightCities[0]} {t("city") || "city spotlight"}</span>
+                    <div className="landing-meta-card">
+                      <p className="eyebrow subtle">{t("mobileFirstTitle") || "Responsive by default"}</p>
+                      <p className="landing-meta-sub">{t("mobileFirstSubtitle") || "Cards, rails, and filters snap into one-column mobile flows."}</p>
+                      <div className="chip-row wrap">
+                        {mobileHighlights.map((item) => (
+                          <span key={item.title} className="chip chip-ghost">
+                            {item.badge} • {item.title}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1436,16 +1475,91 @@ export default function App() {
               </div>
             </section>
 
-            <section className="home-spotlight">
-              <div className="container spotlight-shell">
+            <section className="home-grid">
+              <div className="card feature-card feature-card--primary stretch">
+                <div className="feature-card__head">
+                  <p className="eyebrow subtle">{t("growthBoardTitle") || "Growth playbook"}</p>
+                  <h2 className="section-title">✨ {t("growthBoardSubtitle") || "Get found faster"}</h2>
+                  <p className="section-subtitle-small">
+                    {t("growthBoardHelper") || "Three steps that keep your listing discoverable and your CTA above the fold."}
+                  </p>
+                </div>
+                <div className="feature-points responsive">
+                  {homeGrowthSteps.map((step) => (
+                    <div key={step.title} className="feature-point">
+                      <div className="feature-icon">✅</div>
+                      <div>
+                        <h4>{step.title}</h4>
+                        <p>{step.description}</p>
+                        <span className="pill pill-soft">{step.stat}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="feature-actions wrap">
+                  <button className="btn" onClick={() => setShowPostForm(true)}>
+                    ➕ {t("submitListing")}
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => setSelectedTab("allListings")}>
+                    🧭 {t("explore")}
+                  </button>
+                </div>
+              </div>
+
+              <div className="card feature-card">
+                <div className="feature-card__head">
+                  <p className="eyebrow subtle">{t("trafficIdeasTitle") || "Traffic ideas"}</p>
+                  <h3 className="section-title-small">🚀 {t("trafficIdeasSubtitle") || "Keep eyes on your listing"}</h3>
+                </div>
+                <div className="traffic-ideas-grid">
+                  {trafficIdeas.map((idea) => (
+                    <div key={idea.title} className="traffic-idea">
+                      <div className="mission-icon">{idea.icon}</div>
+                      <div>
+                        <h4>{idea.title}</h4>
+                        <p>{idea.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card feature-card">
+                <div className="feature-card__head">
+                  <p className="eyebrow subtle">{t("categorySpotlight")}</p>
+                  <h3 className="section-title-small">🧭 {t("homeDigest")}</h3>
+                  <p className="section-subtitle-small">
+                    {t("resultsSummary") || "Sorted layouts keep previews tight on any device."}
+                  </p>
+                </div>
+                <div className="chip-row wrap">
+                  {featuredCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      className={`chip ${catFilter === t(cat) ? "chip-active" : "chip-ghost"}`}
+                      onClick={() => {
+                        setCatFilter(t(cat));
+                        setSelectedTab("allListings");
+                      }}
+                    >
+                      {categoryIcons[cat]} {t(cat) || cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="feature-badges">
+                  <span className="pill pill-soft">🌟 {featuredCategoryOrder.length} {t("featured")}</span>
+                  <span className="pill pill-soft">📍 {mkSpotlightCities[0]}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="home-spotlight reboot">
+              <div className="spotlight-shell">
                 <div className="spotlight-header">
                   <div>
-                    <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
-                    <h3 className="featured-title">{t("todaySpotlight") || "Today's spotlight board"}</h3>
-                    <p className="featured-subtitle">
-                      {t("spotlightHint") ||
-                        "A tight carousel of trusted listings that stays visible without endless scrolling."}
-                    </p>
+                    <p className="eyebrow subtle">{t("featured")}</p>
+                    <h3 className="featured-title">{t("todaySpotlight")}</h3>
+                    <p className="featured-subtitle">{t("spotlightHint")}</p>
                   </div>
                   <div className="spotlight-controls">
                     <div className="featured-pills">
@@ -1460,124 +1574,84 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-
                     <div className="featured-actions">
-                      <button
-                        className="btn btn-ghost small"
-                        type="button"
-                        onClick={() => setSelectedTab("allListings")}
-                      >
-                        🔍 {t("explore") || "Open explore"}
+                      <button className="btn btn-ghost small" type="button" onClick={() => setSelectedTab("allListings")}>
+                        🔍 {t("explore")}
                       </button>
                     </div>
                   </div>
                 </div>
-                <div className="spotlight-rail">
-                  <button
-                    type="button"
-                    className="rail-btn"
-                    onClick={() => changeFeaturedSlide(-1)}
-                    disabled={featuredSlideCount <= 1}
-                    aria-label="Previous featured slide"
-                  >
-                    ←
-                  </button>
 
-                  <div className="rail-window">
-                    <AnimatePresence mode="wait">
-                      <Motion.div
-                        key={`${activeFeaturedCategory}-${featuredSlide}`}
-                        initial={{ opacity: 0, x: 24 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -24 }}
-                        transition={{ duration: 0.25 }}
-                        className="rail-track"
-                      >
-                        {featuredItemsForSlide.length === 0 ? (
-                          <div className="empty">
-                            <div className="empty-icon">🧭</div>
-                            <p className="empty-text">{t("noListingsYet")}</p>
+                <div className="featured-grid">
+                  {featuredItemsForSlide.length === 0 ? (
+                    <div className="empty">
+                      <div className="empty-icon">🧭</div>
+                      <p className="empty-text">{t("noListingsYet")}</p>
+                    </div>
+                  ) : (
+                    featuredItemsForSlide.map((l) => {
+                      const stats = getListingStats(l);
+                      const ratingValue = Number(stats.avgRating || 0).toFixed(1);
+                      return (
+                        <article
+                          key={l.id}
+                          className="listing-card spotlight-card"
+                          onClick={() => {
+                            setSelectedListing(l);
+                            setSelectedTab("allListings");
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("listing", l.id);
+                            window.history.replaceState({}, "", url.toString());
+                          }}
+                        >
+                          <div className="spotlight-body">
+                            <header className="spotlight-header">
+                              <div>
+                                <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
+                                <h3 className="listing-title">{l.name}</h3>
+                              </div>
+                              {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
+                            </header>
+
+                            <p className="listing-description listing-description-clamp spotlight-description">
+                              {getDescriptionPreview(l.description, 160)}
+                            </p>
+
+                            <div className="listing-stats">
+                              <span className="stat-chip rating">⭐ {ratingValue}</span>
+                              <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                              <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                            </div>
                           </div>
-                        ) : (
-                          featuredItemsForSlide.map((l) => (
-                            <article
-                              key={l.id}
-                              className="listing-card spotlight-card"
-                              style={{width: "25%"}}
-                              onClick={() => {
-                                setSelectedListing(l);
-                                setSelectedTab("allListings");
-                                const url = new URL(window.location.href);
-                                url.searchParams.set("listing", l.id);
-                                window.history.replaceState({}, "", url.toString());
-                              }}
-                            >
-                              <div className="spotlight-body">
-                                <header className="spotlight-header">
-                                  <div>
-                                    <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
-                                    <h3 className="listing-title">{l.name}</h3>
-                                  </div>
-                                  {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
-                                </header>
 
-                                <p className="listing-description listing-description-clamp spotlight-description">
-                                  {getDescriptionPreview(l.description, 140)}
-                                </p>
+                          <div className="listing-footer-row spotlight-footer">
+                            <div className="listing-footer-left">
+                              {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
+                              {l.tags && (
+                                <span className="pill pill-tags">
+                                  {l.tags.split(",")[0]?.trim()}
+                                  {l.tags.split(",").length > 1 ? " +" : ""}
+                                </span>
+                              )}
+                            </div>
 
-                                {(() => {
-                                  const stats = getListingStats(l);
-                                  return (
-                                    <div className="listing-stats">
-                                      <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
-                                      <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                                      <span className="stat-chip subtle">🔥 {stats.engagement}</span>
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-
-                              <div className="listing-footer-row spotlight-footer">
-                                <div className="listing-footer-left">
-                                  {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
-                                  {l.tags && (
-                                    <span className="pill pill-tags">
-                                      {l.tags.split(",")[0]?.trim()}
-                                      {l.tags.split(",").length > 1 ? " +" : ""}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="listing-actions compact">
-                                  <span className="rating-chip">⭐ {l.avgRating?.toFixed(1) || "0.0"}</span>
-                                  <button
-                                    className="icon-btn"
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleFav(l.id);
-                                    }}
-                                  >
-                                    {favorites.includes(l.id) ? "★" : "☆"}
-                                  </button>
-                                </div>
-                              </div>
-                            </article>
-                          ))
-                        )}
-                      </Motion.div>
-                    </AnimatePresence>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="rail-btn"
-                    onClick={() => changeFeaturedSlide(1)}
-                    disabled={featuredSlideCount <= 1}
-                    aria-label="Next featured slide"
-                  >
-                    →
-                  </button>
+                            <div className="listing-actions compact">
+                              <button
+                                className="icon-btn"
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleFav(l.id);
+                                }}
+                              >
+                                {favorites.includes(l.id) ? "★" : "☆"}
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })
+                  )}
                 </div>
 
                 {featuredSlideCount > 1 && (
@@ -1595,7 +1669,69 @@ export default function App() {
                 )}
               </div>
             </section>
-          </>
+
+            <section className="discovery-rails">
+              <div className="discovery-grid">
+                <div className="card discovery-card">
+                  <div className="discovery-header">
+                    <p className="eyebrow subtle">{t("cityShortcuts")}</p>
+                    <span className="pill pill-soft">{mkSpotlightCities.length} {t("cities")}</span>
+                  </div>
+                  <p className="section-subtitle-small">{t("mkRibbonSubtitle")}</p>
+                  <div className="chip-row wrap">
+                    {mkSpotlightCities.map((city) => (
+                      <button
+                        key={city}
+                        className="chip chip-ghost"
+                        onClick={() => {
+                          setLocFilter(city);
+                          setSelectedTab("allListings");
+                        }}
+                      >
+                        📍 {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="card discovery-card">
+                  <div className="discovery-header">
+                    <p className="eyebrow subtle">{t("categorySpotlight")}</p>
+                    <span className="pill pill-soft">{featuredCategories.length} {t("categories") || "categories"}</span>
+                  </div>
+                  <p className="section-subtitle-small">{t("growthStepRespondDesc") || t("resultsSummary")}</p>
+                  <div className="chip-row wrap">
+                    {featuredCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        className="chip chip-ghost"
+                        onClick={() => {
+                          setCatFilter(t(cat));
+                          setSelectedTab("allListings");
+                        }}
+                      >
+                        {categoryIcons[cat]} {t(cat) || cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="card discovery-card alt">
+                  <div className="discovery-header">
+                    <p className="eyebrow subtle">{t("mobileFirstTitle") || "Responsive everywhere"}</p>
+                    <span className="pill pill-soft">{t("homepageReboot") || "Refreshed"}</span>
+                  </div>
+                  <p className="section-subtitle-small">
+                    {t("mobileFirstSubtitle") || "Grids collapse, filters slide, and cards stay legible even on the smallest screens."}
+                  </p>
+                  <div className="feature-badges">
+                    <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Mobile ready"}</span>
+                    <span className="pill pill-soft">🖥️ {t("responsiveLayout") || "Desktop optimized"}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         )}
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
@@ -1675,16 +1811,19 @@ export default function App() {
                   <div className="tab-panel unified-panel">
                     {selectedTab === "myListings" && (
                       <div className="section my-listings-section">
-                        <div className="section-header-row">
+                        <div className="section-header-row stacked-mobile">
                           <div>
-                            <h2 className="section-title-inner">{t("myListings")}</h2>
+                            <h2 className="section-title-inner">📁 {t("myListings")}</h2>
                             <p className="section-subtitle-small">
                               {t("myListingsHint") || "Review, edit and extend your listings in one place."}
                             </p>
                           </div>
-                          <span className="badge count">
-                            {myListings.length} {(t("listingsLabel") || "listings")}
-                          </span>
+                          <div className="pill-row">
+                            <span className="badge count">
+                              {myListings.length} {(t("listingsLabel") || "listings")}
+                            </span>
+                            <span className="badge soft">{t("responsiveLayout") || "Responsive cards"}</span>
+                          </div>
                         </div>
 
                         <div className="my-listings-toolbar">
@@ -1696,6 +1835,10 @@ export default function App() {
                             <div className="stat-chip subtle">
                               <span className="stat-label">⏳ {t("pending")}</span>
                               <span className="stat-value">{myPendingCount}</span>
+                            </div>
+                            <div className="stat-chip subtle">
+                              <span className="stat-label">⭐ {t("reputation") || "Reputation"}</span>
+                              <span className="stat-value">{favorites.length}</span>
                             </div>
                           </div>
                           <div className="my-listings-actions">
@@ -1725,7 +1868,7 @@ export default function App() {
                             <p className="empty-text">{t("noListingsYet")}</p>
                           </div>
                         ) : (
-                          <div className="listing-grid my-listings-grid">
+                          <div className="listing-grid my-listings-grid responsive-grid">
                             {myListings.map((l) => (
                               <article key={l.id} className="listing-card my-listing-card">
                                 <header className="listing-header my-listing-header">
@@ -1868,10 +2011,29 @@ export default function App() {
                     {selectedTab === "account" && (
                       <div className="section">
                         <div className="card account-card">
-                          <h2 className="section-title">👤 {t("accountTitle")}</h2>
-                          <p className="account-subtitle">
-                            {t("accountSubtitle")}
-                          </p>
+                          <div className="section-header-row stacked-mobile">
+                            <div>
+                              <h2 className="section-title">👤 {t("accountTitle")}</h2>
+                              <p className="account-subtitle">
+                                {t("accountSubtitle")}
+                              </p>
+                            </div>
+                            <div className="pill-row">
+                              <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
+                              <span className="pill pill-soft">🔒 {t("securitySettings")}</span>
+                            </div>
+                          </div>
+
+                          <div className="account-banner">
+                            <div>
+                              <p className="eyebrow subtle">{t("postingReady")}</p>
+                              <h4>{t("growthBoardSubtitle")}</h4>
+                              <p className="account-subtitle">{t("postingReadyHint")}</p>
+                            </div>
+                            <button className="btn small" onClick={() => setShowPostForm(true)}>
+                              ➕ {t("submitListing")}
+                            </button>
+                          </div>
 
                           <div className="account-main">
                             {/* LEFT: overview + stats */}
@@ -1946,16 +2108,6 @@ export default function App() {
                                   <span className="stat-label">{t("plan") || "Plan"}</span>
                                   <span className="stat-value">{plan} {t("months")}</span>
                                 </div>
-                              </div>
-
-                              <div className="account-tips">
-                                <div>
-                                  <h4>{t("postingReady") || "Posting ready"}</h4>
-                                  <p>{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
-                                </div>
-                                <button className="btn small" onClick={() => setShowPostForm(true)}>
-                                  {t("submitListing")}
-                                </button>
                               </div>
                             </div>
 
@@ -2088,6 +2240,10 @@ export default function App() {
                               {t("allListingsHint") ||
                                 "View and filter all verified listings from the platform."}
                             </p>
+                            <div className="pill-row">
+                              <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
+                              <span className="pill pill-soft">🧭 {t("responsiveLayout") || "Responsive layout"}</span>
+                            </div>
                           </div>
                         <div className="listings-count">
                           <span className="badge count">
@@ -2134,6 +2290,24 @@ export default function App() {
                               <p className="meta-number">{filtered.length}</p>
                               <p className="meta-note-text">{t("resultsSummary") || "Sorted by rating with previews for quick scanning."}</p>
                             </div>
+                          </div>
+                        </div>
+
+                        <div className="explore-metrics">
+                          <div className="stat-block">
+                            <p className="stat-label">{t("listingsLabel")}</p>
+                            <p className="stat-value">{filtered.length}</p>
+                            <p className="stat-note">{t("resultsSummary")}</p>
+                          </div>
+                          <div className="stat-block">
+                            <p className="stat-label">{t("verified")}</p>
+                            <p className="stat-value">{verifiedListings.length}</p>
+                            <p className="stat-note">{t("heroPointTwo")}</p>
+                          </div>
+                          <div className="stat-block">
+                            <p className="stat-label">{t("categorySpotlight")}</p>
+                            <p className="stat-value">{featuredCategories.length}</p>
+                            <p className="stat-note">{t("quickFilters")}</p>
                           </div>
                         </div>
 
@@ -2275,7 +2449,7 @@ export default function App() {
                               <div className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</div>
                             </div>
 
-                            <div className="listing-grid listing-grid-dashboard">
+                            <div className="listing-grid listing-grid-dashboard responsive-grid">
                               {filtered.map((l) => (
                                 <article
                                   key={l.id}
