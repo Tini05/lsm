@@ -1870,12 +1870,19 @@ export default function App() {
                         ) : (
                           <div className="listing-grid my-listings-grid responsive-grid">
                             {myListings.map((l) => (
-                              <article key={l.id} className="listing-card my-listing-card">
-                                <header className="listing-header my-listing-header">
+                              <article key={l.id} className="listing-card my-listing-card elevated">
+                                <header className="listing-header my-listing-header rich-header">
+                                  <div className="listing-icon-bubble">{categoryIcons[l.category] || "🏷️"}</div>
                                   <div className="listing-header-main">
-                                    <h3 className="listing-title">{l.name}</h3>
-
-                                    <div className="listing-meta-row">
+                                    <div className="listing-title-row spaced">
+                                      <h3 className="listing-title">{l.name}</h3>
+                                      <span
+                                        className={`status-chip ${l.status === "verified" ? "status-chip-verified" : "status-chip-pending"}`}
+                                      >
+                                        {l.status === "verified" ? `✅ ${t("verified")}` : `⏳ ${t("pending")}`}
+                                      </span>
+                                    </div>
+                                    <div className="listing-meta-row pill-row-tight">
                                       <span className="pill pill-category">
                                         {categoryIcons[l.category] || "🏷️"} {t(l.category) || l.category}
                                       </span>
@@ -1884,51 +1891,44 @@ export default function App() {
                                           📍 {l.location}
                                         </span>
                                       )}
-                                    </div>
-                                  </div>
-
-                                  <div className="listing-header-side">
-                                    <div className="status-stack">
-                                      <span
-                                        className={`status-chip ${
-                                          l.status === "verified" ? "status-chip-verified" : "status-chip-pending"
-                                        }`}
-                                      >
-                                        {l.status === "verified" ? `✅ ${t("verified")}` : `⏳ ${t("pending")}`}
+                                      <span className="pill pill-soft">
+                                        ⏱️ {l.plan} {t("months")}
                                       </span>
-
-                                      <div className="plan-expiry-row">
-                                        <span className="plan-chip">
-                                          ⏱️ {l.plan} {t("months")}
-                                        </span>
-                                        <span className="expiry-chip">
-                                          {t("expires")}:{" "}
-                                          {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
-                                        </span>
-                                      </div>
+                                    </div>
+                                    <div className="listing-meta subtle">
+                                      {t("expires")}: {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
                                     </div>
                                   </div>
+                                  {(() => {
+                                    const stats = getListingStats(l);
+                                    return (
+                                      <div className="listing-score-pill">
+                                        <span className="score-main">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
+                                        <span className="score-sub">{stats.feedbackCount} {t("reviews") || "reviews"}</span>
+                                      </div>
+                                    );
+                                  })()}
                                 </header>
 
-                                <p className="listing-description clamp-3">
+                                <p className="listing-description clamp-3 enhanced-copy">
                                   {l.description}
                                 </p>
 
                                 {(() => {
                                   const stats = getListingStats(l);
                                   return (
-                                    <div className="listing-stats">
-                                      <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                    <div className="listing-stats ribboned">
+                                      <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
                                       <span className="stat-chip">💬 {stats.feedbackCount}</span>
                                       <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                      {l.offerprice && (
+                                        <span className="pill pill-price subtle-pill">💶 {l.offerprice}</span>
+                                      )}
                                     </div>
                                   );
                                 })()}
 
-                                <div className="my-listing-highlights">
-                                  {l.offerprice && (
-                                    <span className="pill pill-offerprice">💶 {l.offerprice}</span>
-                                  )}
+                                <div className="my-listing-highlights rich-highlights">
                                   {l.tags && (
                                     <span className="pill pill-tags">🏷️ {l.tags}</span>
                                   )}
@@ -1937,7 +1937,7 @@ export default function App() {
                                   )}
                                 </div>
 
-                                <div className="my-listing-footer">
+                                <div className="my-listing-footer framed-footer">
                                   <div className="listing-actions listing-actions-compact">
                                     <button
                                       className="btn btn-ghost small"
@@ -2423,20 +2423,29 @@ export default function App() {
                                     window.history.replaceState({}, "", url.toString());
                                   }}
                                 >
-                                  <header className="listing-header">
+                                  <header className="listing-header listing-header-dense">
                                     <div className="listing-title-wrap">
                                       <div className="listing-title-row">
-                                        <span className="category-icon">
+                                        <span className="listing-icon-bubble">
                                           {categoryIcons[l.category] || "🏷️"}
                                         </span>
-                                        <h3 className="listing-title">{l.name}</h3>
-                                      </div>
-                                      <div className="listing-meta">
-                                        {t(l.category) || l.category} • {l.location}
+                                        <div>
+                                          <h3 className="listing-title">{l.name}</h3>
+                                          <div className="listing-meta pill-row-tight">
+                                            <span className="pill pill-category">{t(l.category) || l.category}</span>
+                                            <span className="pill pill-location">📍 {l.location}</span>
+                                            {l.expiresAt && (
+                                              <span className="pill pill-ghost subtle-pill">
+                                                ⏱️ {new Date(l.expiresAt).toLocaleDateString()}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
                                       </div>
                                     </div>
 
-                                    <div className="listing-badges">
+                                    <div className="listing-badges dense-badges">
+                                      {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
                                       <span className="badge verified">✓ {t("verified")}</span>
                                     </div>
                                   </header>
@@ -2449,10 +2458,16 @@ export default function App() {
                                     {(() => {
                                       const stats = getListingStats(l);
                                       return (
-                                        <div className="listing-stats">
-                                          <span className="stat-chip rating">⭐ {stats.avgRating.toFixed(1)}</span>
+                                        <div className="listing-stats spaced">
+                                          <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
                                           <span className="stat-chip">💬 {stats.feedbackCount}</span>
                                           <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                          {l.tags && (
+                                            <span className="pill pill-tags">
+                                              {l.tags.split(",")[0]?.trim()}
+                                              {l.tags.split(",").length > 1 ? " +" : ""}
+                                            </span>
+                                          )}
                                         </div>
                                       );
                                     })()}
@@ -2463,13 +2478,14 @@ export default function App() {
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <div className="listing-footer-left">
-                                      {l.offerprice && (
-                                        <span className="pill pill-price">{l.offerprice}</span>
+                                      {l.contact && (
+                                        <span className="pill pill-contact ghost-pill">
+                                          📞 {l.contact}
+                                        </span>
                                       )}
-                                      {l.tags && (
-                                        <span className="pill pill-tags">
-                                          {l.tags.split(",")[0]?.trim()}
-                                          {l.tags.split(",").length > 1 ? " +" : ""}
+                                      {l.socialLink && (
+                                        <span className="pill pill-ghost subtle-pill">
+                                          🔗 {t("websiteLabel") || "Link"}
                                         </span>
                                       )}
                                     </div>
@@ -3296,6 +3312,20 @@ export default function App() {
                 </div>
 
                 <div className="modal-body edit-modal-body">
+                  <div className="edit-summary-banner">
+                    <div>
+                      <p className="eyebrow subtle">{t("preview") || "Preview"}</p>
+                      <h4 className="edit-summary-title">{editForm.name || t("name")}</h4>
+                      <p className="edit-summary-sub">
+                        {(t(editForm.category) || editForm.category || t("category"))} • {editLocationPreview || t("location")}
+                      </p>
+                    </div>
+                    <div className="pill-row">
+                      <span className="pill pill-soft">⏱️ {editForm.plan || plan} {t("months")}</span>
+                      {editForm.offerprice && <span className="pill pill-price">{editForm.offerprice}</span>}
+                    </div>
+                  </div>
+
                   <div className="field-group">
                     <label className="field-label">{t("name")}</label>
                     <input
