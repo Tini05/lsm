@@ -280,6 +280,7 @@ export default function App() {
   const [feedbackStore, setFeedbackStore] = useState({});
   const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
   const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   /* Featured carousel */
   const [activeFeaturedCategory, setActiveFeaturedCategory] = useState(featuredCategories[0]);
@@ -1114,6 +1115,14 @@ export default function App() {
         </nav>
 
         <div className="header-actions">
+          <button
+            className="icon-btn mobile-menu-btn"
+            onClick={() => setSidebarOpen(true)}
+            aria-label={t("menu") || "Menu"}
+          >
+            ☰
+          </button>
+
           <select className="lang-select" value={lang} onChange={(e) => setLang(e.target.value)}>
             <option value="sq">🇦🇱 SQ</option>
             <option value="mk">🇲🇰 MK</option>
@@ -1122,15 +1131,6 @@ export default function App() {
 
           {user ? (
             <>
-              <div className="mobile-only">
-                <button
-                  className="icon-btn"
-                  onClick={() => setSidebarOpen(true)}
-                  aria-label={t("dashboard")}
-                >
-                  ☰
-                </button>
-              </div>
               <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
                 {t("logout")}
               </button>
@@ -1555,6 +1555,11 @@ export default function App() {
                     showMessage(t("signedOut"), "success");
                     setSidebarOpen(false);
                   }}
+                  onLogin={() => {
+                    setShowAuthModal(true);
+                    setSidebarOpen(false);
+                  }}
+                  user={user}
                 />
               </Motion.aside>
             </>
@@ -2005,11 +2010,11 @@ export default function App() {
                                 "View and filter all verified listings from the platform."}
                             </p>
                           </div>
-                          <div className="listings-count">
-                            <span className="badge count">
-                              {filtered.length} {t("resultsLabel") || "results"}
-                            </span>
-                            <span className="badge soft">
+                        <div className="listings-count">
+                          <span className="badge count">
+                            {filtered.length} {t("resultsLabel") || "results"}
+                          </span>
+                          <span className="badge soft">
                               {verifiedListings.length}{" "}
                               {t("verified")?.toLowerCase?.() || "verified"}
                             </span>
@@ -2053,8 +2058,21 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div className="explore-layout">
-                          <aside className="explore-filters card">
+                        <div className="explore-mobile-toolbar">
+                          <button
+                            type="button"
+                            className="btn btn-ghost filter-toggle-btn"
+                            onClick={() => setFiltersOpen((v) => !v)}
+                            aria-expanded={filtersOpen}
+                          >
+                            {filtersOpen ? "✕ " : "🔍 "}
+                            {filtersOpen ? t("hideFilters") || "Hide filters" : t("showFilters") || "Show filters"}
+                          </button>
+                          <span className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</span>
+                        </div>
+
+                        <div className={`explore-layout ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
+                          <aside className={`explore-filters card ${filtersOpen ? "open" : "collapsed"}`}>
                             <div className="filter-panel-head">
                               <div>
                                 <p className="eyebrow subtle">{t("refineResults") || "Refine results"}</p>

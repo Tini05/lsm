@@ -92,6 +92,9 @@ const translations = {
     filterHelper: "Narrow down by name, city, category, or sort preference.",
     resetFilters: "Reset filters",
     quickFilters: "Quick filters",
+    showFilters: "Show filters",
+    hideFilters: "Hide filters",
+    menu: "Menu",
 
     // Authentication
     login: "Login",
@@ -440,6 +443,9 @@ const translations = {
     filterHelper: "Ngushto sipas emrit, qytetit, kategorisë ose mënyrës së renditjes.",
     resetFilters: "Rifillo filtrat",
     quickFilters: "Filtra të shpejtë",
+    showFilters: "Shfaq filtrat",
+    hideFilters: "Fshih filtrat",
+    menu: "Meny",
 
     // Authentication
     login: "Hyrje",
@@ -791,6 +797,9 @@ const translations = {
     filterHelper: "Сузи по име, град, категорија или тип на сортирање.",
     resetFilters: "Ресетирај филтрите",
     quickFilters: "Брзи филтри",
+    showFilters: "Прикажи филтри",
+    hideFilters: "Скриј филтри",
+    menu: "Мени",
 
     // Authentication
     login: "Најава",
