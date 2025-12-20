@@ -2009,72 +2009,86 @@ export default function App() {
 
 
                     {selectedTab === "account" && (
-                      <div className="section">
-                        <div className="card account-card">
-                          <div className="section-header-row stacked-mobile">
-                            <div>
-                              <h2 className="section-title">👤 {t("accountTitle")}</h2>
-                              <p className="account-subtitle">
-                                {t("accountSubtitle")}
-                              </p>
+                      <div className="section account-shell">
+                        <div className="account-hero-row">
+                          <div className="account-hero-card">
+                            <div className="account-hero-meta">
+                              <p className="eyebrow subtle">{t("accountTitle")}</p>
+                              <h2 className="account-hero-title">👤 {t("accountSubtitle")}</h2>
+                              <p className="account-hero-desc">{t("postingReadyHint")}</p>
+                              <div className="account-badges">
+                                <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
+                                <span className="pill pill-soft">🔒 {t("securitySettings")}</span>
+                              </div>
                             </div>
-                            <div className="pill-row">
-                              <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
-                              <span className="pill pill-soft">🔒 {t("securitySettings")}</span>
+                            <div className="account-hero-actions">
+                              <button className="btn small" onClick={() => setShowPostForm(true)}>
+                                ➕ {t("submitListing")}
+                              </button>
+                              <button className="btn btn-ghost small" onClick={() => setSelectedTab("allListings")}>
+                                🧭 {t("explore")}
+                              </button>
                             </div>
                           </div>
 
-                          <div className="account-banner">
-                            <div>
-                              <p className="eyebrow subtle">{t("postingReady")}</p>
-                              <h4>{t("growthBoardSubtitle")}</h4>
-                              <p className="account-subtitle">{t("postingReadyHint")}</p>
-                            </div>
-                            <button className="btn small" onClick={() => setShowPostForm(true)}>
-                              ➕ {t("submitListing")}
-                            </button>
+                          <div className="account-hero-stats">
+                            {[
+                              { label: t("myListings"), value: myListings.length, hint: t("manageListings") },
+                              { label: t("favorites") || "Favorites", value: favorites.length, hint: t("reputation") },
+                              { label: t("plan") || "Plan", value: `${plan} ${t("months")}`, hint: t("plan") },
+                            ].map((stat) => (
+                              <div key={stat.label} className="account-stat-card">
+                                <p className="stat-label">{stat.label}</p>
+                                <p className="stat-value">{stat.value}</p>
+                                <p className="stat-note">{stat.hint}</p>
+                              </div>
+                            ))}
                           </div>
+                        </div>
 
-                          <div className="account-main">
-                            {/* LEFT: overview + stats */}
-                            <div className="account-overview">
-                              <div className="account-info">
-                                <div className="account-row">
-                                  <span className="account-label">{t("emailLabel")}</span>
-                                  <span className="account-value">{user?.email || "—"}</span>
+                        <div className="account-panels">
+                          <div className="account-column">
+                            <div className="card account-card modern">
+                              <div className="account-info-grid">
+                                <div className="account-info-block">
+                                  <p className="account-label">{t("emailLabel")}</p>
+                                  <p className="account-value">{user?.email || "—"}</p>
                                 </div>
-
-                                <div className="account-row">
-                                  <span className="account-label">{t("phoneNumber")}</span>
-                                  <span className="account-value">{accountPhone || t("addPhoneInAccount") || "—"}</span>
+                                <div className="account-info-block">
+                                  <p className="account-label">{t("phoneNumber")}</p>
+                                  <p className="account-value">
+                                    {accountPhone || t("addPhoneInAccount") || "—"}
+                                  </p>
                                 </div>
-
-                                <div className="account-row">
-                                  <span className="account-label">{t("verifiedLabel")}</span>
-                                  <span className="account-value">
-                                    {user?.emailVerified ? (
-                                      <span className="badge verified">✅ {t("verified")}</span>
-                                    ) : (
-                                      <span className="badge not-verified">
-                                        ⏳ {t("pendingVerification")}
-                                      </span>
-                                    )}
-                                  </span>
-                                </div>
-
-                                <div className="account-row">
-                                  <span className="account-label">{t("accountSince")}</span>
-                                  <span className="account-value">
+                                <div className="account-info-block">
+                                  <p className="account-label">{t("accountSince")}</p>
+                                  <p className="account-value">
                                     {user?.metadata?.creationTime
                                       ? new Date(user.metadata.creationTime).toLocaleDateString()
                                       : "—"}
-                                  </span>
+                                  </p>
                                 </div>
+                                <div className="account-info-block">
+                                  <p className="account-label">{t("verifiedLabel")}</p>
+                                  <p className="account-value">
+                                    {user?.emailVerified ? (
+                                      <span className="badge verified">✅ {t("verified")}</span>
+                                    ) : (
+                                      <span className="badge not-verified">⏳ {t("pendingVerification")}</span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
 
-                                {!user?.emailVerified && (
-                                  <div className="account-row">
+                              {!user?.emailVerified && (
+                                <div className="account-alert">
+                                  <div>
+                                    <p className="account-alert-title">{t("verifyYourEmail")}</p>
+                                    <p className="account-alert-sub">{t("verifyEmailHint")}</p>
+                                  </div>
+                                  <div className="account-alert-actions">
                                     <button
-                                      className="btn small"
+                                      className="btn btn-ghost small"
                                       onClick={async () => {
                                         try {
                                           if (user) {
@@ -2082,148 +2096,136 @@ export default function App() {
                                             showMessage(t("verificationSent"), "success");
                                           }
                                         } catch (err) {
-                                          showMessage(
-                                            t("verificationError") + " " + err.message,
-                                            "error"
-                                          );
+                                          showMessage(t("verificationError") + " " + err.message, "error");
                                         }
                                       }}
                                     >
                                       {t("resendVerificationEmail")}
                                     </button>
+                                    <button
+                                      className="btn small"
+                                      onClick={() => {
+                                        setAuthMode("verify");
+                                        setShowAuthModal(true);
+                                      }}
+                                    >
+                                      {t("iVerified")}
+                                    </button>
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
+                            </div>
 
-                              <div className="account-stats">
-                                <div className="stat-pill">
-                                  <span className="stat-label">{t("myListings")}</span>
-                                  <span className="stat-value">{myListings.length}</span>
+                            <div className="card account-card modern soft">
+                              <div className="account-list">
+                                <div className="account-list-row">
+                                  <div>
+                                    <p className="account-list-title">{t("myListings")}</p>
+                                    <p className="account-list-sub">{t("myListingsHint")}</p>
+                                  </div>
+                                  <span className="badge count">{myListings.length}</span>
                                 </div>
-                                <div className="stat-pill">
-                                  <span className="stat-label">{t("favorites") || "Favorites"}</span>
-                                  <span className="stat-value">{favorites.length}</span>
+                                <div className="account-list-row">
+                                  <div>
+                                    <p className="account-list-title">{t("favorites") || "Favorites"}</p>
+                                    <p className="account-list-sub">{t("reputation")}</p>
+                                  </div>
+                                  <span className="badge soft">{favorites.length}</span>
                                 </div>
-                                <div className="stat-pill">
-                                  <span className="stat-label">{t("plan") || "Plan"}</span>
-                                  <span className="stat-value">{plan} {t("months")}</span>
+                                <div className="account-list-row">
+                                  <div>
+                                    <p className="account-list-title">{t("plan")}</p>
+                                    <p className="account-list-sub">{t("responsiveLayout") || t("growthBoardSubtitle")}</p>
+                                  </div>
+                                  <span className="badge soft">{plan} {t("months")}</span>
                                 </div>
                               </div>
                             </div>
+                          </div>
 
-                            {/* RIGHT: security / settings */}
-                            <div className="account-security">
+                          <div className="account-column">
+                            <div className="card account-security-card">
                               <h3 className="account-security-title">{t("securitySettings")}</h3>
                               <p className="account-security-text">{t("securitySettingsText")}</p>
 
-                              {/* Change email */}
                               <form className="account-form" onSubmit={handleChangeEmail}>
-                                <h4 className="account-form-title">{t("changeEmail")}</h4>
+                                <div className="account-form-head">
+                                  <h4 className="account-form-title">{t("changeEmail")}</h4>
+                                  <span className="pill pill-soft">{t("emailLabel")}</span>
+                                </div>
                                 <div className="account-form-row">
-                                  <label className="account-label">
-                                    {t("newEmail")}
-                                  </label>
+                                  <label className="account-label">{t("newEmail")}</label>
                                   <input
                                     type="email"
                                     className="input"
                                     value={emailForm.newEmail}
-                                    onChange={(e) =>
-                                      setEmailForm((f) => ({ ...f, newEmail: e.target.value }))
-                                    }
+                                    onChange={(e) => setEmailForm((f) => ({ ...f, newEmail: e.target.value }))}
                                     placeholder={t("newEmailPlaceholder")}
                                   />
                                 </div>
                                 <div className="account-form-row">
-                                  <label className="account-label">
-                                    {t("currentPassword")}
-                                  </label>
+                                  <label className="account-label">{t("currentPassword")}</label>
                                   <input
                                     type="password"
                                     className="input"
                                     value={emailForm.currentPassword}
-                                    onChange={(e) =>
-                                      setEmailForm((f) => ({
-                                        ...f,
-                                        currentPassword: e.target.value,
-                                      }))
-                                    }
+                                    onChange={(e) => setEmailForm((f) => ({ ...f, currentPassword: e.target.value }))}
                                     placeholder={t("currentPasswordPlaceholder")}
                                   />
                                 </div>
-                                <button
-                                  type="submit"
-                                  className="btn small"
-                                  disabled={savingEmail}
-                                >
-                                  {savingEmail ? t("saving") : t("saveEmail")}
-                                </button>
+                                <div className="account-form-actions">
+                                  <button type="submit" className="btn small full-width" disabled={savingEmail}>
+                                    {savingEmail ? t("saving") : t("saveEmail")}
+                                  </button>
+                                </div>
                               </form>
 
-                              {/* Change password */}
                               <form className="account-form" onSubmit={handleChangePassword}>
-                                <h4 className="account-form-title">{t("changePassword")}</h4>
-
+                                <div className="account-form-head">
+                                  <h4 className="account-form-title">{t("changePassword")}</h4>
+                                  <span className="pill pill-soft">{t("securitySettings")}</span>
+                                </div>
                                 <div className="account-form-row">
-                                  <label className="account-label">
-                                    {t("currentPassword")}
-                                  </label>
+                                  <label className="account-label">{t("currentPassword")}</label>
                                   <input
                                     type="password"
                                     className="input"
                                     value={passwordForm.currentPassword}
                                     onChange={(e) =>
-                                      setPasswordForm((f) => ({
-                                        ...f,
-                                        currentPassword: e.target.value,
-                                      }))
+                                      setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))
                                     }
                                     placeholder={t("currentPasswordPlaceholder")}
                                   />
                                 </div>
-
                                 <div className="account-form-row">
-                                  <label className="account-label">
-                                    {t("newPassword")}
-                                  </label>
+                                  <label className="account-label">{t("newPassword")}</label>
                                   <input
                                     type="password"
                                     className="input"
                                     value={passwordForm.newPassword}
                                     onChange={(e) =>
-                                      setPasswordForm((f) => ({
-                                        ...f,
-                                        newPassword: e.target.value,
-                                      }))
+                                      setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))
                                     }
                                     placeholder={t("newPasswordPlaceholder")}
                                   />
                                 </div>
-
                                 <div className="account-form-row">
-                                  <label className="account-label">
-                                    {t("repeatNewPassword")}
-                                  </label>
+                                  <label className="account-label">{t("repeatNewPassword")}</label>
                                   <input
                                     type="password"
                                     className="input"
                                     value={passwordForm.repeatNewPassword}
                                     onChange={(e) =>
-                                      setPasswordForm((f) => ({
-                                        ...f,
-                                        repeatNewPassword: e.target.value,
-                                      }))
+                                      setPasswordForm((f) => ({ ...f, repeatNewPassword: e.target.value }))
                                     }
                                     placeholder={t("repeatNewPasswordPlaceholder")}
                                   />
                                 </div>
-
-                                <button
-                                  type="submit"
-                                  className="btn small"
-                                  disabled={savingPassword}
-                                >
-                                  {savingPassword ? t("saving") : t("savePassword")}
-                                </button>
+                                <div className="account-form-actions">
+                                  <button type="submit" className="btn small full-width" disabled={savingPassword}>
+                                    {savingPassword ? t("saving") : t("savePassword")}
+                                  </button>
+                                </div>
                               </form>
                             </div>
                           </div>
@@ -2232,82 +2234,40 @@ export default function App() {
                     )}
 
                     {selectedTab === "allListings" && (
-                      <div className="section explore-section">
-                        <div className="listings-header">
-                          <div className="listings-header-text">
-                            <h2 className="section-title">🏪 {t("browse")}</h2>
-                            <p className="section-subtitle">
-                              {t("allListingsHint") ||
-                                "View and filter all verified listings from the platform."}
-                            </p>
-                            <div className="pill-row">
-                              <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
-                              <span className="pill pill-soft">🧭 {t("responsiveLayout") || "Responsive layout"}</span>
-                            </div>
-                          </div>
-                        <div className="listings-count">
-                          <span className="badge count">
-                            {filtered.length} {t("resultsLabel") || "results"}
-                          </span>
-                          <span className="badge soft">
-                              {verifiedListings.length}{" "}
-                              {t("verified")?.toLowerCase?.() || "verified"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="explore-hero card glass-card">
-                          <div className="explore-hero-copy">
-                            <p className="eyebrow">{t("explore")}</p>
-                            <h3 className="explore-hero-title">
-                              {t("exploreHeroTitle") || "Explore trusted listings across every city"}
-                            </h3>
-                            <p className="explore-hero-subtitle">
-                              {t("exploreHeroSubtitle") ||
-                                t("allListingsHint") ||
-                                "Filter by category, city, and price to discover the best local options."}
-                            </p>
-                            <div className="explore-hero-badges">
-                              <span className="badge count">{activeListingCount} {t("listingsLabel") || "listings"}</span>
-                              <span className="badge soft">{verifiedListings.length} {t("verified")}</span>
-                              <span className="pill pill-tags">{mkSpotlightCities[0]} • {t("cityShortcuts")}</span>
-                            </div>
-                          </div>
-
-                          <div className="explore-hero-meta">
-                            <div className="meta-card">
-                              <p className="meta-label">{t("categorySpotlight")}</p>
-                              <div className="chip-row compact">
-                                {featuredCategories.slice(0, 4).map((cat) => (
-                                  <span key={cat} className="chip chip-ghost">
-                                    {categoryIcons[cat]} {t(cat)}
-                                  </span>
-                                ))}
+                      <div className="section explore-section revamped">
+                        <div className="explore-header-grid">
+                          <div className="explore-hero-card">
+                            <div>
+                              <p className="eyebrow subtle">{t("explore")}</p>
+                              <h2 className="explore-hero-title">🏪 {t("exploreHeroTitle") || "Discover every listing"}</h2>
+                              <p className="explore-hero-desc">
+                                {t("exploreHeroSubtitle") ||
+                                  "Swipe-friendly cards, sticky filters, and instant stats built for mobile."}
+                              </p>
+                              <div className="explore-hero-tags">
+                                <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
+                                <span className="pill pill-soft">🧭 {t("responsiveLayout") || "Responsive layout"}</span>
+                                <span className="pill pill-soft">🌍 {mkSpotlightCities[0]}</span>
                               </div>
                             </div>
-                            <div className="meta-card">
-                              <p className="meta-label">{t("resultsLabel")}</p>
-                              <p className="meta-number">{filtered.length}</p>
-                              <p className="meta-note-text">{t("resultsSummary") || "Sorted by rating with previews for quick scanning."}</p>
+                            <div className="explore-hero-actions">
+                              <span className="badge count">{filtered.length} {t("resultsLabel") || "results"}</span>
+                              <span className="badge soft">{verifiedListings.length} {t("verified")}</span>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="explore-metrics">
-                          <div className="stat-block">
-                            <p className="stat-label">{t("listingsLabel")}</p>
-                            <p className="stat-value">{filtered.length}</p>
-                            <p className="stat-note">{t("resultsSummary")}</p>
-                          </div>
-                          <div className="stat-block">
-                            <p className="stat-label">{t("verified")}</p>
-                            <p className="stat-value">{verifiedListings.length}</p>
-                            <p className="stat-note">{t("heroPointTwo")}</p>
-                          </div>
-                          <div className="stat-block">
-                            <p className="stat-label">{t("categorySpotlight")}</p>
-                            <p className="stat-value">{featuredCategories.length}</p>
-                            <p className="stat-note">{t("quickFilters")}</p>
+                          <div className="explore-stat-grid">
+                            {[
+                              { label: t("listingsLabel") || "Active", value: activeListingCount, hint: t("homeDigest") },
+                              { label: t("verified"), value: verifiedListings.length, hint: t("heroPointTwo") },
+                              { label: t("categorySpotlight"), value: featuredCategories.length, hint: t("quickFilters") },
+                            ].map((stat) => (
+                              <div key={stat.label} className="stat-block mini">
+                                <p className="stat-label">{stat.label}</p>
+                                <p className="stat-value">{stat.value}</p>
+                                <p className="stat-note">{stat.hint}</p>
+                              </div>
+                            ))}
                           </div>
                         </div>
 
@@ -2324,13 +2284,13 @@ export default function App() {
                           <span className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</span>
                         </div>
 
-                        <div className={`explore-layout ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
-                          <aside className={`explore-filters card ${filtersOpen ? "open" : "collapsed"}`}>
-                            <div className="filter-panel-head">
+                        <div className={`explore-body ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
+                          <aside className={`explore-filter-rail ${filtersOpen ? "is-open" : ""}`}>
+                            <div className="filter-rail-head">
                               <div>
                                 <p className="eyebrow subtle">{t("refineResults") || "Refine results"}</p>
-                                <p className="filter-panel-subtitle">
-                                  {t("filterHelper") || "Narrow down by name, category, location, or sort order."}
+                                <p className="filter-rail-subtitle">
+                                  {t("filterHelper") || "Search name, narrow by category, pick a city, then sort."}
                                 </p>
                               </div>
                               <button
@@ -2347,31 +2307,33 @@ export default function App() {
                               </button>
                             </div>
 
-                            <label className="filter-label">{t("search")}</label>
-                            <div className="searchbar searchbar-stacked">
-                              <input
-                                className="input"
-                                placeholder={t("searchPlaceholder") || "Search by name or description"}
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                              />
-                              <div className="search-actions">
-                                {q && (
-                                  <button
-                                    className="btn btn-ghost small"
-                                    type="button"
-                                    onClick={() => setQ("")}
-                                  >
-                                    ✕
+                            <div className="filter-card">
+                              <label className="filter-label">{t("search")}</label>
+                              <div className="searchbar searchbar-stacked">
+                                <input
+                                  className="input"
+                                  placeholder={t("searchPlaceholder") || "Search by name or description"}
+                                  value={q}
+                                  onChange={(e) => setQ(e.target.value)}
+                                />
+                                <div className="search-actions">
+                                  {q && (
+                                    <button
+                                      className="btn btn-ghost small"
+                                      type="button"
+                                      onClick={() => setQ("")}
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                  <button className="btn btn-ghost" type="button">
+                                    {t("search")}
                                   </button>
-                                )}
-                                <button className="btn btn-ghost" type="button">
-                                  {t("search")}
-                                </button>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="filter-stack">
+                            <div className="filter-card stack">
                               <div className="filter-group full">
                                 <label className="filter-label">{t("category")}</label>
                                 <select
@@ -2419,9 +2381,9 @@ export default function App() {
                               </div>
                             </div>
 
-                            <div className="quick-filters">
+                            <div className="filter-card">
                               <p className="filter-label subtle">{t("quickFilters") || "Quick filters"}</p>
-                              <div className="chip-row">
+                              <div className="chip-row wrap">
                                 {featuredCategories.slice(0, 6).map((cat) => {
                                   const label = t(cat);
                                   const active = catFilter === label;
@@ -2440,7 +2402,7 @@ export default function App() {
                             </div>
                           </aside>
 
-                          <div className="explore-results">
+                          <div className="explore-results-pane">
                             <div className="explore-results-bar">
                               <div>
                                 <p className="results-title">{t("resultsLabel")}: {filtered.length}</p>
@@ -2453,7 +2415,7 @@ export default function App() {
                               {filtered.map((l) => (
                                 <article
                                   key={l.id}
-                                  className="listing-card"
+                                  className="listing-card explore-card-modern"
                                   onClick={() => {
                                     setSelectedListing(l);
                                     const url = new URL(window.location.href);
