@@ -47,6 +47,11 @@ const translations = {
     neighborhoodFriendly: "Neighbourhood-friendly navigation",
     exploreHeroTitle: "Explore trusted local listings",
     exploreHeroSubtitle: "Use quick filters to keep cards tidy and open details when you're ready.",
+    city: "city",
+    cities: "cities",
+    todaySpotlight: "Today's spotlight board",
+    spotlightHint: "A tight carousel of trusted listings that stays visible without endless scrolling.",
+    homeDigest: "Live snapshot",
 
     // Form / Listings
     submitListing: "Submit Your Listing",
@@ -194,6 +199,8 @@ const translations = {
     averageRating: "Average rating",
     reviews: "reviews",
     shareListing: "Share listing",
+    shareHint: "Share your listing with neighbours to collect feedback and boost visibility.",
+    updateListing: "Refresh one listing",
     statusLabel: "Status",
     locationLabelFull: "Location",
     feedbackSidebarBlurb: "Ratings and notes help everyone see the most trusted listings.",
@@ -388,6 +395,11 @@ const translations = {
     neighborhoodFriendly: "Navigim i lehtë për lagjen",
     exploreHeroTitle: "Eksploro listimet e besuara lokale",
     exploreHeroSubtitle: "Përdor filtrat e shpejtë që kartat të jenë të rregullta dhe hap detajet kur të duash.",
+    city: "qytet",
+    cities: "qytete",
+    todaySpotlight: "Tabela e sotme e theksuar",
+    spotlightHint: "Një karusel i shkurtër me listime të besuara që mbetet i dukshëm pa skrollim të pafund.",
+    homeDigest: "Pamje e shpejtë",
 
     // Form / Listings
     submitListing: "Dërgo listimin tënd",
@@ -535,6 +547,8 @@ const translations = {
     averageRating: "Vlerësimi mesatar",
     reviews: "vlerësime",
     shareListing: "Shpërndaj listimin",
+    shareHint: "Ndaj listimin me fqinjët për të mbledhur përshtypje dhe më shumë shikueshmëri.",
+    updateListing: "Rifresko një listim",
     statusLabel: "Statusi",
     locationLabelFull: "Lokacioni",
     feedbackSidebarBlurb: "Vlerësimet dhe shënimet ndihmojnë të shihen listimet më të besuara.",
@@ -732,6 +746,11 @@ const translations = {
     neighborhoodFriendly: "Маалска навигација",
     exploreHeroTitle: "Истражи доверливи локални огласи",
     exploreHeroSubtitle: "Користи брзи филтри за уредни картички и отвори детали кога ти треба.",
+    city: "град",
+    cities: "градови",
+    todaySpotlight: "Денешна табла на истакнати",
+    spotlightHint: "Краток карусел со доверливи огласи што останува видлив без бесконечно скролање.",
+    homeDigest: "Брз преглед",
 
     // Form / Listings
     submitListing: "Испрати твој оглас",
@@ -879,6 +898,8 @@ const translations = {
     averageRating: "Просечна оцена",
     reviews: "рецензии",
     shareListing: "Сподели оглас",
+    shareHint: "Сподели го огласот со соседите за да собереш повратни информации и повеќе прегледи.",
+    updateListing: "Освежи еден оглас",
     statusLabel: "Статус",
     locationLabelFull: "Локација",
     feedbackSidebarBlurb: "Оцените и белешките им помагаат на сите да ги видат најдоверливите огласи.",

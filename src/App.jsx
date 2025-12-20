@@ -1237,6 +1237,11 @@ export default function App() {
                   <p className="ribbon-eyebrow">🇲🇰 {t("mkRibbonTitle")}</p>
                   <h2 className="ribbon-title">{t("neighborhoodFriendly") || "Built for neighbourhoods"}</h2>
                   <p className="ribbon-subtitle">{t("mkRibbonSubtitle")}</p>
+                  <div className="ribbon-meta">
+                    <span className="pill pill-soft">✨ {t("featured") || "Featured"}: {featuredCategoryOrder.length}</span>
+                    <span className="pill pill-soft">🔒 {t("verified") || "Verified"}: {verifiedListingCount}</span>
+                    <span className="pill pill-soft">📍 {mkSpotlightCities.length} {t("cities") || "cities"}</span>
+                  </div>
                 </div>
                 <div className="ribbon-chips" aria-label={t("cityShortcuts")}>
                   {mkSpotlightCities.map((city) => (
@@ -1256,7 +1261,9 @@ export default function App() {
             </section>
 
             <section className="page-hero">
-              <div className="container hero-grid">
+              <div className="container hero-shell">
+                <div className="hero-surface" />
+                <div className="hero-grid">
                 <div className="hero-copy">
                   <p className="eyebrow hero-eyebrow">{t("community") || "Community marketplace"}</p>
                   <h2 className="hero-heading">
@@ -1266,6 +1273,12 @@ export default function App() {
                     {t("heroSubtitle") ||
                       "List your service in seconds, verify your profile, and connect with people who need you most."}
                   </p>
+
+                  <div className="hero-pill-row">
+                    <span className="chip chip-ghost">🔒 {t("verified") || "Verified"}</span>
+                    <span className="chip chip-ghost">⚡ {t("quickStart") || "Get started fast"}</span>
+                    <span className="chip chip-ghost">🧭 {t("city") || "City spotlight"}</span>
+                  </div>
 
                   <div className="hero-actions">
                     <button
@@ -1340,11 +1353,12 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                </div>
               </div>
             </section>
 
             <section className="home-spotlight">
-              <div className="container">
+              <div className="container spotlight-shell">
                 <div className="spotlight-header">
                   <div>
                     <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
@@ -2326,42 +2340,105 @@ export default function App() {
                 </div>
               )}
 
-              {/* ====== DISCOVER SECTION ====== */}
-              <section className="card explore-highlight">
-                <div className="explore-highlight__copy">
-                  <p className="eyebrow subtle">{t("browse") || "Browse"}</p>
-                  <h2 className="section-title">🔍 {t("explore") || "Explore the marketplace"}</h2>
-                  <p className="section-subtitle-small">
-                    {t("allListingsHint") || "Visit the Explore tab to see every verified local listing."}
-                  </p>
-                  <div className="explore-highlight__actions">
+              {/* ====== MOMENTUM SECTION ====== */}
+              <section className="home-feature-grid">
+                <div className="card feature-card feature-card--primary">
+                  <div className="feature-card__head">
+                    <p className="eyebrow subtle">{t("quickStart") || "Get started fast"}</p>
+                    <h2 className="section-title">✨ {t("heroTitle") || "Find and share trustworthy local services"}</h2>
+                    <p className="section-subtitle-small">
+                      {t("spotlightHint") ||
+                        "Track momentum, stay verified, and guide neighbours toward your best offers without digging through menus."}
+                    </p>
+                  </div>
+                  <div className="feature-points">
+                    <div className="feature-point">
+                      <div className="feature-icon">🚀</div>
+                      <div>
+                        <h4>{t("submitListing") || "Submit a listing"}</h4>
+                        <p>{t("exploreHeroSubtitle") || "Post, verify contact info, and publish in minutes."}</p>
+                      </div>
+                    </div>
+                    <div className="feature-point">
+                      <div className="feature-icon">🧭</div>
+                      <div>
+                        <h4>{t("explore") || "Explore"}</h4>
+                        <p>{t("allListingsHint") || "Search by category, price, and location for quick matches."}</p>
+                      </div>
+                    </div>
+                    <div className="feature-point">
+                      <div className="feature-icon">🛡️</div>
+                      <div>
+                        <h4>{t("verified") || "Verified"}</h4>
+                        <p>{t("heroPanelSubtitle") || "Keep trust high with verified profiles and plans."}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="feature-actions">
                     <button className="btn" onClick={() => setSelectedTab("allListings")}>
-                      {t("openExplore") || "Open Explore"}
+                      🔍 {t("explore") || "Browse the marketplace"}
                     </button>
-                    <button className="btn btn-ghost" onClick={() => { setCatFilter(""); setLocFilter(""); }}>
-                      {t("clearFilters") || "Reset filters"}
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        setShowPostForm(true);
+                        setForm((f) => ({ ...f, step: 1 }));
+                      }}
+                    >
+                      ➕ {t("submitListing") || "Post a service"}
                     </button>
                   </div>
                 </div>
 
-                <div className="explore-highlight__meta">
-                  <div className="stat-pill">
-                    <span className="stat-label">{t("listingsLabel") || "Active listings"}</span>
-                    <span className="stat-value">{activeListingCount}</span>
-                  </div>
-                  <div className="stat-pill">
-                    <span className="stat-label">{t("verified") || "Verified"}</span>
-                    <span className="stat-value">{verifiedListingCount}</span>
-                  </div>
-                  <div className="stat-pill">
-                    <span className="stat-label">{t("favorites") || "Favorites"}</span>
-                    <span className="stat-value">{favorites.length}</span>
-                  </div>
-                  <div className="meta-note">
-                    <span className="pill pill-soft">✨ {t("featured") || "Featured"}</span>
-                    <p className="meta-note-text">
-                      {t("featuredHint") || "Featured listings are curated here. Open Explore for the full feed."}
+                <div className="card feature-card">
+                  <div className="feature-card__head">
+                    <p className="eyebrow subtle">{t("verified") || "Verified"}</p>
+                    <h3 className="section-title-small">🔒 Trust &amp; Safety lane</h3>
+                    <p className="section-subtitle-small">
+                      Keep conversations secure with verified contacts, transparent pricing, and a consistent city tag.
                     </p>
+                  </div>
+                  <ul className="feature-list">
+                    <li>✔️ {t("phoneVerified") || "Phone verified"}: {phoneVerifiedCount}</li>
+                    <li>✔️ {t("listingsLabel") || "Active listings"}: {activeListingCount}</li>
+                    <li>✔️ {t("categorySpotlight") || "Category spotlight"}: {featuredCategoryOrder.slice(0, 3).map((cat) => t(cat)).join(", ")}</li>
+                  </ul>
+                  <div className="feature-badges">
+                    <span className="pill pill-soft">📬 {t("homeDigest") || "Live snapshot"}</span>
+                    <span className="pill pill-soft">📍 {mkSpotlightCities[0]}</span>
+                  </div>
+                </div>
+
+                <div className="card feature-card">
+                  <div className="feature-card__head">
+                    <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
+                    <h3 className="section-title-small">🧭 Local missions</h3>
+                    <p className="section-subtitle-small">
+                      Rotate through weekly prompts to keep your profile fresh and boost visibility in the spotlight rail.
+                    </p>
+                  </div>
+                  <div className="mission-list">
+                    <div className="mission-item">
+                      <span className="mission-icon">🌟</span>
+                      <div>
+                        <h4>{t("updateListing") || "Refresh one listing"}</h4>
+                        <p>{t("featuredHint") || "Add a new tag or price range to appear in curated lanes."}</p>
+                      </div>
+                    </div>
+                    <div className="mission-item">
+                      <span className="mission-icon">🤝</span>
+                      <div>
+                        <h4>{t("share") || "Share"}</h4>
+                        <p>{t("shareHint") || "Send your listing link to neighbours and collect feedback."}</p>
+                      </div>
+                    </div>
+                    <div className="mission-item">
+                      <span className="mission-icon">🎯</span>
+                      <div>
+                        <h4>{t("categorySpotlight") || "Category spotlight"}</h4>
+                        <p>{t("spotlightHint") || "Pick a city chip to get discovered faster."}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
