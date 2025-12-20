@@ -1400,16 +1400,17 @@ export default function App() {
             )}
 
             <section className="home-landing">
-              <div className="landing-grid">
+              <div className="landing-inner">
                 <div className="landing-copy">
-                  <div className="hero-kicker">
+                  <div className="hero-kicker hero-badge-row">
                     <span className="pill pill-soft">🧭 {t("community") || "Community marketplace"}</span>
                     <span className="pill pill-ghost">{t("homepageReboot") || "New responsive hub"}</span>
+                    <span className="pill pill-soft accent">✨ {t("mobileFirstTitle") || "Responsive by default"}</span>
                   </div>
                   <h1 className="home-hero__title">{t("heroTitle")}</h1>
                   <p className="home-hero__subtitle">{t("heroSubtitle")}</p>
 
-                  <div className="home-hero__ctas">
+                  <div className="hero-cta-row">
                     <button
                       className="btn btn-primary-lg"
                       onClick={() => {
@@ -1422,22 +1423,20 @@ export default function App() {
                     <button className="btn btn-ghost-lg" onClick={() => setSelectedTab("allListings")}>
                       🔍 {t("explore")}
                     </button>
-                    <button className="btn btn-ghost-lg secondary" onClick={() => setSelectedTab("allListings")}>
-                      🎥 {t("ctaWatchDemo") || "See how it looks"}
-                    </button>
                   </div>
+                  <p className="hero-note">{t("homeDigest") || "Find offers, post in minutes, and keep your inbox active."}</p>
 
-                  <div className="home-hero__stats compact">
+                  <div className="hero-metrics">
                     {[
                       {
                         label: t("listingsLabel") || "Active listings",
                         value: activeListingCount,
-                        hint: t("homeDigest"),
+                        hint: t("heroPointTwo") || "Trust first",
                       },
                       {
                         label: t("verified") || "Verified",
                         value: verifiedListingCount,
-                        hint: t("heroPointTwo") || "Trust first",
+                        hint: t("verified") || "Verified contacts",
                       },
                       {
                         label: t("cityShortcuts") || "Cities",
@@ -1445,47 +1444,57 @@ export default function App() {
                         hint: mkSpotlightCities[0],
                       },
                     ].map((stat) => (
-                      <div key={stat.label} className="stat-block">
-                        <p className="stat-label">{stat.label}</p>
-                        <p className="stat-value">{stat.value}</p>
-                        <p className="stat-note">{stat.hint}</p>
+                      <div key={stat.label} className="metric-card">
+                        <p className="metric-label">{stat.label}</p>
+                        <p className="metric-value">{stat.value}</p>
+                        <p className="metric-note">{stat.hint}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="landing-panel">
-                  <div className="hero-action-grid">
-                    {homeActionCards.map((card) => (
-                      <button key={card.id} type="button" className="action-tile" onClick={card.onClick}>
-                        <div className="action-icon">{card.icon}</div>
-                        <div className="action-body">
-                          <p className="action-title">{card.title}</p>
-                          <p className="action-desc">{card.description}</p>
-                        </div>
-                        <span className="pill pill-ghost">{card.cta}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="landing-meta">
-                    <div className="landing-meta-card">
-                      <p className="eyebrow subtle">{t("mkRibbonTitle")}</p>
-                      <p className="landing-meta-title">{t("mkRibbonSubtitle")}</p>
-                      <div className="landing-meta-row">
-                        <span className="pill pill-soft">📍 {mkSpotlightCities.length} {t("cities")}</span>
-                        <span className="pill pill-soft">🌟 {featuredCategoryOrder.length} {t("featured")}</span>
+                <div className="landing-visual">
+                  <div className="glass-board">
+                    <div className="glass-header">
+                      <div>
+                        <p className="eyebrow subtle">{t("mkRibbonTitle")}</p>
+                        <p className="landing-meta-title">{t("mkRibbonSubtitle")}</p>
+                      </div>
+                      <div className="chip-row wrap">
+                        <span className="chip chip-soft">📍 {mkSpotlightCities.length} {t("cities")}</span>
+                        <span className="chip chip-ghost">✅ {verifiedListingCount} {t("verified")}</span>
                       </div>
                     </div>
-                    <div className="landing-meta-card">
-                      <p className="eyebrow subtle">{t("mobileFirstTitle") || "Responsive by default"}</p>
-                      <p className="landing-meta-sub">{t("mobileFirstSubtitle") || "Cards, rails, and filters snap into one-column mobile flows."}</p>
-                      <div className="chip-row wrap">
-                        {mobileHighlights.map((item) => (
-                          <span key={item.title} className="chip chip-ghost">
-                            {item.badge} • {item.title}
-                          </span>
-                        ))}
-                      </div>
+
+                    <div className="spotlight-rail">
+                      {mkSpotlightCities.slice(0, 5).map((city) => (
+                        <div key={city} className="spotlight-chip">
+                          <span className="spotlight-pin">📍</span>
+                          <span className="spotlight-title">{city}</span>
+                          <span className="spotlight-sub">{t("cityShortcuts") || "City"}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="action-compact-grid">
+                      {homeActionCards.map((card) => (
+                        <button key={card.id} type="button" className="action-compact" onClick={card.onClick}>
+                          <span className="action-icon">{card.icon}</span>
+                          <div className="action-copy">
+                            <p className="action-title">{card.title}</p>
+                            <p className="action-desc">{card.description}</p>
+                          </div>
+                          <span className="chip chip-ghost">{card.cta}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="hero-tags wrap">
+                      {mobileHighlights.map((item) => (
+                        <span key={item.title} className="chip chip-ghost">
+                          {item.badge} • {item.title}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
