@@ -276,6 +276,23 @@ export default function App() {
   });
   useEffect(() => localStorage.setItem("favorites", JSON.stringify(favorites)), [favorites]);
 
+  const listingLocationLabel = useMemo(() => {
+    if (!selectedListing) return "";
+    return (
+      buildLocationString(
+        selectedListing.locationData?.city || selectedListing.location,
+        selectedListing.locationData?.area || selectedListing.locationExtra
+      ) || t("unspecified") || "Unspecified"
+    );
+  }, [selectedListing, t]);
+
+  const listingPriceLabel = useMemo(() => {
+    if (!selectedListing) return "";
+    return selectedListing.offerprice || t("unspecified") || "Unspecified";
+  }, [selectedListing, t]);
+
+  const listingContactAvailable = !!selectedListing?.contact;
+
   /* Feedback per listing (rating + comments) */
   const [feedbackStore, setFeedbackStore] = useState({});
   const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
@@ -4296,7 +4313,7 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="modal-body listing-details-body" style={{ maxHeight: "72vh", overflowY: "auto" }}>
+                <div className="modal-body listing-details-body">
                   <div className="listing-layout">
                     <div className="listing-main">
                       <div className="listing-hero">
@@ -4324,6 +4341,31 @@ export default function App() {
                         </div>
                       </div>
 
+                      <div className="mobile-cta-bar">
+                        <div className="mobile-cta-meta">
+                          <span className="pill pill-soft">{listingLocationLabel}</span>
+                          <span className="pill">{listingPriceLabel}</span>
+                        </div>
+                        <div className="mobile-cta-actions">
+                          <button className="quick-action-btn" disabled={!listingContactAvailable} onClick={() => listingContactAvailable && window.open(`tel:${selectedListing.contact}`)}>
+                            📞 {t("call")}
+                          </button>
+                          <button className="quick-action-btn" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>
+                            ✉️ {t("emailAction")}
+                          </button>
+                          <button className="quick-action-btn ghost" disabled={!listingContactAvailable} onClick={() => {
+                            if (!listingContactAvailable) return;
+                            navigator.clipboard.writeText(selectedListing.contact);
+                            showMessage(t("copied"), "success");
+                          }}>
+                            📋 {t("copy")}
+                          </button>
+                          <button className="quick-action-btn ghost" onClick={() => handleShareListing(selectedListing)}>
+                            🔗 {t("share") || "Share"}
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="listing-highlight-grid">
                         <div className="highlight-card">
                           <p className="highlight-label">{t("status")}</p>
@@ -4335,13 +4377,11 @@ export default function App() {
                         </div>
                         <div className="highlight-card">
                           <p className="highlight-label">{t("priceRangeLabel") || t("priceLabel")}</p>
-                          <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
+                          <p className="highlight-value">{listingPriceLabel}</p>
                         </div>
                         <div className="highlight-card">
                           <p className="highlight-label">{t("locationDetails") || "Location"}</p>
-                          <p className="highlight-value">
-                            {buildLocationString(selectedListing.locationData?.city || selectedListing.location, selectedListing.locationData?.area || selectedListing.locationExtra) || t("unspecified") || "Unspecified"}
-                          </p>
+                          <p className="highlight-value">{listingLocationLabel}</p>
                           {selectedListing.locationData?.mapsUrl && (
                             <a className="map-link" href={selectedListing.locationData.mapsUrl} target="_blank" rel="noreferrer">{t("openInMaps") || "Open in Maps"}</a>
                           )}
@@ -4364,7 +4404,7 @@ export default function App() {
                         <div className="soft-grid">
                           <div>
                             <p className="highlight-label">{t("pricing") || t("priceLabel")}</p>
-                            <p className="highlight-value">{selectedListing.offerprice || t("unspecified") || "Unspecified"}</p>
+                            <p className="highlight-value">{listingPriceLabel}</p>
                           </div>
                           <div>
                             <p className="highlight-label">{t("contactEmail") || "Email"}</p>
@@ -4395,9 +4435,13 @@ export default function App() {
                             <p className="small-muted">{t("postingReadyHint") || "Listings reuse your saved phone number and location for faster posting."}</p>
                           </div>
                           <div className="quick-action-buttons">
-                            <button className="quick-action-btn" onClick={() => window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
+                            <button className="quick-action-btn" disabled={!listingContactAvailable} onClick={() => listingContactAvailable && window.open(`tel:${selectedListing.contact}`)}>📞 {t("call")}</button>
                             <button className="quick-action-btn" onClick={() => window.open(`mailto:${selectedListing.userEmail || ""}?subject=Regarding%20${encodeURIComponent(selectedListing.name)}`)}>✉️ {t("emailAction")}</button>
-                            <button className="quick-action-btn ghost" onClick={() => { navigator.clipboard.writeText(selectedListing.contact); showMessage(t("copied"), "success"); }}>📋 {t("copy")}</button>
+                            <button className="quick-action-btn ghost" disabled={!listingContactAvailable} onClick={() => {
+                              if (!listingContactAvailable) return;
+                              navigator.clipboard.writeText(selectedListing.contact);
+                              showMessage(t("copied"), "success");
+                            }}>📋 {t("copy")}</button>
                             <button className="quick-action-btn ghost" onClick={() => handleShareListing(selectedListing)}>🔗 {t("share") || "Share"}</button>
                           </div>
                         </div>
