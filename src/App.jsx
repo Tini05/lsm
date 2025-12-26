@@ -1368,397 +1368,77 @@ export default function App() {
 
         {selectedTab === "main" && (
           <div className="home-shell">
-            {user && user.emailVerified && !showPostForm && (
-              <button
-                type="button"
-                className="floating-post-btn"
-                onClick={() => {
-                  setShowPostForm(true);
-                  setForm((f) => ({ ...f, step: 1 }));
-                }}
-              >
-                ➕ {t("submitListing")}
-              </button>
-            )}
-
-            {user && !user.emailVerified && (
-              <div className="verify-banner">
-                <div>
-                  <strong>{t("verifyYourEmail")}</strong>
-                  <div className="verify-banner-sub">{t("verifyEmailHint")}</div>
-                </div>
-                <button
-                  className="btn btn-ghost small"
-                  onClick={() => {
-                    setShowAuthModal(true);
-                    setAuthMode("verify");
-                  }}
-                >
-                  {t("verifyYourEmail")}
+            {/* HERO SECTION */}
+            <section className="home-hero-simple">
+              <h1 className="hero-simple-title">{t("homeSimpleTitle")}</h1>
+              <p className="hero-simple-subtitle">{t("homeSimpleSubtitle")}</p>
+              <div className="hero-simple-ctas">
+                <button className="btn" onClick={() => { setShowPostForm(true); setForm((f) => ({ ...f, step: 1 })); }}>
+                  {t("homeSimpleCtaPost")}
+                </button>
+                <button className="btn btn-outline" onClick={() => setSelectedTab("allListings")}>
+                  {t("homeSimpleCtaBrowse")}
                 </button>
               </div>
-            )}
-
-            <section className="home-landing">
-              <div className="landing-inner">
-                <div className="landing-copy">
-                  <div className="hero-kicker hero-badge-row">
-                    <span className="pill pill-soft">🧭 {t("community") || "Community marketplace"}</span>
-                    <span className="pill pill-ghost">{t("homepageReboot") || "New responsive hub"}</span>
-                    <span className="pill pill-soft accent">✨ {t("mobileFirstTitle") || "Responsive by default"}</span>
-                  </div>
-                  <h1 className="home-hero__title">{t("heroTitle")}</h1>
-                  <p className="home-hero__subtitle">{t("heroSubtitle")}</p>
-
-                  <div className="hero-cta-row">
-                    <button
-                      className="btn btn-primary-lg"
-                      onClick={() => {
-                        setSelectedTab("main");
-                        setShowPostForm(true);
-                      }}
-                    >
-                      🚀 {t("submitListing")}
-                    </button>
-                    <button className="btn btn-ghost-lg" onClick={() => setSelectedTab("allListings")}>
-                      🔍 {t("explore")}
-                    </button>
-                  </div>
-                  <p className="hero-note">{t("homeDigest") || "Find offers, post in minutes, and keep your inbox active."}</p>
-
-                  <div className="hero-metrics">
-                    {[
-                      {
-                        label: t("listingsLabel") || "Active listings",
-                        value: activeListingCount,
-                        hint: t("heroPointTwo") || "Trust first",
-                      },
-                      {
-                        label: t("verified") || "Verified",
-                        value: verifiedListingCount,
-                        hint: t("verified") || "Verified contacts",
-                      },
-                      {
-                        label: t("cityShortcuts") || "Cities",
-                        value: mkSpotlightCities.length,
-                        hint: mkSpotlightCities[0],
-                      },
-                    ].map((stat) => (
-                      <div key={stat.label} className="metric-card">
-                        <p className="metric-label">{stat.label}</p>
-                        <p className="metric-value">{stat.value}</p>
-                        <p className="metric-note">{stat.hint}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="landing-visual">
-                  <div className="glass-board">
-                    <div className="glass-header">
-                      <div>
-                        <p className="eyebrow subtle">{t("mkRibbonTitle")}</p>
-                        <p className="landing-meta-title">{t("mkRibbonSubtitle")}</p>
-                      </div>
-                      <div className="chip-row wrap">
-                        <span className="chip chip-soft">📍 {mkSpotlightCities.length} {t("cities")}</span>
-                        <span className="chip chip-ghost">✅ {verifiedListingCount} {t("verified")}</span>
-                      </div>
-                    </div>
-
-                    <div className="spotlight-rail">
-                      {mkSpotlightCities.slice(0, 5).map((city) => (
-                        <div key={city} className="spotlight-chip">
-                          <span className="spotlight-pin">📍</span>
-                          <span className="spotlight-title">{city}</span>
-                          <span className="spotlight-sub">{t("cityShortcuts") || "City"}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="action-compact-grid">
-                      {homeActionCards.map((card) => (
-                        <button key={card.id} type="button" className="action-compact" onClick={card.onClick}>
-                          <span className="action-icon">{card.icon}</span>
-                          <div className="action-copy">
-                            <p className="action-title">{card.title}</p>
-                            <p className="action-desc">{card.description}</p>
-                          </div>
-                          <span className="chip chip-ghost">{card.cta}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="hero-tags wrap">
-                      {mobileHighlights.map((item) => (
-                        <span key={item.title} className="chip chip-ghost">
-                          {item.badge} • {item.title}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p style={{ marginTop: "12px", fontSize: "0.85rem", opacity: 0.9 }}>
+                {t("homeSimpleTrustLine")}
+              </p>
             </section>
-
-            <section className="home-grid">
-              <div className="card feature-card feature-card--primary stretch">
-                <div className="feature-card__head">
-                  <p className="eyebrow subtle">{t("growthBoardTitle") || "Growth playbook"}</p>
-                  <h2 className="section-title">✨ {t("growthBoardSubtitle") || "Get found faster"}</h2>
-                  <p className="section-subtitle-small">
-                    {t("growthBoardHelper") || "Three steps that keep your listing discoverable and your CTA above the fold."}
-                  </p>
-                </div>
-                <div className="feature-points responsive">
-                  {homeGrowthSteps.map((step) => (
-                    <div key={step.title} className="feature-point">
-                      <div className="feature-icon">✅</div>
-                      <div>
-                        <h4>{step.title}</h4>
-                        <p>{step.description}</p>
-                        <span className="pill pill-soft">{step.stat}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="feature-actions wrap">
-                  <button className="btn" onClick={() => setShowPostForm(true)}>
-                    ➕ {t("submitListing")}
-                  </button>
-                  <button className="btn btn-ghost" onClick={() => setSelectedTab("allListings")}>
-                    🧭 {t("explore")}
-                  </button>
-                </div>
-              </div>
-
-              <div className="card feature-card">
-                <div className="feature-card__head">
-                  <p className="eyebrow subtle">{t("trafficIdeasTitle") || "Traffic ideas"}</p>
-                  <h3 className="section-title-small">🚀 {t("trafficIdeasSubtitle") || "Keep eyes on your listing"}</h3>
-                </div>
-                <div className="traffic-ideas-grid">
-                  {trafficIdeas.map((idea) => (
-                    <div key={idea.title} className="traffic-idea">
-                      <div className="mission-icon">{idea.icon}</div>
-                      <div>
-                        <h4>{idea.title}</h4>
-                        <p>{idea.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="card feature-card">
-                <div className="feature-card__head">
-                  <p className="eyebrow subtle">{t("categorySpotlight")}</p>
-                  <h3 className="section-title-small">🧭 {t("homeDigest")}</h3>
-                  <p className="section-subtitle-small">
-                    {t("resultsSummary") || "Sorted layouts keep previews tight on any device."}
-                  </p>
-                </div>
-                <div className="chip-row wrap">
-                  {featuredCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      className={`chip ${catFilter === t(cat) ? "chip-active" : "chip-ghost"}`}
-                      onClick={() => {
-                        setCatFilter(t(cat));
-                        setSelectedTab("allListings");
-                      }}
-                    >
-                      {categoryIcons[cat]} {t(cat) || cat}
+        
+            {/* MAIN CONTENT GRID */}
+            <div className="home-main-grid">
+              {/* POPULAR CATEGORIES */}
+              <div className="simple-card">
+                <h3>📁 {t("homePopularCategoriesTitle")}</h3>
+                <div className="simple-chip-row">
+                  {featuredCategories.slice(0, 6).map((cat) => (
+                    <button key={cat} className="simple-chip" onClick={() => { setCatFilter(t(cat)); setSelectedTab("allListings"); }}>
+                      {categoryIcons[cat]} {t(cat)}
                     </button>
                   ))}
                 </div>
-                <div className="feature-badges">
-                  <span className="pill pill-soft">🌟 {featuredCategoryOrder.length} {t("featured")}</span>
-                  <span className="pill pill-soft">📍 {mkSpotlightCities[0]}</span>
+              </div>
+        
+              {/* POPULAR CITIES */}
+              <div className="simple-card">
+                <h3>📍 {t("homePopularCitiesTitle")}</h3>
+                <div className="simple-chip-row">
+                  {mkSpotlightCities.slice(0, 6).map((city) => (
+                    <button key={city} className="simple-chip" onClick={() => { setLocFilter(city); setSelectedTab("allListings"); }}>
+                      📍 {city}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </section>
-
-            <section className="home-spotlight reboot">
-              <div className="spotlight-shell">
-                <div className="spotlight-header">
-                  <div>
-                    <p className="eyebrow subtle">{t("featured")}</p>
-                    <h3 className="featured-title">{t("todaySpotlight")}</h3>
-                    <p className="featured-subtitle">{t("spotlightHint")}</p>
+        
+              {/* HOW IT WORKS */}
+              <div className="simple-card">
+                <h3>✨ {t("homeHowItWorksTitle")}</h3>
+                <div className="how-it-works-steps">
+                  <div style={{ textAlign: "center" }}>
+                    <div className="step-number">1</div>
+                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
+                      {t("homeHowItWorksStep1")}
+                    </p>
                   </div>
-                  <div className="spotlight-controls">
-                    <div className="featured-pills">
-                      {featuredCategoryOrder.map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          className={`pill featured-pill ${activeFeaturedCategory === cat ? "pill-active" : ""}`}
-                          onClick={() => setActiveFeaturedCategory(cat)}
-                        >
-                          {categoryIcons[cat]} {t(cat) || cat}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="featured-actions">
-                      <button className="btn btn-ghost small" type="button" onClick={() => setSelectedTab("allListings")}>
-                        🔍 {t("explore")}
-                      </button>
-                    </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div className="step-number">2</div>
+                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
+                      {t("homeHowItWorksStep2")}
+                    </p>
                   </div>
-                </div>
-
-                <div className="featured-grid">
-                  {featuredItemsForSlide.length === 0 ? (
-                    <div className="empty">
-                      <div className="empty-icon">🧭</div>
-                      <p className="empty-text">{t("noListingsYet")}</p>
-                    </div>
-                  ) : (
-                    featuredItemsForSlide.map((l) => {
-                      const stats = getListingStats(l);
-                      const ratingValue = Number(stats.avgRating || 0).toFixed(1);
-                      return (
-                        <article
-                          key={l.id}
-                          className="listing-card spotlight-card"
-                          onClick={() => {
-                            setSelectedListing(l);
-                            setSelectedTab("allListings");
-                            const url = new URL(window.location.href);
-                            url.searchParams.set("listing", l.id);
-                            window.history.replaceState({}, "", url.toString());
-                          }}
-                        >
-                          <div className="spotlight-body">
-                            <header className="spotlight-header">
-                              <div>
-                                <p className="spotlight-meta">{t(l.category) || l.category} • {l.location}</p>
-                                <h3 className="listing-title">{l.name}</h3>
-                              </div>
-                              {l.status === "verified" && <span className="badge verified">✓ {t("verified")}</span>}
-                            </header>
-
-                            <p className="listing-description listing-description-clamp spotlight-description">
-                              {getDescriptionPreview(l.description, 160)}
-                            </p>
-
-                            <div className="listing-stats">
-                              <span className="stat-chip rating">⭐ {ratingValue}</span>
-                              <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                              <span className="stat-chip subtle">🔥 {stats.engagement}</span>
-                            </div>
-                          </div>
-
-                          <div className="listing-footer-row spotlight-footer">
-                            <div className="listing-footer-left">
-                              {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
-                              {l.tags && (
-                                <span className="pill pill-tags">
-                                  {l.tags.split(",")[0]?.trim()}
-                                  {l.tags.split(",").length > 1 ? " +" : ""}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="listing-actions compact">
-                              <button
-                                className="icon-btn"
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleFav(l.id);
-                                }}
-                              >
-                                {favorites.includes(l.id) ? "★" : "☆"}
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-
-                {featuredSlideCount > 1 && (
-                  <div className="rail-dots" role="tablist" aria-label="Featured slides">
-                    {featuredSlidesForActive.map((_, idx) => (
-                      <button
-                        key={`${activeFeaturedCategory}-${idx}`}
-                        className={`dot ${idx === featuredSlide ? "active" : ""}`}
-                        onClick={() => setFeaturedSlide(idx)}
-                        aria-label={`Go to featured slide ${idx + 1}`}
-                        role="tab"
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="discovery-rails">
-              <div className="discovery-grid">
-                <div className="card discovery-card">
-                  <div className="discovery-header">
-                    <p className="eyebrow subtle">{t("cityShortcuts")}</p>
-                    <span className="pill pill-soft">{mkSpotlightCities.length} {t("cities")}</span>
-                  </div>
-                  <p className="section-subtitle-small">{t("mkRibbonSubtitle")}</p>
-                  <div className="chip-row wrap">
-                    {mkSpotlightCities.map((city) => (
-                      <button
-                        key={city}
-                        className="chip chip-ghost"
-                        onClick={() => {
-                          setLocFilter(city);
-                          setSelectedTab("allListings");
-                        }}
-                      >
-                        📍 {city}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="card discovery-card">
-                  <div className="discovery-header">
-                    <p className="eyebrow subtle">{t("categorySpotlight")}</p>
-                    <span className="pill pill-soft">{featuredCategories.length} {t("categories") || "categories"}</span>
-                  </div>
-                  <p className="section-subtitle-small">{t("growthStepRespondDesc") || t("resultsSummary")}</p>
-                  <div className="chip-row wrap">
-                    {featuredCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        className="chip chip-ghost"
-                        onClick={() => {
-                          setCatFilter(t(cat));
-                          setSelectedTab("allListings");
-                        }}
-                      >
-                        {categoryIcons[cat]} {t(cat) || cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="card discovery-card alt">
-                  <div className="discovery-header">
-                    <p className="eyebrow subtle">{t("mobileFirstTitle") || "Responsive everywhere"}</p>
-                    <span className="pill pill-soft">{t("homepageReboot") || "Refreshed"}</span>
-                  </div>
-                  <p className="section-subtitle-small">
-                    {t("mobileFirstSubtitle") || "Grids collapse, filters slide, and cards stay legible even on the smallest screens."}
-                  </p>
-                  <div className="feature-badges">
-                    <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Mobile ready"}</span>
-                    <span className="pill pill-soft">🖥️ {t("responsiveLayout") || "Desktop optimized"}</span>
+                  <div style={{ textAlign: "center" }}>
+                    <div className="step-number">3</div>
+                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
+                      {t("homeHowItWorksStep3")}
+                    </p>
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
           </div>
         )}
+        
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
         <AnimatePresence>
