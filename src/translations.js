@@ -758,6 +758,18 @@ const translations = {
     locationDetails: "Detajet e lokacionit",
     aboutListing: "Rreth këtij listimi",
     quickActions: "Veprime të shpejta",
+        // Home section - simplified
+    homeSimpleTitle: "Gjej mjeshtër, shitës ose shërbim në qytetin tënd",
+    homeSimpleSubtitle: "Posto një oglas të vogël me numër telefoni dhe qytet, ose kërko çfarë ofrojnë të tjerët.",
+    homeSimpleCtaPost: "Posto oglas",
+    homeSimpleCtaBrowse: "Shfleto oglaset",
+    homeSimpleTrustLine: "Pa komisione, flisni direkt në telefon ose Viber.",
+    homePopularCategoriesTitle: "Kategoritë më të përdorura",
+    homePopularCitiesTitle: "Qytetet e njohura",
+    homeHowItWorksTitle: "Si funksionon",
+    homeHowItWorksStep1: "Posto oglas me numër telefoni, qytet dhe përshkrim të shkurtër.",
+    homeHowItWorksStep2: "Njerëzit të thërrasin ose të shkruajnë në Viber / WhatsApp.",
+    homeHowItWorksStep3: "Ata lënë vlerësime që të tjerët të dinë kush është i besueshëm.",
 },
 
   mk: {
@@ -1137,6 +1149,18 @@ const translations = {
     locationDetails: "Детали за локацијата",
     aboutListing: "За овој оглас",
     quickActions: "Брзи акции",
+        // Home section - simplified
+    homeSimpleTitle: "Пронајди мајстор, продавач или услуга во твојот град",
+    homeSimpleSubtitle: "Објави мал оглас со телефон и град или пребарај што нудат другите.",
+    homeSimpleCtaPost: "Објави оглас",
+    homeSimpleCtaBrowse: "Пребарај огласи",
+    homeSimpleTrustLine: "Без провизија, се договараш директно по телефон или Вибер.",
+    homePopularCategoriesTitle: "Најкористени категории",
+    homePopularCitiesTitle: "Популарни градови",
+    homeHowItWorksTitle: "Како функционира",
+    homeHowItWorksStep1: "Објави оглас со телефон, град и краток опис.",
+    homeHowItWorksStep2: "Луѓето те бараат или ти пишуваат на Viber / WhatsApp.",
+    homeHowItWorksStep3: "Оставаат оценки за да знаат сите кому да веруваат.",
 },
 };
 
