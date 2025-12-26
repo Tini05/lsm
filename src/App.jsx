@@ -1633,7 +1633,7 @@ export default function App() {
                                 </header>
 
                                 <p className="listing-description clamp-3 enhanced-copy">
-                                  {l.description}
+                                  {getDescriptionPreview(l.description, 180)}
                                 </p>
 
                                 {(() => {
