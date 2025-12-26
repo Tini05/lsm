@@ -371,6 +371,18 @@ const translations = {
     locationDetails: "Location details",
     aboutListing: "About this listing",
     quickActions: "Quick actions",
+        // Home section - simplified
+    homeSimpleTitle: "Find a handyman, seller or service in your city",
+    homeSimpleSubtitle: "Post a small ad with your phone number and city, or quickly search what others offer.",
+    homeSimpleCtaPost: "Post an ad",
+    homeSimpleCtaBrowse: "Browse ads",
+    homeSimpleTrustLine: "No commissions, you talk directly by phone or Viber.",
+    homePopularCategoriesTitle: "Most used categories",
+    homePopularCitiesTitle: "Popular cities",
+    homeHowItWorksTitle: "How it works",
+    homeHowItWorksStep1: "Post an ad with your phone, city and short description.",
+    homeHowItWorksStep2: "People call you or write on Viber / WhatsApp.",
+    homeHowItWorksStep3: "They leave ratings so others know who is trusted.",
 },
 
   sq: {
