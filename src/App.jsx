@@ -1367,78 +1367,94 @@ export default function App() {
         <Header />
 
         {selectedTab === "main" && (
-          <div className="home-shell">
+          <div className="app-main-content">
             {/* HERO SECTION */}
             <section className="home-hero-simple">
               <h1 className="hero-simple-title">{t("homeSimpleTitle")}</h1>
               <p className="hero-simple-subtitle">{t("homeSimpleSubtitle")}</p>
               <div className="hero-simple-ctas">
-                <button className="btn" onClick={() => { setShowPostForm(true); setForm((f) => ({ ...f, step: 1 })); }}>
-                  {t("homeSimpleCtaPost")}
+                <button className="btn btn-primary" onClick={() => { setShowPostForm(true); setForm((f) => ({ ...f, step: 1 })); }}>
+                  📝 {t("homeSimpleCtaPost")}
                 </button>
                 <button className="btn btn-outline" onClick={() => setSelectedTab("allListings")}>
-                  {t("homeSimpleCtaBrowse")}
+                  🔍 {t("homeSimpleCtaBrowse")}
                 </button>
               </div>
               <p style={{ marginTop: "12px", fontSize: "0.85rem", opacity: 0.9 }}>
-                {t("homeSimpleTrustLine")}
+                💡 {t("homeSimpleTrustLine")}
               </p>
             </section>
         
-            {/* MAIN CONTENT GRID */}
+            {/* THREE CARDS */}
             <div className="home-main-grid">
-              {/* POPULAR CATEGORIES */}
+              {/* CARD 1: POPULAR CATEGORIES */}
               <div className="simple-card">
-                <h3>📁 {t("homePopularCategoriesTitle")}</h3>
+                <h3>🎯 {t("homePopularCategoriesTitle")}</h3>
                 <div className="simple-chip-row">
                   {featuredCategories.slice(0, 6).map((cat) => (
-                    <button key={cat} className="simple-chip" onClick={() => { setCatFilter(t(cat)); setSelectedTab("allListings"); }}>
+                    <button 
+                      key={cat} 
+                      className="simple-chip" 
+                      onClick={() => { setCatFilter(t(cat)); setSelectedTab("allListings"); }}
+                    >
                       {categoryIcons[cat]} {t(cat)}
                     </button>
                   ))}
                 </div>
               </div>
         
-              {/* POPULAR CITIES */}
+              {/* CARD 2: POPULAR CITIES */}
               <div className="simple-card">
                 <h3>📍 {t("homePopularCitiesTitle")}</h3>
                 <div className="simple-chip-row">
                   {mkSpotlightCities.slice(0, 6).map((city) => (
-                    <button key={city} className="simple-chip" onClick={() => { setLocFilter(city); setSelectedTab("allListings"); }}>
+                    <button 
+                      key={city} 
+                      className="simple-chip" 
+                      onClick={() => { setLocFilter(city); setSelectedTab("allListings"); }}
+                    >
                       📍 {city}
                     </button>
                   ))}
                 </div>
               </div>
         
-              {/* HOW IT WORKS */}
+              {/* CARD 3: HOW IT WORKS */}
               <div className="simple-card">
                 <h3>✨ {t("homeHowItWorksTitle")}</h3>
                 <div className="how-it-works-steps">
-                  <div style={{ textAlign: "center" }}>
-                    <div className="step-number">1</div>
-                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
-                      {t("homeHowItWorksStep1")}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div className="step-number">2</div>
-                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
-                      {t("homeHowItWorksStep2")}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div className="step-number">3</div>
-                    <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569" }}>
-                      {t("homeHowItWorksStep3")}
-                    </p>
-                  </div>
+                  {[1, 2, 3].map((step) => (
+                    <div key={step} style={{ textAlign: "center" }}>
+                      <div className="step-number">{step}</div>
+                      <p style={{ fontSize: "0.85rem", margin: "8px 0", color: "#475569", lineHeight: "1.4" }}>
+                        {step === 1 ? t("homeHowItWorksStep1") : step === 2 ? t("homeHowItWorksStep2") : t("homeHowItWorksStep3")}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
+        
+            {/* QUICK STATS */}
+            <section style={{ marginTop: "24px", padding: "20px", background: "#f8fafc", borderRadius: "12px", textAlign: "center" }}>
+              <h3 style={{ marginTop: 0, marginBottom: "12px", color: "#0f172a" }}>📊 {t("homeDigest") || "Live snapshot"}</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+                <div>
+                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#3b82f6" }}>{activeListingCount}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("listingsLabel") || "Active"}</p>
+                </div>
+                <div>
+                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#10b981" }}>{verifiedListingCount}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("verified") || "Verified"}</p>
+                </div>
+                <div>
+                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#8b5cf6" }}>{mkSpotlightCities.length}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("cities") || "Cities"}</p>
+                </div>
+              </div>
+            </section>
           </div>
         )}
-        
 
         {/* SIDEBAR (overlay closes on click; ESC handled globally) */}
         <AnimatePresence>
