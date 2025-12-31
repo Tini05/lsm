@@ -208,6 +208,7 @@ export default function App() {
   /* Dashboard/UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("main"); // myListings | account | allListings
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
   const [showPostForm, setShowPostForm] = useState(false);
 
   /* Editing */
@@ -1956,43 +1957,100 @@ export default function App() {
                     )}
 
                     {selectedTab === "allListings" && (
-                      <div className="section explore-section revamped">
-                        <div className="explore-header-grid">
-                          <div className="explore-hero-card">
-                            <div>
-                              <p className="eyebrow subtle">{t("explore")}</p>
-                              <h2 className="explore-hero-title">🏪 {t("exploreHeroTitle") || "Discover every listing"}</h2>
-                              <p className="explore-hero-desc">
-                                {t("exploreHeroSubtitle") ||
-                                  "Swipe-friendly cards, sticky filters, and instant stats built for mobile."}
-                              </p>
-                              <div className="explore-hero-tags">
-                                <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
-                                <span className="pill pill-soft">🧭 {t("responsiveLayout") || "Responsive layout"}</span>
-                                <span className="pill pill-soft">🌍 {mkSpotlightCities[0]}</span>
-                              </div>
-                            </div>
-                            <div className="explore-hero-actions">
-                              <span className="badge count">{filtered.length} {t("resultsLabel") || "results"}</span>
-                              <span className="badge soft">{verifiedListings.length} {t("verified")}</span>
-                            </div>
+                      <div className="section explore-section-new">
+                        {/* Simplified Header */}
+                        <div className="explore-top-bar">
+                          <div className="explore-header-content">
+                            <h2 className="explore-page-title">🔍 {t("explore") || "Explore Listings"}</h2>
+                            <p className="explore-page-subtitle">
+                              {filtered.length === 0 
+                                ? t("noListingsFound") || "No listings found. Try adjusting your filters."
+                                : `${filtered.length} ${filtered.length === 1 ? t("listing") || "listing" : t("listingsLabel") || "listings"} available`
+                              }
+                            </p>
                           </div>
-
-                          <div className="explore-stat-grid">
-                            {[
-                              { label: t("listingsLabel") || "Active", value: activeListingCount, hint: t("homeDigest") },
-                              { label: t("verified"), value: verifiedListings.length, hint: t("heroPointTwo") },
-                              { label: t("categorySpotlight"), value: featuredCategories.length, hint: t("quickFilters") },
-                            ].map((stat) => (
-                              <div key={stat.label} className="stat-block mini">
-                                <p className="stat-label">{stat.label}</p>
-                                <p className="stat-value">{stat.value}</p>
-                                <p className="stat-note">{stat.hint}</p>
-                              </div>
-                            ))}
+                          <div className="explore-top-actions">
+                            <button
+                              type="button"
+                              className="btn btn-ghost view-toggle-btn"
+                              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                              title={viewMode === "grid" ? t("switchToListView") || "Switch to list view" : t("switchToGridView") || "Switch to grid view"}
+                            >
+                              {viewMode === "grid" ? "☰" : "⊞"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost filter-toggle-btn-desktop"
+                              onClick={() => setFiltersOpen((v) => !v)}
+                              aria-expanded={filtersOpen}
+                            >
+                              {filtersOpen ? "✕ " : "🔍 "}
+                              {t("filters") || "Filters"}
+                            </button>
                           </div>
                         </div>
 
+                        {/* Active Filters Bar */}
+                        {(q || catFilter || locFilter) && (
+                          <div className="active-filters-bar">
+                            <span className="active-filters-label">{t("activeFilters") || "Active filters"}:</span>
+                            <div className="active-filters-chips">
+                              {q && (
+                                <span className="active-filter-chip">
+                                  {t("search")}: "{q}"
+                                  <button
+                                    type="button"
+                                    className="filter-chip-remove"
+                                    onClick={() => setQ("")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
+                                  >
+                                    ✕
+                                  </button>
+                                </span>
+                              )}
+                              {catFilter && (
+                                <span className="active-filter-chip">
+                                  {t("category")}: {catFilter}
+                                  <button
+                                    type="button"
+                                    className="filter-chip-remove"
+                                    onClick={() => setCatFilter("")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
+                                  >
+                                    ✕
+                                  </button>
+                                </span>
+                              )}
+                              {locFilter && (
+                                <span className="active-filter-chip">
+                                  {t("location")}: {locFilter}
+                                  <button
+                                    type="button"
+                                    className="filter-chip-remove"
+                                    onClick={() => setLocFilter("")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
+                                  >
+                                    ✕
+                                  </button>
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                className="btn-clear-all-filters"
+                                onClick={() => {
+                                  setQ("");
+                                  setCatFilter("");
+                                  setLocFilter("");
+                                  setSortBy("topRated");
+                                }}
+                              >
+                                {t("clearAll") || "Clear all"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mobile Toolbar */}
                         <div className="explore-mobile-toolbar">
                           <button
                             type="button"
@@ -2003,137 +2061,113 @@ export default function App() {
                             {filtersOpen ? "✕ " : "🔍 "}
                             {filtersOpen ? t("hideFilters") || "Hide filters" : t("showFilters") || "Show filters"}
                           </button>
-                          <span className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</span>
+                          <select
+                            className="select sort-select-mobile"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                          >
+                            <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
+                            <option value="newest">{t("sortNewest")}</option>
+                            <option value="expiring">{t("sortExpiring")}</option>
+                            <option value="az">{t("sortAZ")}</option>
+                          </select>
+                          <button
+                            type="button"
+                            className="btn btn-ghost view-toggle-btn"
+                            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                          >
+                            {viewMode === "grid" ? "☰" : "⊞"}
+                          </button>
                         </div>
 
-                        <div className={`explore-body ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
-                          <aside className={`explore-filter-rail ${filtersOpen ? "is-open" : ""}`}>
-                            <div className="filter-rail-head">
-                              <div>
-                                <p className="eyebrow subtle">{t("refineResults") || "Refine results"}</p>
-                                <p className="filter-rail-subtitle">
-                                  {t("filterHelper") || "Search name, narrow by category, pick a city, then sort."}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                className="btn btn-ghost small"
-                                onClick={() => {
-                                  setQ("");
-                                  setCatFilter("");
-                                  setLocFilter("");
-                                  setSortBy("topRated");
-                                }}
-                              >
-                                {t("resetFilters") || "Reset"}
-                              </button>
+                        <div className={`explore-body-new ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
+                          <aside className={`explore-filter-panel ${filtersOpen ? "is-open" : ""}`}>
+                            <div className="filter-panel-header">
+                              <h3 className="filter-panel-title">🔍 {t("filters") || "Filters"}</h3>
                             </div>
 
-                            <div className="filter-card">
-                              <label className="filter-label">{t("search")}</label>
-                              <div className="searchbar searchbar-stacked">
+                            {/* Search - Prominent */}
+                            <div className="filter-section">
+                              <label className="filter-section-label">{t("search") || "Search"}</label>
+                              <div className="search-wrapper">
                                 <input
-                                  className="input"
-                                  placeholder={t("searchPlaceholder") || "Search by name or description"}
+                                  className="input search-input"
+                                  type="search"
+                                  placeholder={t("searchPlaceholder") || "Search by name or description..."}
                                   value={q}
                                   onChange={(e) => setQ(e.target.value)}
                                 />
-                                <div className="search-actions">
-                                  {q && (
-                                    <button
-                                      className="btn btn-ghost small"
-                                      type="button"
-                                      onClick={() => setQ("")}
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
-                                  <button className="btn btn-ghost" type="button">
-                                    {t("search")}
+                                {q && (
+                                  <button
+                                    className="search-clear-btn"
+                                    type="button"
+                                    onClick={() => setQ("")}
+                                    aria-label={t("clearSearch") || "Clear search"}
+                                  >
+                                    ✕
                                   </button>
-                                </div>
+                                )}
                               </div>
                             </div>
 
-                            <div className="filter-card stack">
-                              <div className="filter-group full">
-                                <label className="filter-label">{t("category")}</label>
-                                <select
-                                  className="select category-dropdown"
-                                  value={catFilter}
-                                  onChange={(e) => setCatFilter(e.target.value)}
-                                >
-                                  <option value="">{t("allCategories")}</option>
-                                  {categories.map((cat) => (
-                                    <option key={cat} value={t(cat)}>
-                                      {t(cat)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div className="filter-group full">
-                                <label className="filter-label">{t("location")}</label>
-                                <select
-                                  className="select"
-                                  value={locFilter}
-                                  onChange={(e) => setLocFilter(e.target.value)}
-                                >
-                                  <option value="">{t("allLocations")}</option>
-                                  {allLocations.map((l) => (
-                                    <option key={l} value={l}>
-                                      {l}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div className="filter-group full">
-                                <label className="filter-label">{t("sortBy")}</label>
-                                <select
-                                  className="select"
-                                  value={sortBy}
-                                  onChange={(e) => setSortBy(e.target.value)}
-                                >
-                                  <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
-                                  <option value="newest">{t("sortNewest")}</option>
-                                  <option value="expiring">{t("sortExpiring")}</option>
-                                  <option value="az">{t("sortAZ")}</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            <div className="filter-card">
-                              <p className="filter-label subtle">{t("quickFilters") || "Quick filters"}</p>
-                              <div className="chip-row wrap">
-                                {featuredCategories.slice(0, 6).map((cat) => {
+                            {/* Quick Category Filters */}
+                            <div className="filter-section">
+                              <label className="filter-section-label">{t("category") || "Category"}</label>
+                              <div className="category-chips-grid">
+                                {categories.map((cat) => {
                                   const label = t(cat);
                                   const active = catFilter === label;
                                   return (
                                     <button
                                       key={cat}
                                       type="button"
-                                      className={`chip ${active ? "chip-active" : "chip-ghost"}`}
+                                      className={`category-chip ${active ? "category-chip-active" : ""}`}
                                       onClick={() => setCatFilter(active ? "" : label)}
                                     >
-                                      {categoryIcons[cat]} {label}
+                                      <span className="category-chip-icon">{categoryIcons[cat]}</span>
+                                      <span className="category-chip-label">{label}</span>
                                     </button>
                                   );
                                 })}
                               </div>
                             </div>
-                          </aside>
 
-                          <div className="explore-results-pane">
-                            <div className="explore-results-bar">
-                              <div>
-                                <p className="results-title">{t("resultsLabel")}: {filtered.length}</p>
-                                <p className="results-subtitle">{t("resultsSummary") || "Consistent card sizes keep browsing smooth."}</p>
-                              </div>
-                              <div className="pill soft-pill">{t("sortBy")}: {sortLabelMap[sortBy] || sortLabelMap.topRated}</div>
+                            {/* Location Filter */}
+                            <div className="filter-section">
+                              <label className="filter-section-label">{t("location") || "Location"}</label>
+                              <select
+                                className="select location-select"
+                                value={locFilter}
+                                onChange={(e) => setLocFilter(e.target.value)}
+                              >
+                                <option value="">{t("allLocations") || "All locations"}</option>
+                                {allLocations.map((l) => (
+                                  <option key={l} value={l}>
+                                    📍 {l}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
 
-                            <div className="listing-grid listing-grid-dashboard responsive-grid">
+                            {/* Sort */}
+                            <div className="filter-section">
+                              <label className="filter-section-label">{t("sortBy") || "Sort by"}</label>
+                              <select
+                                className="select sort-select"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                              >
+                                <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
+                                <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
+                                <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
+                                <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
+                              </select>
+                            </div>
+                          </aside>
+
+                          <div className="explore-results-area">
+                            {filtered.length > 0 ? (
+                              <div className={`listing-grid-${viewMode}`}>
                               {filtered.map((l) => (
                                 <article
                                   key={l.id}
@@ -2262,13 +2296,31 @@ export default function App() {
                                 </article>
                               ))}
 
-                              {filtered.length === 0 && (
-                                <div className="empty">
-                                  <div className="empty-icon">📭</div>
-                                  <p className="empty-text">{t("noListingsYet")}</p>
-                                </div>
-                              )}
-                            </div>
+                              </div>
+                            ) : (
+                              <div className="explore-empty-state">
+                                <div className="empty-state-icon">🔍</div>
+                                <h3 className="empty-state-title">{t("noListingsFound") || "No listings found"}</h3>
+                                <p className="empty-state-text">
+                                  {q || catFilter || locFilter 
+                                    ? t("tryDifferentFilters") || "Try adjusting your search or filters to find more listings."
+                                    : t("noListingsAvailable") || "There are currently no listings available."
+                                  }
+                                </p>
+                                {(q || catFilter || locFilter) && (
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                      setQ("");
+                                      setCatFilter("");
+                                      setLocFilter("");
+                                    }}
+                                  >
+                                    {t("clearFilters") || "Clear all filters"}
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
