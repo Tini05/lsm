@@ -1436,20 +1436,20 @@ export default function App() {
             </div>
         
             {/* QUICK STATS */}
-            <section style={{ marginTop: "24px", padding: "20px", background: "#f8fafc", borderRadius: "12px", textAlign: "center" }}>
-              <h3 style={{ marginTop: 0, marginBottom: "12px", color: "#0f172a" }}>📊 {t("homeDigest") || "Live snapshot"}</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
-                <div>
-                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#3b82f6" }}>{activeListingCount}</p>
-                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("listingsLabel") || "Active"}</p>
+            <section className="stats-section">
+              <h3>📊 {t("homeDigest") || "Live snapshot"}</h3>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <p className="stat-value blue">{activeListingCount}</p>
+                  <p className="stat-label">{t("listingsLabel") || "Active"}</p>
                 </div>
-                <div>
-                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#10b981" }}>{verifiedListingCount}</p>
-                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("verified") || "Verified"}</p>
+                <div className="stat-item">
+                  <p className="stat-value green">{verifiedListingCount}</p>
+                  <p className="stat-label">{t("verified") || "Verified"}</p>
                 </div>
-                <div>
-                  <p style={{ margin: "0", fontSize: "1.2rem", fontWeight: "800", color: "#8b5cf6" }}>{mkSpotlightCities.length}</p>
-                  <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748b" }}>{t("cities") || "Cities"}</p>
+                <div className="stat-item">
+                  <p className="stat-value purple">{mkSpotlightCities.length}</p>
+                  <p className="stat-label">{t("cities") || "Cities"}</p>
                 </div>
               </div>
             </section>
