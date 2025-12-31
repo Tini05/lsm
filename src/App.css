@@ -1941,7 +1941,7 @@ body {
 }
 
 .filter-toggle-btn-desktop {
-  display: none;
+  display: inline-flex;
 }
 
 /* Active Filters Bar */
@@ -2026,8 +2026,35 @@ body {
   align-items: start;
 }
 
-.explore-body-new.filters-collapsed .explore-filter-panel {
-  display: none;
+/* On desktop, always show filters unless explicitly collapsed */
+@media (min-width: 769px) {
+  .explore-body-new.filters-collapsed {
+    grid-template-columns: 1fr;
+  }
+  
+  .explore-body-new.filters-collapsed .explore-filter-panel {
+    display: none;
+  }
+  
+  .explore-body-new.filters-open .explore-filter-panel,
+  .explore-body-new:not(.filters-collapsed) .explore-filter-panel {
+    display: flex;
+  }
+  
+  .explore-body-new:not(.filters-collapsed) {
+    grid-template-columns: minmax(280px, 320px) 1fr;
+  }
+}
+
+/* On mobile, respect the filters-open state */
+@media (max-width: 768px) {
+  .explore-body-new.filters-collapsed .explore-filter-panel {
+    display: none;
+  }
+  
+  .explore-body-new.filters-open .explore-filter-panel {
+    display: flex;
+  }
 }
 
 .explore-filter-panel {
@@ -2045,6 +2072,7 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   max-height: calc(100vh - 140px);
   overflow-y: auto;
+  align-self: start;
 }
 
 .filter-panel-header {
@@ -2151,18 +2179,33 @@ body {
 /* Results Area */
 .explore-results-area {
   min-height: 400px;
+  width: 100%;
 }
 
 .listing-grid-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  width: 100%;
+}
+
+@media (min-width: 1200px) {
+  .listing-grid-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .listing-grid-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
 }
 
 .listing-grid-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .listing-grid-list .listing-card {
