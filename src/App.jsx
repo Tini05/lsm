@@ -298,7 +298,7 @@ export default function App() {
   const [feedbackStore, setFeedbackStore] = useState({});
   const [feedbackDraft, setFeedbackDraft] = useState({ rating: 4, comment: "" });
   const [feedbackSaving, setFeedbackSaving] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false); // Start closed, user can toggle
 
   /* Featured carousel */
   const [activeFeaturedCategory, setActiveFeaturedCategory] = useState(featuredCategories[0]);
@@ -2081,87 +2081,109 @@ export default function App() {
                         </div>
 
                         <div className={`explore-body-new ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
+                          {/* Overlay */}
+                          {filtersOpen && (
+                            <div 
+                              className="explore-filter-overlay"
+                              onClick={() => setFiltersOpen(false)}
+                              aria-label={t("closeFilters") || "Close filters"}
+                            />
+                          )}
+                          
+                          {/* Sidebar Filter Panel */}
                           <aside className={`explore-filter-panel ${filtersOpen ? "is-open" : ""}`}>
-                            <div className="filter-panel-header">
-                              <h3 className="filter-panel-title">🔍 {t("filters") || "Filters"}</h3>
-                            </div>
+                            <div className="filter-panel-inner">
+                              <div className="filter-panel-header">
+                                <h3 className="filter-panel-title">🔍 {t("filters") || "Filters"}</h3>
+                                <button
+                                  type="button"
+                                  className="filter-panel-close"
+                                  onClick={() => setFiltersOpen(false)}
+                                  aria-label={t("closeFilters") || "Close filters"}
+                                >
+                                  ✕
+                                </button>
+                              </div>
 
-                            {/* Search - Prominent */}
-                            <div className="filter-section">
-                              <label className="filter-section-label">{t("search") || "Search"}</label>
-                              <div className="search-wrapper">
-                                <input
-                                  className="input search-input"
-                                  type="search"
-                                  placeholder={t("searchPlaceholder") || "Search by name or description..."}
-                                  value={q}
-                                  onChange={(e) => setQ(e.target.value)}
-                                />
-                                {q && (
-                                  <button
-                                    className="search-clear-btn"
-                                    type="button"
-                                    onClick={() => setQ("")}
-                                    aria-label={t("clearSearch") || "Clear search"}
+                              <div className="filter-sections-container">
+                                {/* Search - Prominent */}
+                                <div className="filter-section">
+                                  <label className="filter-section-label">{t("search") || "Search"}</label>
+                                  <div className="search-wrapper">
+                                    <input
+                                      className="input search-input"
+                                      type="search"
+                                      placeholder={t("searchPlaceholder") || "Search by name or description..."}
+                                      value={q}
+                                      onChange={(e) => setQ(e.target.value)}
+                                    />
+                                    {q && (
+                                      <button
+                                        className="search-clear-btn"
+                                        type="button"
+                                        onClick={() => setQ("")}
+                                        aria-label={t("clearSearch") || "Clear search"}
+                                      >
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Quick Category Filters */}
+                                <div className="filter-section">
+                                  <label className="filter-section-label">{t("category") || "Category"}</label>
+                                  <div className="category-chips-grid">
+                                    {categories.map((cat) => {
+                                      const label = t(cat);
+                                      const active = catFilter === label;
+                                      return (
+                                        <button
+                                          key={cat}
+                                          type="button"
+                                          className={`category-chip ${active ? "category-chip-active" : ""}`}
+                                          onClick={() => setCatFilter(active ? "" : label)}
+                                        >
+                                          <span className="category-chip-icon">{categoryIcons[cat]}</span>
+                                          <span className="category-chip-label">{label}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Location Filter */}
+                                <div className="filter-section">
+                                  <label className="filter-section-label">{t("location") || "Location"}</label>
+                                  <select
+                                    className="select location-select"
+                                    value={locFilter}
+                                    onChange={(e) => setLocFilter(e.target.value)}
                                   >
-                                    ✕
-                                  </button>
-                                )}
+                                    <option value="">{t("allLocations") || "All locations"}</option>
+                                    {allLocations.map((l) => (
+                                      <option key={l} value={l}>
+                                        📍 {l}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* Sort */}
+                                <div className="filter-section">
+                                  <label className="filter-section-label">{t("sortBy") || "Sort by"}</label>
+                                  <select
+                                    className="select sort-select"
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                  >
+                                    <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
+                                    <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
+                                    <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
+                                    <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
+                                  </select>
+                                </div>
                               </div>
-                            </div>
-
-                            {/* Quick Category Filters */}
-                            <div className="filter-section">
-                              <label className="filter-section-label">{t("category") || "Category"}</label>
-                              <div className="category-chips-grid">
-                                {categories.map((cat) => {
-                                  const label = t(cat);
-                                  const active = catFilter === label;
-                                  return (
-                                    <button
-                                      key={cat}
-                                      type="button"
-                                      className={`category-chip ${active ? "category-chip-active" : ""}`}
-                                      onClick={() => setCatFilter(active ? "" : label)}
-                                    >
-                                      <span className="category-chip-icon">{categoryIcons[cat]}</span>
-                                      <span className="category-chip-label">{label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Location Filter */}
-                            <div className="filter-section">
-                              <label className="filter-section-label">{t("location") || "Location"}</label>
-                              <select
-                                className="select location-select"
-                                value={locFilter}
-                                onChange={(e) => setLocFilter(e.target.value)}
-                              >
-                                <option value="">{t("allLocations") || "All locations"}</option>
-                                {allLocations.map((l) => (
-                                  <option key={l} value={l}>
-                                    📍 {l}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            {/* Sort */}
-                            <div className="filter-section">
-                              <label className="filter-section-label">{t("sortBy") || "Sort by"}</label>
-                              <select
-                                className="select sort-select"
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                              >
-                                <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
-                                <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
-                                <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
-                                <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
-                              </select>
                             </div>
                           </aside>
 
