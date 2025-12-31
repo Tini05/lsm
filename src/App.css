@@ -2045,8 +2045,8 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 420px;
-  max-width: 90vw;
+  width: 480px;
+  max-width: 100vw;
   background: linear-gradient(180deg, #ffffff, #f8fafc);
   border-right: 2px solid rgba(226, 232, 240, 0.8);
   box-shadow: 
