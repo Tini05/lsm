@@ -905,6 +905,15 @@ export default function App() {
     [myListings]
   );
 
+  // Helper function to calculate days until expiration
+  const getDaysUntilExpiry = (expiresAt) => {
+    if (!expiresAt) return null;
+    const now = Date.now();
+    const diff = expiresAt - now;
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days;
+  };
+
   const getFeedbackForListing = useCallback(
     (listingId) => feedbackStore[listingId]?.entries || [],
     [feedbackStore]
@@ -1543,9 +1552,13 @@ export default function App() {
                           </div>
                           <div className="pill-row">
                             <span className="badge count">
-                              {myListings.length} {(t("listingsLabel") || "listings")}
+                              {myListings.length} {(myListings.length === 1 ? t("listing") || "listing" : t("listingsLabel") || "listings")}
                             </span>
-                            <span className="badge soft">{t("responsiveLayout") || "Responsive cards"}</span>
+                            {myVerifiedCount > 0 && (
+                              <span className="badge success">
+                                ✅ {myVerifiedCount} {t("verified")}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -1555,14 +1568,36 @@ export default function App() {
                               <span className="stat-label">✅ {t("verified")}</span>
                               <span className="stat-value">{myVerifiedCount}</span>
                             </div>
-                            <div className="stat-chip subtle">
-                              <span className="stat-label">⏳ {t("pending")}</span>
-                              <span className="stat-value">{myPendingCount}</span>
-                            </div>
-                            <div className="stat-chip subtle">
-                              <span className="stat-label">⭐ {t("reputation") || "Reputation"}</span>
-                              <span className="stat-value">{favorites.length}</span>
-                            </div>
+                            {myPendingCount > 0 && (
+                              <div className="stat-chip subtle">
+                                <span className="stat-label">⏳ {t("pending")}</span>
+                                <span className="stat-value">{myPendingCount}</span>
+                              </div>
+                            )}
+                            {(() => {
+                              const expiringSoon = myListings.filter(l => {
+                                const days = getDaysUntilExpiry(l.expiresAt);
+                                return days !== null && days > 0 && days <= 7;
+                              }).length;
+                              return expiringSoon > 0 ? (
+                                <div className="stat-chip warning">
+                                  <span className="stat-label">⚠️ {t("expiringSoon") || "Expiring soon"}</span>
+                                  <span className="stat-value">{expiringSoon}</span>
+                                </div>
+                              ) : null;
+                            })()}
+                            {(() => {
+                              const totalReviews = myListings.reduce((sum, l) => {
+                                const stats = getListingStats(l);
+                                return sum + (stats.feedbackCount || 0);
+                              }, 0);
+                              return totalReviews > 0 ? (
+                                <div className="stat-chip info">
+                                  <span className="stat-label">💬 {t("reviews") || "Reviews"}</span>
+                                  <span className="stat-value">{totalReviews}</span>
+                                </div>
+                              ) : null;
+                            })()}
                           </div>
                           <div className="my-listings-actions">
                             <button
@@ -1614,13 +1649,39 @@ export default function App() {
                                           📍 {l.location}
                                         </span>
                                       )}
-                                      <span className="pill pill-soft">
-                                        ⏱️ {l.plan} {t("months")}
-                                      </span>
+                                      {l.createdAt && (
+                                        <span className="pill pill-soft pill-date">
+                                          📅 {new Date(l.createdAt).toLocaleDateString()}
+                                        </span>
+                                      )}
                                     </div>
-                                    <div className="listing-meta subtle">
-                                      {t("expires")}: {l.expiresAt ? new Date(l.expiresAt).toLocaleDateString() : "N/A"}
-                                    </div>
+                                    {(() => {
+                                      const days = getDaysUntilExpiry(l.expiresAt);
+                                      const isExpiringSoon = days !== null && days > 0 && days <= 7;
+                                      const isExpired = days !== null && days <= 0;
+                                      return (
+                                        <div className={`listing-expiry-info ${isExpiringSoon ? "expiring-soon" : ""} ${isExpired ? "expired" : ""}`}>
+                                          {l.expiresAt ? (
+                                            <>
+                                              <span className="expiry-label">{t("expires")}:</span>
+                                              <span className="expiry-date">{new Date(l.expiresAt).toLocaleDateString()}</span>
+                                              {days !== null && (
+                                                <span className={`expiry-days ${isExpiringSoon ? "warning" : ""} ${isExpired ? "expired-text" : ""}`}>
+                                                  {isExpired 
+                                                    ? ` ⚠️ ${t("expired") || "Expired"}`
+                                                    : isExpiringSoon 
+                                                      ? ` ⏰ ${days} ${days === 1 ? t("day") || "day" : t("days") || "days"} ${t("remaining") || "left"}`
+                                                      : ` (${days} ${days === 1 ? t("day") || "day" : t("days") || "days"})`
+                                                  }
+                                                </span>
+                                              )}
+                                            </>
+                                          ) : (
+                                            <span className="expiry-date">{t("noExpiry") || "No expiration"}</span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                   {(() => {
                                     const stats = getListingStats(l);
@@ -1633,61 +1694,73 @@ export default function App() {
                                   })()}
                                 </header>
 
-                                <p className="listing-description clamp-3 enhanced-copy">
-                                  {getDescriptionPreview(l.description, 15)}
-                                </p>
+                                <div className="listing-card-body-enhanced">
+                                  <p className="listing-description clamp-3 enhanced-copy">
+                                    {getDescriptionPreview(l.description, 120)}
+                                  </p>
 
-                                {(() => {
-                                  const stats = getListingStats(l);
-                                  return (
-                                    <div className="listing-stats ribboned">
-                                      <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
-                                      <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                                      <span className="stat-chip subtle">🔥 {stats.engagement}</span>
-                                      {l.offerprice && (
-                                        <span className="pill pill-price subtle-pill">💶 {l.offerprice}</span>
+                                  {(() => {
+                                    const stats = getListingStats(l);
+                                    return (
+                                      <div className="listing-stats ribboned">
+                                        <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
+                                        <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                        <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                        {l.offerprice && (
+                                          <span className="pill pill-price subtle-pill">💶 {l.offerprice}</span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+
+                                  {(l.tags || l.contact) && (
+                                    <div className="my-listing-highlights rich-highlights">
+                                      {l.tags && (
+                                        <span className="pill pill-tags">🏷️ {l.tags.split(",")[0]?.trim() || l.tags}</span>
+                                      )}
+                                      {l.contact && (
+                                        <span className="pill pill-contact">📞 {l.contact}</span>
                                       )}
                                     </div>
-                                  );
-                                })()}
-
-                                <div className="my-listing-highlights rich-highlights">
-                                  {l.tags && (
-                                    <span className="pill pill-tags">🏷️ {l.tags}</span>
-                                  )}
-                                  {l.contact && (
-                                    <span className="pill pill-contact">📞 {l.contact}</span>
                                   )}
                                 </div>
 
                                 <div className="my-listing-footer framed-footer">
-                                  <div className="listing-actions listing-actions-compact">
+                                  <div className="listing-actions-primary">
                                     <button
-                                      className="btn btn-ghost small"
+                                      className="btn btn-primary small"
+                                      onClick={() => {
+                                        setSelectedListing(l);
+                                        const url = new URL(window.location.href);
+                                        url.searchParams.set("listing", l.id);
+                                        window.history.replaceState({}, "", url.toString());
+                                      }}
+                                    >
+                                      👁️ {t("view") || "View"}
+                                    </button>
+                                    <button
+                                      className="btn small"
                                       onClick={() => openEdit(l)}
                                     >
-                                      {t("edit")}
+                                      ✏️ {t("edit")}
                                     </button>
                                     <button
-                                      className="btn btn-ghost small"
-                                      onClick={() => confirmDelete(l.id)}
-                                    >
-                                      {t("del")}
-                                    </button>
-                                    <button
-                                      className="btn small"
+                                      className="btn small btn-extend"
                                       onClick={() => startExtendFlow(l)}
                                     >
-                                      {t("extend")}
+                                      ⏰ {t("extend")}
                                     </button>
+                                  </div>
+                                  <div className="listing-actions-secondary">
                                     <button
-                                      className="btn small"
+                                      className="btn btn-ghost small icon-only"
                                       onClick={() => window.open(`tel:${l.contact}`)}
+                                      title={t("call") || "Call"}
                                     >
-                                      📞 {t("call")}
+                                      📞
                                     </button>
                                     <button
-                                      className="btn small"
+                                      className="btn btn-ghost small icon-only"
                                       onClick={() =>
                                         window.open(
                                           `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
@@ -1695,31 +1768,34 @@ export default function App() {
                                           )}`
                                         )
                                       }
+                                      title={t("emailAction") || "Email"}
                                     >
-                                      ✉️ {t("emailAction")}
+                                      ✉️
                                     </button>
                                     <button
-                                      className="btn btn-ghost small"
+                                      className="btn btn-ghost small icon-only"
                                       onClick={() => {
                                         navigator.clipboard?.writeText(l.contact || "");
                                         showMessage(t("copied"), "success");
                                       }}
+                                      title={t("copy") || "Copy contact"}
                                     >
-                                      📋 {t("copy")}
+                                      📋
                                     </button>
                                     <button
-                                      className="btn btn-ghost small"
+                                      className="btn btn-ghost small icon-only"
                                       type="button"
                                       onClick={() => handleShareListing(l)}
+                                      title={t("share") || "Share"}
                                     >
-                                      🔗 {t("share")}
+                                      🔗
                                     </button>
                                     <button
-                                      className="btn btn-ghost small"
-                                      type="button"
-                                      onClick={() => toggleFav(l.id)}
+                                      className="btn btn-ghost small icon-only btn-delete"
+                                      onClick={() => confirmDelete(l.id)}
+                                      title={t("del") || "Delete"}
                                     >
-                                      {favorites.includes(l.id) ? "★" : "☆"}
+                                      🗑️
                                     </button>
                                   </div>
                                 </div>
