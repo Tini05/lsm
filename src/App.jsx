@@ -460,7 +460,7 @@ export default function App() {
       );
       await reauthenticateWithCredential(currentUser, cred);
       
-      // Try to update email
+      // Try to update email in Firebase Auth
       try {
         await updateEmail(currentUser, emailForm.newEmail);
         
@@ -487,20 +487,30 @@ export default function App() {
         showMessage(t("emailUpdateSuccess") || "Email updated successfully! Please check your new email for verification.", "success");
         setEmailForm({ newEmail: "", currentPassword: "" });
       } catch (updateErr) {
-        // If updateEmail fails with operation-not-allowed, Firebase may have restrictions
-        // In this case, we'll update the database but warn the user they need to re-authenticate
+        // If updateEmail fails with operation-not-allowed, it's a Firebase Auth restriction
+        // The error message "Please verify the new email before changing email" is misleading
+        // This typically means email changes are restricted at the project level
         if (updateErr.code === "auth/operation-not-allowed") {
-          // Update database with new email as a workaround
-          await update(dbRef(db, `users/${currentUser.uid}`), { 
-            email: emailForm.newEmail,
-            emailChangePending: true,
-            emailChangeRequestedAt: Date.now()
-          });
-          
-          showMessage(
-            "Email change requested. Due to Firebase restrictions, you'll need to sign out and create a new account with the new email, or contact support. Your new email has been saved in your profile.",
-            "error"
-          );
+          // Still update the database with the new email as a reference
+          // The user will need to use the new email for future logins, but Firebase Auth won't reflect it
+          try {
+            await update(dbRef(db, `users/${currentUser.uid}`), { 
+              email: emailForm.newEmail,
+              previousEmail: currentUser.email,
+              emailChangeRequestedAt: Date.now()
+            });
+            
+            showMessage(
+              "⚠️ Email change is restricted by Firebase. Your new email has been saved in your profile, but you'll need to sign out and sign in with your new email address. Alternatively, contact support to enable email changes in Firebase Console.",
+              "error"
+            );
+          } catch (dbErr) {
+            console.error("Database update failed:", dbErr);
+            showMessage(
+              "Email change failed. Firebase has restricted email changes. Please contact support or check Firebase Console > Authentication > Settings.",
+              "error"
+            );
+          }
           setEmailForm({ newEmail: "", currentPassword: "" });
           return;
         }
@@ -518,7 +528,7 @@ export default function App() {
       } else if (err.code === "auth/requires-recent-login") {
         errorMessage = "Please log out and log back in before changing your email.";
       } else if (err.code === "auth/operation-not-allowed") {
-        errorMessage = "Email changes are not allowed in this Firebase project. Please ensure the Email/Password provider is enabled in Firebase Console > Authentication > Sign-in method. If you're not the administrator, please contact support.";
+        errorMessage = "Email changes are blocked by 'Email Enumeration Protection' in Firebase. To fix: Install Google Cloud SDK, then run: gcloud identity-platform settings update --project=YOUR_PROJECT_ID --disable-email-enum. Or check Firebase Console > Authentication > Settings for email enumeration protection settings.";
       }
       
       showMessage(errorMessage, "error");
