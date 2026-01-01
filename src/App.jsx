@@ -445,6 +445,12 @@ export default function App() {
       return;
     }
 
+    // Check if current email is verified (some Firebase projects require this)
+    if (!currentUser.emailVerified) {
+      showMessage(t("verifyYourEmail") || "Please verify your current email address before changing it.", "error");
+      return;
+    }
+
     setSavingEmail(true);
     try {
       // Reauthenticate user
@@ -490,6 +496,8 @@ export default function App() {
         errorMessage = "This email is already in use by another account.";
       } else if (err.code === "auth/requires-recent-login") {
         errorMessage = "Please log out and log back in before changing your email.";
+      } else if (err.code === "auth/operation-not-allowed") {
+        errorMessage = "Email changes are not currently enabled. Please contact support or verify your current email first.";
       }
       
       showMessage(errorMessage, "error");
