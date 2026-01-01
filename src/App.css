@@ -2602,40 +2602,72 @@ body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    background: #ffffff;
   }
 
   .filter-panel-header {
     padding: 16px 20px;
-    background: #ffffff;
+    background: #ffffff !important;
     border-bottom: 1px solid #e5e7eb;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    border-radius: 0 !important;
+    overflow: visible;
+    box-shadow: none;
   }
 
   .filter-panel-title {
+    margin: 0;
+    padding: 0;
     font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a !important;
+    flex: 1;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    line-height: 1.4;
+    text-align: left;
   }
 
+
   .filter-panel-close {
-    width: 36px;
-    height: 36px;
-    display: flex;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
     font-size: 1.25rem;
-    color: #475569;
+    color: #475569 !important;
     transition: all 0.2s ease;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
   }
 
   .filter-panel-close:hover,
   .filter-panel-close:active {
-    background: #e2e8f0;
-    color: #0f172a;
-    border-color: #cbd5e1;
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
   }
 
   .filter-panel-close:active {
@@ -5976,6 +6008,7 @@ body {
     justify-content: flex-end;
     min-width: 0;
     margin-left: auto;
+    flex: 0 0 auto;
   }
 
   .lang-select {
@@ -5984,6 +6017,7 @@ body {
     min-width: 0;
     max-width: 80px;
     flex-shrink: 0;
+    margin-left: 0;
   }
 
   .desktop-only {
