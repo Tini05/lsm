@@ -460,31 +460,52 @@ export default function App() {
       );
       await reauthenticateWithCredential(currentUser, cred);
       
-      // Update email
-      await updateEmail(currentUser, emailForm.newEmail);
-      
-      // Send verification email for the new email
+      // Try to update email
       try {
-        await sendEmailVerification(currentUser);
-      } catch (verifyErr) {
-        console.warn("Verification email send failed:", verifyErr);
-        // Not critical if verification email fails, email is still changed
+        await updateEmail(currentUser, emailForm.newEmail);
+        
+        // Send verification email for the new email
+        try {
+          await sendEmailVerification(currentUser);
+        } catch (verifyErr) {
+          console.warn("Verification email send failed:", verifyErr);
+          // Not critical if verification email fails, email is still changed
+        }
+        
+        // Update user profile in database
+        await update(dbRef(db, `users/${currentUser.uid}`), { 
+          email: emailForm.newEmail 
+        });
+        
+        // Reload user to get updated email
+        await currentUser.reload();
+        
+        // Update user state
+        const updatedUser = auth.currentUser;
+        setUser(updatedUser);
+        
+        showMessage(t("emailUpdateSuccess") || "Email updated successfully! Please check your new email for verification.", "success");
+        setEmailForm({ newEmail: "", currentPassword: "" });
+      } catch (updateErr) {
+        // If updateEmail fails with operation-not-allowed, Firebase may have restrictions
+        // In this case, we'll update the database but warn the user they need to re-authenticate
+        if (updateErr.code === "auth/operation-not-allowed") {
+          // Update database with new email as a workaround
+          await update(dbRef(db, `users/${currentUser.uid}`), { 
+            email: emailForm.newEmail,
+            emailChangePending: true,
+            emailChangeRequestedAt: Date.now()
+          });
+          
+          showMessage(
+            "Email change requested. Due to Firebase restrictions, you'll need to sign out and create a new account with the new email, or contact support. Your new email has been saved in your profile.",
+            "error"
+          );
+          setEmailForm({ newEmail: "", currentPassword: "" });
+          return;
+        }
+        throw updateErr;
       }
-      
-      // Update user profile in database
-      await update(dbRef(db, `users/${currentUser.uid}`), { 
-        email: emailForm.newEmail 
-      });
-      
-      // Reload user to get updated email
-      await currentUser.reload();
-      
-      // Update user state
-      const updatedUser = auth.currentUser;
-      setUser(updatedUser);
-      
-      showMessage(t("emailUpdateSuccess"), "success");
-      setEmailForm({ newEmail: "", currentPassword: "" });
     } catch (err) {
       console.error("Email update error:", err);
       let errorMessage = err.message || t("emailUpdateError");
@@ -497,7 +518,7 @@ export default function App() {
       } else if (err.code === "auth/requires-recent-login") {
         errorMessage = "Please log out and log back in before changing your email.";
       } else if (err.code === "auth/operation-not-allowed") {
-        errorMessage = "Email changes are not currently enabled. Please contact support or verify your current email first.";
+        errorMessage = "Email changes are not allowed in this Firebase project. Please ensure the Email/Password provider is enabled in Firebase Console > Authentication > Sign-in method. If you're not the administrator, please contact support.";
       }
       
       showMessage(errorMessage, "error");
