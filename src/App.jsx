@@ -2500,7 +2500,7 @@ export default function App() {
                                       onClick={() => setFiltersOpen(false)}
                                       aria-label={t("closeFilters") || "Close filters"}
                                     >
-                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ minWidth: "24" }}>
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                       </svg>
@@ -2515,7 +2515,7 @@ export default function App() {
                                       </div>
                                       <div className="filter-group-content">
                                         <div className="filter-search-box">
-                                          <svg className="filter-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                          <svg className="filter-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ minWidth: "24" }}>
                                             <circle cx="11" cy="11" r="8"></circle>
                                             <path d="m21 21-4.35-4.35"></path>
                                           </svg>
@@ -2533,7 +2533,7 @@ export default function App() {
                                               onClick={() => setQ("")}
                                               aria-label={t("clearSearch") || "Clear search"}
                                             >
-                                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ minWidth: "24" }}>
                                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                                               </svg>
@@ -2564,7 +2564,7 @@ export default function App() {
                                                 <div className="filter-option-label">{label}</div>
                                                 {active && (
                                                   <div className="filter-option-check">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ minWidth: "24" }}>
                                                       <polyline points="20 6 9 17 4 12"></polyline>
                                                     </svg>
                                                   </div>
