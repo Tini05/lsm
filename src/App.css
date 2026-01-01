@@ -2214,46 +2214,57 @@ body {
   position: relative;
 }
 
-/* Filter Sidebar - Slides in/out */
-.explore-filter-panel {
+/* Filter Modal - Full Screen Approach */
+.filter-modal-wrapper {
   position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 480px;
-  max-width: 100%;
+  inset: 0;
+  z-index: 10000; /* Same as modals - above everything */
+  display: flex;
+  align-items: stretch;
+  pointer-events: none;
+}
+
+.filter-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1;
+  pointer-events: auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.filter-modal-panel {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 480px;
   background: #ffffff;
-  border-right: 1px solid #e5e7eb;
   box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
-  z-index: 1001; /* Same as sidebar - above header (100) */
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform: translateX(-100%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-.explore-filter-panel.is-open {
+  pointer-events: auto;
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(0);
 }
 
-/* Sidebar overlay when open */
-.explore-filter-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1002; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  backdrop-filter: blur(4px);
-  touch-action: none;
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
-.explore-body-new.filters-open .explore-filter-overlay {
-  opacity: 1;
-  visibility: visible;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .filter-panel-inner {
@@ -2263,8 +2274,12 @@ body {
   padding: 0;
   height: 100%;
   max-height: 100vh;
+  min-height: 100vh;
+  min-height: -webkit-fill-available; /* iOS Safari fix */
   overflow: hidden;
   box-sizing: border-box;
+  width: 100%;
+  background: #ffffff;
 }
 
 .filter-panel-header {
@@ -2626,36 +2641,16 @@ body {
     gap: 16px;
   }
 
-  .explore-filter-panel {
-    position: fixed !important;
-    left: 0 !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
+  .filter-modal-wrapper {
+    z-index: 10000 !important; /* Same as modals - above everything */
+  }
+
+  .filter-modal-panel {
     max-width: 100% !important;
-    z-index: 1001 !important; /* Same as sidebar - above header (100) */
-    transform: translateX(-100%);
-    border-radius: 0;
-    overflow: hidden;
+    width: 100% !important;
     /* Account for safe areas on iOS */
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
-    /* Ensure it covers everything including header */
-    margin: 0 !important;
-    padding-top: 0 !important;
-  }
-  
-  .explore-filter-panel.is-open {
-    transform: translateX(0) !important;
-    z-index: 1001 !important; /* Same as sidebar */
-  }
-
-  .explore-filter-overlay {
-    z-index: 1000 !important; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    position: fixed !important;
-    inset: 0 !important;
   }
 
   .filter-panel-inner {

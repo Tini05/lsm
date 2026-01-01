@@ -2473,18 +2473,16 @@ export default function App() {
                         </div>
 
                         <div className={`explore-body-new ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
-                          {/* Overlay */}
+                          {/* Full-Screen Filter Modal */}
                           {filtersOpen && (
-                            <div 
-                              className="explore-filter-overlay"
-                              onClick={() => setFiltersOpen(false)}
-                              aria-label={t("closeFilters") || "Close filters"}
-                            />
-                          )}
-                          
-                          {/* Sidebar Filter Panel */}
-                          <aside className={`explore-filter-panel ${filtersOpen ? "is-open" : ""}`}>
-                            <div className="filter-panel-inner">
+                            <div className="filter-modal-wrapper">
+                              <div 
+                                className="filter-modal-overlay"
+                                onClick={() => setFiltersOpen(false)}
+                                aria-label={t("closeFilters") || "Close filters"}
+                              />
+                              <aside className="filter-modal-panel">
+                                <div className="filter-panel-inner">
                               <div className="filter-panel-header">
                                 <h3 className="filter-panel-title">🔍 {t("filters") || "Filters"}</h3>
                                 <button
@@ -2580,8 +2578,10 @@ export default function App() {
                                   </select>
                                 </div>
                               </div>
+                                </div>
+                              </aside>
                             </div>
-                          </aside>
+                          )}
 
                           <div className="explore-results-area">
                             {filtered.length > 0 ? (
