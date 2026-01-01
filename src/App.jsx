@@ -1385,12 +1385,12 @@ export default function App() {
       { id: "allListings", label: t("explore") || "Explore", icon: "🧭", badge: listings.length },
       ...(user
         ? [
-            { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListings.length },
+            { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListingsRaw.length },
             { id: "account", label: t("account") || "Account", icon: "👤" },
           ]
         : []),
     ],
-    [t, listings.length, myListings.length, user]
+    [t, listings.length, myListingsRaw.length, user]
   );
 
   const currentSectionLabel = useMemo(() => {
@@ -1956,223 +1956,290 @@ export default function App() {
 
                     {selectedTab === "account" && (
                       <div className="section account-shell">
-                        <div className="account-hero-row">
-                          <div className="account-hero-card">
-                            <div className="account-hero-meta">
-                              <p className="eyebrow subtle">{t("accountTitle")}</p>
-                              <h2 className="account-hero-title">👤 {t("accountSubtitle")}</h2>
-                              <p className="account-hero-desc">{t("postingReadyHint")}</p>
-                              <div className="account-badges">
-                                <span className="pill pill-soft">📱 {t("mobileFirstTitle") || "Responsive"}</span>
-                                <span className="pill pill-soft">🔒 {t("securitySettings")}</span>
-                              </div>
-                            </div>
-                            <div className="account-hero-actions">
-                              <button className="btn small" onClick={() => setShowPostForm(true)}>
-                                ➕ {t("submitListing")}
-                              </button>
-                              <button className="btn btn-ghost small" onClick={() => setSelectedTab("allListings")}>
-                                🧭 {t("explore")}
-                              </button>
-                            </div>
+                        {/* Account Header */}
+                        <div className="account-header-section">
+                          <div className="account-header-content">
+                            <h2 className="account-page-title">👤 {t("account") || "Account"}</h2>
+                            <p className="account-page-subtitle">
+                              {t("accountSubtitle") || "Manage your login status, verification and security settings."}
+                            </p>
                           </div>
+                          <div className="account-header-actions">
+                            <button className="btn btn-ghost small" onClick={() => setSelectedTab("allListings")}>
+                              🧭 {t("explore")}
+                            </button>
+                            <button className="btn small" onClick={() => setShowPostForm(true)}>
+                              ➕ {t("submitListing")}
+                            </button>
+                          </div>
+                        </div>
 
-                          <div className="account-hero-stats">
-                            {[
-                              { label: t("myListings"), value: myListings.length, hint: t("manageListings") },
-                              { label: t("favorites") || "Favorites", value: favorites.length, hint: t("reputation") },
-                              { label: t("plan") || "Plan", value: `${plan} ${t("months")}`, hint: t("plan") },
+                        {/* Quick Stats */}
+                        <div className="account-quick-stats">
+                          {[
+                              { 
+                                icon: "📁", 
+                                label: t("myListings"), 
+                                value: myListingsRaw.length, 
+                                hint: `${myVerifiedCount} ${t("verified")}`,
+                                color: "blue"
+                              },
+                              { 
+                                icon: "⭐", 
+                                label: t("favorites") || "Favorites", 
+                                value: favorites.length, 
+                                hint: t("reputation"),
+                                color: "yellow"
+                              },
+                              { 
+                                icon: "📅", 
+                                label: t("accountSince") || "Member since", 
+                                value: user?.metadata?.creationTime
+                                  ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                                  : "—",
+                                hint: t("accountSince") || "Account created",
+                                color: "purple"
+                              },
                             ].map((stat) => (
-                              <div key={stat.label} className="account-stat-card">
-                                <p className="stat-label">{stat.label}</p>
-                                <p className="stat-value">{stat.value}</p>
-                                <p className="stat-note">{stat.hint}</p>
+                              <div key={stat.label} className={`account-stat-card-enhanced stat-${stat.color}`}>
+                                <div className="stat-icon">{stat.icon}</div>
+                                <div className="stat-content">
+                                  <p className="stat-label">{stat.label}</p>
+                                  <p className="stat-value">{stat.value}</p>
+                                  {stat.hint && <p className="stat-note">{stat.hint}</p>}
+                                </div>
                               </div>
                             ))}
-                          </div>
                         </div>
 
                         <div className="account-panels">
                           <div className="account-column">
-                            <div className="card account-card modern">
-                              <div className="account-info-grid">
-                                <div className="account-info-block">
-                                  <p className="account-label">{t("emailLabel")}</p>
-                                  <p className="account-value">{user?.email || "—"}</p>
-                                </div>
-                                <div className="account-info-block">
-                                  <p className="account-label">{t("phoneNumber")}</p>
-                                  <p className="account-value">
-                                    {accountPhone || t("addPhoneInAccount") || "—"}
-                                  </p>
-                                </div>
-                                <div className="account-info-block">
-                                  <p className="account-label">{t("accountSince")}</p>
-                                  <p className="account-value">
-                                    {user?.metadata?.creationTime
-                                      ? new Date(user.metadata.creationTime).toLocaleDateString()
-                                      : "—"}
-                                  </p>
-                                </div>
-                                <div className="account-info-block">
-                                  <p className="account-label">{t("verifiedLabel")}</p>
-                                  <p className="account-value">
+                            {/* Profile Information Card */}
+                            <div className="card account-card-enhanced">
+                              <div className="account-card-header">
+                                <h3 className="account-card-title">📋 {t("profile") || "Profile Information"}</h3>
+                                <p className="account-card-subtitle">{t("accountTitle") || "Your account details"}</p>
+                              </div>
+                              
+                              <div className="account-info-list">
+                                <div className="account-info-item">
+                                  <div className="account-info-item-icon">✉️</div>
+                                  <div className="account-info-item-content">
+                                    <p className="account-info-label">{t("emailLabel")}</p>
+                                    <p className="account-info-value">{user?.email || "—"}</p>
                                     {user?.emailVerified ? (
-                                      <span className="badge verified">✅ {t("verified")}</span>
+                                      <span className="account-info-badge verified">✅ {t("verified")}</span>
                                     ) : (
-                                      <span className="badge not-verified">⏳ {t("pendingVerification")}</span>
+                                      <span className="account-info-badge not-verified">⏳ {t("pendingVerification")}</span>
                                     )}
-                                  </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="account-info-item">
+                                  <div className="account-info-item-icon">📞</div>
+                                  <div className="account-info-item-content">
+                                    <p className="account-info-label">{t("phoneNumber")}</p>
+                                    <p className="account-info-value">
+                                      {accountPhone || (
+                                        <span className="account-info-placeholder">{t("addPhoneInAccount") || "Add phone number"}</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="account-info-item">
+                                  <div className="account-info-item-icon">📅</div>
+                                  <div className="account-info-item-content">
+                                    <p className="account-info-label">{t("accountSince")}</p>
+                                    <p className="account-info-value">
+                                      {user?.metadata?.creationTime
+                                        ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                          })
+                                        : "—"}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
 
                               {!user?.emailVerified && (
-                                <div className="account-alert">
-                                  <div>
+                                <div className="account-alert-enhanced">
+                                  <div className="account-alert-icon">⚠️</div>
+                                  <div className="account-alert-content">
                                     <p className="account-alert-title">{t("verifyYourEmail")}</p>
                                     <p className="account-alert-sub">{t("verifyEmailHint")}</p>
-                                  </div>
-                                  <div className="account-alert-actions">
-                                    <button
-                                      className="btn btn-ghost small"
-                                      onClick={async () => {
-                                        try {
-                                          if (user) {
-                                            await sendEmailVerification(user);
-                                            showMessage(t("verificationSent"), "success");
+                                    <div className="account-alert-actions">
+                                      <button
+                                        className="btn btn-ghost small"
+                                        onClick={async () => {
+                                          try {
+                                            if (user) {
+                                              await sendEmailVerification(user);
+                                              showMessage(t("verificationSent"), "success");
+                                            }
+                                          } catch (err) {
+                                            showMessage(t("verificationError") + " " + err.message, "error");
                                           }
-                                        } catch (err) {
-                                          showMessage(t("verificationError") + " " + err.message, "error");
-                                        }
-                                      }}
-                                    >
-                                      {t("resendVerificationEmail")}
-                                    </button>
-                                    <button
-                                      className="btn small"
-                                      onClick={() => {
-                                        setAuthMode("verify");
-                                        setShowAuthModal(true);
-                                      }}
-                                    >
-                                      {t("iVerified")}
-                                    </button>
+                                        }}
+                                      >
+                                        {t("resendVerificationEmail")}
+                                      </button>
+                                      <button
+                                        className="btn small"
+                                        onClick={() => {
+                                          setAuthMode("verify");
+                                          setShowAuthModal(true);
+                                        }}
+                                      >
+                                        {t("iVerified")}
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               )}
                             </div>
 
-                            <div className="card account-card modern soft">
-                              <div className="account-list">
-                                <div className="account-list-row">
-                                  <div>
-                                    <p className="account-list-title">{t("myListings")}</p>
-                                    <p className="account-list-sub">{t("myListingsHint")}</p>
+                            {/* Quick Links Card */}
+                            <div className="card account-card-enhanced account-quick-links">
+                              <div className="account-card-header">
+                                <h3 className="account-card-title">⚡ {t("quickActions") || "Quick Actions"}</h3>
+                              </div>
+                              <div className="account-quick-links-list">
+                                <button 
+                                  className="account-quick-link-item"
+                                  onClick={() => setSelectedTab("myListings")}
+                                >
+                                  <span className="quick-link-icon">📁</span>
+                                  <div className="quick-link-content">
+                                    <p className="quick-link-title">{t("myListings")}</p>
+                                    <p className="quick-link-subtitle">{myListingsRaw.length} {t("listingsLabel") || "listings"}</p>
                                   </div>
-                                  <span className="badge count">{myListings.length}</span>
-                                </div>
-                                <div className="account-list-row">
-                                  <div>
-                                    <p className="account-list-title">{t("favorites") || "Favorites"}</p>
-                                    <p className="account-list-sub">{t("reputation")}</p>
+                                  <span className="quick-link-arrow">→</span>
+                                </button>
+                                <button 
+                                  className="account-quick-link-item"
+                                  onClick={() => setSelectedTab("allListings")}
+                                >
+                                  <span className="quick-link-icon">🔍</span>
+                                  <div className="quick-link-content">
+                                    <p className="quick-link-title">{t("explore")}</p>
+                                    <p className="quick-link-subtitle">{t("allListingsHint") || "Browse all listings"}</p>
                                   </div>
-                                  <span className="badge soft">{favorites.length}</span>
-                                </div>
-                                <div className="account-list-row">
-                                  <div>
-                                    <p className="account-list-title">{t("plan")}</p>
-                                    <p className="account-list-sub">{t("responsiveLayout") || t("growthBoardSubtitle")}</p>
+                                  <span className="quick-link-arrow">→</span>
+                                </button>
+                                <button 
+                                  className="account-quick-link-item"
+                                  onClick={() => setShowPostForm(true)}
+                                >
+                                  <span className="quick-link-icon">➕</span>
+                                  <div className="quick-link-content">
+                                    <p className="quick-link-title">{t("submitListing")}</p>
+                                    <p className="quick-link-subtitle">{t("postingReadyHint") || "Create a new listing"}</p>
                                   </div>
-                                  <span className="badge soft">{plan} {t("months")}</span>
-                                </div>
+                                  <span className="quick-link-arrow">→</span>
+                                </button>
                               </div>
                             </div>
                           </div>
 
                           <div className="account-column">
-                            <div className="card account-security-card">
-                              <h3 className="account-security-title">{t("securitySettings")}</h3>
-                              <p className="account-security-text">{t("securitySettingsText")}</p>
+                            {/* Security Settings Card */}
+                            <div className="card account-card-enhanced account-security-section">
+                              <div className="account-card-header">
+                                <h3 className="account-card-title">🔒 {t("securitySettings")}</h3>
+                                <p className="account-card-subtitle">{t("securitySettingsText") || "Update your email and password to keep your account safe."}</p>
+                              </div>
 
-                              <form className="account-form" onSubmit={handleChangeEmail}>
-                                <div className="account-form-head">
-                                  <h4 className="account-form-title">{t("changeEmail")}</h4>
-                                  <span className="pill pill-soft">{t("emailLabel")}</span>
+                              {/* Change Email Form */}
+                              <div className="account-form-section">
+                                <div className="account-form-section-header">
+                                  <h4 className="account-form-section-title">✉️ {t("changeEmail")}</h4>
+                                  <p className="account-form-section-desc">{t("emailLabel") || "Update your email address"}</p>
                                 </div>
-                                <div className="account-form-row">
-                                  <label className="account-label">{t("newEmail")}</label>
-                                  <input
-                                    type="email"
-                                    className="input"
-                                    value={emailForm.newEmail}
-                                    onChange={(e) => setEmailForm((f) => ({ ...f, newEmail: e.target.value }))}
-                                    placeholder={t("newEmailPlaceholder")}
-                                  />
-                                </div>
-                                <div className="account-form-row">
-                                  <label className="account-label">{t("currentPassword")}</label>
-                                  <input
-                                    type="password"
-                                    className="input"
-                                    value={emailForm.currentPassword}
-                                    onChange={(e) => setEmailForm((f) => ({ ...f, currentPassword: e.target.value }))}
-                                    placeholder={t("currentPasswordPlaceholder")}
-                                  />
-                                </div>
-                                <div className="account-form-actions">
-                                  <button type="submit" className="btn small full-width" disabled={savingEmail}>
-                                    {savingEmail ? t("saving") : t("saveEmail")}
-                                  </button>
-                                </div>
-                              </form>
+                                <form className="account-form-enhanced" onSubmit={handleChangeEmail}>
+                                  <div className="account-form-field">
+                                    <label className="account-form-label">{t("newEmail")}</label>
+                                    <input
+                                      type="email"
+                                      className="input account-form-input"
+                                      value={emailForm.newEmail}
+                                      onChange={(e) => setEmailForm((f) => ({ ...f, newEmail: e.target.value }))}
+                                      placeholder={t("newEmailPlaceholder")}
+                                    />
+                                  </div>
+                                  <div className="account-form-field">
+                                    <label className="account-form-label">{t("currentPassword")}</label>
+                                    <input
+                                      type="password"
+                                      className="input account-form-input"
+                                      value={emailForm.currentPassword}
+                                      onChange={(e) => setEmailForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                                      placeholder={t("currentPasswordPlaceholder")}
+                                    />
+                                  </div>
+                                  <div className="account-form-actions">
+                                    <button type="submit" className="btn small" disabled={savingEmail}>
+                                      {savingEmail ? t("saving") : t("saveEmail")}
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
 
-                              <form className="account-form" onSubmit={handleChangePassword}>
-                                <div className="account-form-head">
-                                  <h4 className="account-form-title">{t("changePassword")}</h4>
-                                  <span className="pill pill-soft">{t("securitySettings")}</span>
+                              {/* Divider */}
+                              <div className="account-form-divider"></div>
+
+                              {/* Change Password Form */}
+                              <div className="account-form-section">
+                                <div className="account-form-section-header">
+                                  <h4 className="account-form-section-title">🔑 {t("changePassword")}</h4>
+                                  <p className="account-form-section-desc">{t("securitySettings") || "Update your password"}</p>
                                 </div>
-                                <div className="account-form-row">
-                                  <label className="account-label">{t("currentPassword")}</label>
-                                  <input
-                                    type="password"
-                                    className="input"
-                                    value={passwordForm.currentPassword}
-                                    onChange={(e) =>
-                                      setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))
-                                    }
-                                    placeholder={t("currentPasswordPlaceholder")}
-                                  />
-                                </div>
-                                <div className="account-form-row">
-                                  <label className="account-label">{t("newPassword")}</label>
-                                  <input
-                                    type="password"
-                                    className="input"
-                                    value={passwordForm.newPassword}
-                                    onChange={(e) =>
-                                      setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))
-                                    }
-                                    placeholder={t("newPasswordPlaceholder")}
-                                  />
-                                </div>
-                                <div className="account-form-row">
-                                  <label className="account-label">{t("repeatNewPassword")}</label>
-                                  <input
-                                    type="password"
-                                    className="input"
-                                    value={passwordForm.repeatNewPassword}
-                                    onChange={(e) =>
-                                      setPasswordForm((f) => ({ ...f, repeatNewPassword: e.target.value }))
-                                    }
-                                    placeholder={t("repeatNewPasswordPlaceholder")}
-                                  />
-                                </div>
-                                <div className="account-form-actions">
-                                  <button type="submit" className="btn small full-width" disabled={savingPassword}>
-                                    {savingPassword ? t("saving") : t("savePassword")}
-                                  </button>
-                                </div>
-                              </form>
+                                <form className="account-form-enhanced" onSubmit={handleChangePassword}>
+                                  <div className="account-form-field">
+                                    <label className="account-form-label">{t("currentPassword")}</label>
+                                    <input
+                                      type="password"
+                                      className="input account-form-input"
+                                      value={passwordForm.currentPassword}
+                                      onChange={(e) =>
+                                        setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))
+                                      }
+                                      placeholder={t("currentPasswordPlaceholder")}
+                                    />
+                                  </div>
+                                  <div className="account-form-field">
+                                    <label className="account-form-label">{t("newPassword")}</label>
+                                    <input
+                                      type="password"
+                                      className="input account-form-input"
+                                      value={passwordForm.newPassword}
+                                      onChange={(e) =>
+                                        setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))
+                                      }
+                                      placeholder={t("newPasswordPlaceholder")}
+                                    />
+                                  </div>
+                                  <div className="account-form-field">
+                                    <label className="account-form-label">{t("repeatNewPassword")}</label>
+                                    <input
+                                      type="password"
+                                      className="input account-form-input"
+                                      value={passwordForm.repeatNewPassword}
+                                      onChange={(e) =>
+                                        setPasswordForm((f) => ({ ...f, repeatNewPassword: e.target.value }))
+                                      }
+                                      placeholder={t("repeatNewPasswordPlaceholder")}
+                                    />
+                                  </div>
+                                  <div className="account-form-actions">
+                                    <button type="submit" className="btn small" disabled={savingPassword}>
+                                      {savingPassword ? t("saving") : t("savePassword")}
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
                             </div>
                           </div>
                         </div>
