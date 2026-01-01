@@ -2994,7 +2994,7 @@ body {
 
   .filter-sheet-content {
     border-radius: 0 !important;
-    overflow: visible !important;
+    /* overflow: visible !important; */
   }
 
   .filter-sheet-header {
