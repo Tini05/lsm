@@ -2473,109 +2473,160 @@ export default function App() {
                         </div>
 
                         <div className={`explore-body-new ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
-                          {/* NEW FILTER DRAWER - COMPLETE REWRITE */}
+                          {/* FILTER BOTTOM SHEET - COMPLETELY DIFFERENT APPROACH */}
                           {filtersOpen && (
-                            <div className="filter-drawer-container">
+                            <>
                               <div 
-                                className="filter-drawer-backdrop"
+                                className="filter-sheet-backdrop"
                                 onClick={() => setFiltersOpen(false)}
                                 aria-label={t("closeFilters") || "Close filters"}
                               />
-                              <div className="filter-drawer-content">
-                                <div className="filter-drawer-topbar">
-                                  <h2 className="filter-drawer-title">Filters</h2>
-                                  <button
-                                    type="button"
-                                    className="filter-drawer-close-btn"
-                                    onClick={() => setFiltersOpen(false)}
-                                    aria-label={t("closeFilters") || "Close filters"}
-                                  >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                  </button>
+                              <div className="filter-sheet-wrapper">
+                                <div className="filter-sheet-handle" onClick={() => setFiltersOpen(false)}>
+                                  <div className="filter-sheet-handle-bar"></div>
                                 </div>
-                                
-                                <div className="filter-drawer-body">
-                                  {/* Search Section */}
-                                  <div className="filter-block">
-                                    <label className="filter-label">Search</label>
-                                    <div className="filter-input-wrapper">
-                                      <input
-                                        className="filter-input"
-                                        type="search"
-                                        placeholder="Search listings..."
-                                        value={q}
-                                        onChange={(e) => setQ(e.target.value)}
-                                      />
-                                      {q && (
-                                        <button
-                                          className="filter-input-clear"
-                                          type="button"
-                                          onClick={() => setQ("")}
-                                          aria-label="Clear"
-                                        >
-                                          ×
-                                        </button>
-                                      )}
+                                <div className="filter-sheet-content">
+                                  <div className="filter-sheet-header">
+                                    <div className="filter-sheet-header-left">
+                                      <div className="filter-sheet-icon">🔍</div>
+                                      <div>
+                                        <h2 className="filter-sheet-title">{t("filters") || "Filters"}</h2>
+                                        <p className="filter-sheet-subtitle">{t("filterSubtitle") || "Refine your search"}</p>
+                                      </div>
                                     </div>
+                                    <button
+                                      type="button"
+                                      className="filter-sheet-close"
+                                      onClick={() => setFiltersOpen(false)}
+                                      aria-label={t("closeFilters") || "Close filters"}
+                                    >
+                                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                    </button>
                                   </div>
 
-                                  {/* Category Section */}
-                                  <div className="filter-block">
-                                    <label className="filter-label">Category</label>
-                                    <div className="filter-chips">
-                                      {categories.map((cat) => {
-                                        const label = t(cat);
-                                        const active = catFilter === label;
-                                        return (
-                                          <button
-                                            key={cat}
-                                            type="button"
-                                            className={`filter-chip ${active ? "active" : ""}`}
-                                            onClick={() => setCatFilter(active ? "" : label)}
+                                  <div className="filter-sheet-scroll">
+                                    <div className="filter-group">
+                                      <div className="filter-group-header">
+                                        <span className="filter-group-icon">🔎</span>
+                                        <span className="filter-group-title">{t("search") || "Search"}</span>
+                                      </div>
+                                      <div className="filter-group-content">
+                                        <div className="filter-search-box">
+                                          <svg className="filter-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.35-4.35"></path>
+                                          </svg>
+                                          <input
+                                            type="search"
+                                            className="filter-search-input"
+                                            placeholder={t("searchPlaceholder") || "Search by name or description..."}
+                                            value={q}
+                                            onChange={(e) => setQ(e.target.value)}
+                                          />
+                                          {q && (
+                                            <button
+                                              type="button"
+                                              className="filter-search-clear"
+                                              onClick={() => setQ("")}
+                                              aria-label={t("clearSearch") || "Clear search"}
+                                            >
+                                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                              </svg>
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="filter-group">
+                                      <div className="filter-group-header">
+                                        <span className="filter-group-icon">📂</span>
+                                        <span className="filter-group-title">{t("category") || "Category"}</span>
+                                      </div>
+                                      <div className="filter-group-content">
+                                        <div className="filter-options-grid">
+                                          {categories.map((cat) => {
+                                            const label = t(cat);
+                                            const active = catFilter === label;
+                                            return (
+                                              <button
+                                                key={cat}
+                                                type="button"
+                                                className={`filter-option-card ${active ? "is-selected" : ""}`}
+                                                onClick={() => setCatFilter(active ? "" : label)}
+                                              >
+                                                <div className="filter-option-icon">{categoryIcons[cat]}</div>
+                                                <div className="filter-option-label">{label}</div>
+                                                {active && (
+                                                  <div className="filter-option-check">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                  </div>
+                                                )}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="filter-group">
+                                      <div className="filter-group-header">
+                                        <span className="filter-group-icon">📍</span>
+                                        <span className="filter-group-title">{t("location") || "Location"}</span>
+                                      </div>
+                                      <div className="filter-group-content">
+                                        <div className="filter-select-wrapper">
+                                          <select
+                                            className="filter-select-field"
+                                            value={locFilter}
+                                            onChange={(e) => setLocFilter(e.target.value)}
                                           >
-                                            <span className="filter-chip-icon">{categoryIcons[cat]}</span>
-                                            <span>{label}</span>
-                                          </button>
-                                        );
-                                      })}
+                                            <option value="">{t("allLocations") || "All locations"}</option>
+                                            {allLocations.map((l) => (
+                                              <option key={l} value={l}>{l}</option>
+                                            ))}
+                                          </select>
+                                          <svg className="filter-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                          </svg>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
 
-                                  {/* Location Section */}
-                                  <div className="filter-block">
-                                    <label className="filter-label">Location</label>
-                                    <select
-                                      className="filter-select"
-                                      value={locFilter}
-                                      onChange={(e) => setLocFilter(e.target.value)}
-                                    >
-                                      <option value="">All locations</option>
-                                      {allLocations.map((l) => (
-                                        <option key={l} value={l}>{l}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-
-                                  {/* Sort Section */}
-                                  <div className="filter-block">
-                                    <label className="filter-label">Sort By</label>
-                                    <select
-                                      className="filter-select"
-                                      value={sortBy}
-                                      onChange={(e) => setSortBy(e.target.value)}
-                                    >
-                                      <option value="topRated">⭐ Highest rated</option>
-                                      <option value="newest">🆕 Newest first</option>
-                                      <option value="expiring">⏰ Expiring soon</option>
-                                      <option value="az">🔤 A to Z</option>
-                                    </select>
+                                    <div className="filter-group">
+                                      <div className="filter-group-header">
+                                        <span className="filter-group-icon">🔄</span>
+                                        <span className="filter-group-title">{t("sortBy") || "Sort by"}</span>
+                                      </div>
+                                      <div className="filter-group-content">
+                                        <div className="filter-select-wrapper">
+                                          <select
+                                            className="filter-select-field"
+                                            value={sortBy}
+                                            onChange={(e) => setSortBy(e.target.value)}
+                                          >
+                                            <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
+                                            <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
+                                            <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
+                                            <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
+                                          </select>
+                                          <svg className="filter-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                          </svg>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            </>
                           )}
 
                           <div className="explore-results-area">
