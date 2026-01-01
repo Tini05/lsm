@@ -2214,42 +2214,106 @@ body {
   position: relative;
 }
 
-/* Filter Modal - Full Screen Approach */
-.filter-modal-wrapper {
+/* =============== NEW FILTER DRAWER - COMPLETE REWRITE =============== */
+.filter-drawer-container {
   position: fixed;
   inset: 0;
-  z-index: 10000; /* Same as modals - above everything */
+  z-index: 10000;
   display: flex;
-  align-items: stretch;
   pointer-events: none;
 }
 
-.filter-modal-overlay {
+.filter-drawer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 1;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   pointer-events: auto;
-  animation: fadeIn 0.2s ease;
+  animation: drawerBackdropFadeIn 0.25s ease-out;
 }
 
-.filter-modal-panel {
+.filter-drawer-content {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   width: 100%;
-  max-width: 480px;
+  max-width: 420px;
   background: #ffffff;
-  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+  box-shadow: -4px 0 32px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100%;
   pointer-events: auto;
-  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: drawerSlideIn 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   transform: translateX(0);
 }
 
-@keyframes slideInLeft {
+.filter-drawer-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  flex-shrink: 0;
+  min-height: 72px;
+}
+
+.filter-drawer-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.filter-drawer-close-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-drawer-close-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+.filter-drawer-close-btn:active {
+  transform: scale(0.95);
+  background: #d1d5db;
+}
+
+.filter-drawer-close-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+}
+
+.filter-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+@keyframes drawerSlideIn {
   from {
     transform: translateX(-100%);
   }
@@ -2258,7 +2322,7 @@ body {
   }
 }
 
-@keyframes fadeIn {
+@keyframes drawerBackdropFadeIn {
   from {
     opacity: 0;
   }
@@ -2641,125 +2705,58 @@ body {
     gap: 16px;
   }
 
-  .filter-modal-wrapper {
-    z-index: 10000 !important; /* Same as modals - above everything */
+  /* Mobile Filter Drawer */
+  .filter-drawer-container {
+    z-index: 10000 !important;
   }
 
-  .filter-modal-panel {
+  .filter-drawer-content {
     max-width: 100% !important;
     width: 100% !important;
-    /* Account for safe areas on iOS */
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
+    height: 100vh !important;
+    height: -webkit-fill-available !important;
   }
 
-  .filter-panel-inner {
-    height: 100% !important;
-    max-height: 100% !important;
-    min-height: 100vh !important;
-    min-height: -webkit-fill-available !important; /* iOS Safari fix */
-    padding: 0 !important;
-    overflow: hidden;
-    box-sizing: border-box;
-    display: flex !important;
-    flex-direction: column;
-    background: #ffffff;
-    width: 100% !important;
-    /* Account for safe areas on iOS */
-    padding-top: env(safe-area-inset-top, 0) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0) !important;
-    margin: 0 !important;
+  .filter-drawer-topbar {
+    padding: 20px !important;
+    padding-top: calc(20px + env(safe-area-inset-top, 0)) !important;
+    min-height: auto;
   }
 
-  .filter-panel-header {
-    padding: 16px 20px !important;
-    padding-top: calc(16px + env(safe-area-inset-top, 0)) !important;
-    background: #ffffff !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 10 !important;
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
-    width: 100% !important;
-    box-sizing: border-box;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    overflow: visible;
-    box-shadow: none;
-    /* Ensure it's visible above everything */
-    min-height: 60px;
+  .filter-drawer-title {
+    font-size: 1.375rem !important;
   }
 
-  .filter-panel-title {
-    margin: 0;
-    padding: 0;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #0f172a !important;
-    flex: 1;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    line-height: 1.4;
-    text-align: left;
-  }
-
-
-  .filter-panel-close {
+  .filter-drawer-close-btn {
     width: 44px !important;
     height: 44px !important;
     min-width: 44px !important;
     min-height: 44px !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: #f1f5f9 !important;
-    border: 2px solid #e2e8f0 !important;
-    font-size: 0;
-    color: #475569 !important;
-    transition: all 0.2s ease;
-    visibility: visible !important;
-    opacity: 1 !important;
-    flex-shrink: 0;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    position: relative;
-    z-index: 10;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
   }
 
-  .filter-panel-close svg {
-    width: 20px;
-    height: 20px;
-    stroke: #475569;
-    display: block;
-    flex-shrink: 0;
+  .filter-drawer-body {
+    padding: 20px !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0)) !important;
   }
 
-  .filter-panel-close:hover {
-    background: #e2e8f0 !important;
-    border-color: #cbd5e1 !important;
+  .filter-block {
+    margin-bottom: 28px;
   }
 
-  .filter-panel-close:hover svg {
-    stroke: #0f172a;
+  .filter-label {
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
   }
 
-  .filter-panel-close:active {
-    transform: scale(0.95);
-    background: #d1d5db !important;
+  .filter-input,
+  .filter-select {
+    padding: 12px 14px;
+    font-size: 0.9375rem;
   }
 
-  .filter-panel-close:active svg {
-    stroke: #0f172a;
+  .filter-chip {
+    padding: 8px 14px;
+    font-size: 0.875rem;
   }
 
   .filter-sections-container {

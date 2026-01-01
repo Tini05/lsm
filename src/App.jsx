@@ -2473,113 +2473,108 @@ export default function App() {
                         </div>
 
                         <div className={`explore-body-new ${filtersOpen ? "filters-open" : "filters-collapsed"}`}>
-                          {/* Full-Screen Filter Modal */}
+                          {/* NEW FILTER DRAWER - COMPLETE REWRITE */}
                           {filtersOpen && (
-                            <div className="filter-modal-wrapper">
+                            <div className="filter-drawer-container">
                               <div 
-                                className="filter-modal-overlay"
+                                className="filter-drawer-backdrop"
                                 onClick={() => setFiltersOpen(false)}
                                 aria-label={t("closeFilters") || "Close filters"}
                               />
-                              <aside className="filter-modal-panel">
-                                <div className="filter-panel-inner">
-                              <div className="filter-panel-header">
-                                <h3 className="filter-panel-title">🔍 {t("filters") || "Filters"}</h3>
-                                <button
-                                  type="button"
-                                  className="filter-panel-close"
-                                  onClick={() => setFiltersOpen(false)}
-                                  aria-label={t("closeFilters") || "Close filters"}
-                                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                >
-                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                  </svg>
-                                </button>
-                              </div>
-
-                              <div className="filter-sections-container">
-                                {/* Search - Prominent */}
-                                <div className="filter-section">
-                                  <label className="filter-section-label">{t("search") || "Search"}</label>
-                                  <div className="search-wrapper">
-                                    <input
-                                      className="input search-input"
-                                      type="search"
-                                      placeholder={t("searchPlaceholder") || "Search by name or description..."}
-                                      value={q}
-                                      onChange={(e) => setQ(e.target.value)}
-                                    />
-                                    {q && (
-                                      <button
-                                        className="search-clear-btn"
-                                        type="button"
-                                        onClick={() => setQ("")}
-                                        aria-label={t("clearSearch") || "Clear search"}
-                                      >
-                                        ✕
-                                      </button>
-                                    )}
-                                  </div>
+                              <div className="filter-drawer-content">
+                                <div className="filter-drawer-topbar">
+                                  <h2 className="filter-drawer-title">Filters</h2>
+                                  <button
+                                    type="button"
+                                    className="filter-drawer-close-btn"
+                                    onClick={() => setFiltersOpen(false)}
+                                    aria-label={t("closeFilters") || "Close filters"}
+                                  >
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                  </button>
                                 </div>
-
-                                {/* Quick Category Filters */}
-                                <div className="filter-section">
-                                  <label className="filter-section-label">{t("category") || "Category"}</label>
-                                  <div className="category-chips-grid">
-                                    {categories.map((cat) => {
-                                      const label = t(cat);
-                                      const active = catFilter === label;
-                                      return (
+                                
+                                <div className="filter-drawer-body">
+                                  {/* Search Section */}
+                                  <div className="filter-block">
+                                    <label className="filter-label">Search</label>
+                                    <div className="filter-input-wrapper">
+                                      <input
+                                        className="filter-input"
+                                        type="search"
+                                        placeholder="Search listings..."
+                                        value={q}
+                                        onChange={(e) => setQ(e.target.value)}
+                                      />
+                                      {q && (
                                         <button
-                                          key={cat}
+                                          className="filter-input-clear"
                                           type="button"
-                                          className={`category-chip ${active ? "category-chip-active" : ""}`}
-                                          onClick={() => setCatFilter(active ? "" : label)}
+                                          onClick={() => setQ("")}
+                                          aria-label="Clear"
                                         >
-                                          <span className="category-chip-icon">{categoryIcons[cat]}</span>
-                                          <span className="category-chip-label">{label}</span>
+                                          ×
                                         </button>
-                                      );
-                                    })}
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Category Section */}
+                                  <div className="filter-block">
+                                    <label className="filter-label">Category</label>
+                                    <div className="filter-chips">
+                                      {categories.map((cat) => {
+                                        const label = t(cat);
+                                        const active = catFilter === label;
+                                        return (
+                                          <button
+                                            key={cat}
+                                            type="button"
+                                            className={`filter-chip ${active ? "active" : ""}`}
+                                            onClick={() => setCatFilter(active ? "" : label)}
+                                          >
+                                            <span className="filter-chip-icon">{categoryIcons[cat]}</span>
+                                            <span>{label}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Location Section */}
+                                  <div className="filter-block">
+                                    <label className="filter-label">Location</label>
+                                    <select
+                                      className="filter-select"
+                                      value={locFilter}
+                                      onChange={(e) => setLocFilter(e.target.value)}
+                                    >
+                                      <option value="">All locations</option>
+                                      {allLocations.map((l) => (
+                                        <option key={l} value={l}>{l}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* Sort Section */}
+                                  <div className="filter-block">
+                                    <label className="filter-label">Sort By</label>
+                                    <select
+                                      className="filter-select"
+                                      value={sortBy}
+                                      onChange={(e) => setSortBy(e.target.value)}
+                                    >
+                                      <option value="topRated">⭐ Highest rated</option>
+                                      <option value="newest">🆕 Newest first</option>
+                                      <option value="expiring">⏰ Expiring soon</option>
+                                      <option value="az">🔤 A to Z</option>
+                                    </select>
                                   </div>
                                 </div>
-
-                                {/* Location Filter */}
-                                <div className="filter-section">
-                                  <label className="filter-section-label">{t("location") || "Location"}</label>
-                                  <select
-                                    className="select location-select"
-                                    value={locFilter}
-                                    onChange={(e) => setLocFilter(e.target.value)}
-                                  >
-                                    <option value="">{t("allLocations") || "All locations"}</option>
-                                    {allLocations.map((l) => (
-                                      <option key={l} value={l}>
-                                        📍 {l}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                {/* Sort */}
-                                <div className="filter-section">
-                                  <label className="filter-section-label">{t("sortBy") || "Sort by"}</label>
-                                  <select
-                                    className="select sort-select"
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                  >
-                                    <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
-                                    <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
-                                    <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
-                                    <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
-                                  </select>
-                                </div>
                               </div>
-                                </div>
-                              </aside>
                             </div>
                           )}
 
