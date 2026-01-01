@@ -1697,8 +1697,10 @@ body {
   cursor: pointer;
   height: 100%;
   max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
   position: relative;
+  overflow: hidden;
 }
 
 .listing-card::before {
@@ -1732,6 +1734,7 @@ body {
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
+  min-width: 0;
 }
 .listing-header.rich-header {
   background: linear-gradient(135deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.9));
@@ -1742,12 +1745,15 @@ body {
 .listing-header-dense {
   align-items: flex-start;
   gap: 12px;
+  min-width: 0;
 }
 
 .listing-title-wrap {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .listing-title-row {
@@ -1784,6 +1790,9 @@ body {
   font-size: 1.05rem;
   color: var(--text);
   letter-spacing: -0.01em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .listing-meta {
@@ -1829,6 +1838,8 @@ body {
   border-radius: 14px;
   padding: 12px;
   transition: border-color 0.2s ease, background 0.2s ease;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .listing-description {
@@ -1836,6 +1847,9 @@ body {
   color: #4b5563;
   line-height: 1.4;
   margin-bottom: 12px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .listing-description-clamp {
@@ -1845,6 +1859,9 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 64px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .listing-description-preview {
@@ -1852,6 +1869,9 @@ body {
   line-clamp: 4;
   min-height: 86px;
   margin-bottom: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 .listing-description.enhanced-copy {
   font-size: 0.95rem;
@@ -1872,6 +1892,17 @@ body {
   align-items: flex-start;
   gap: 6px;
   flex-wrap: wrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.listing-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .pill.ghost-pill,
 .ghost-pill {
@@ -2338,6 +2369,12 @@ body {
 
 .listing-grid-list .listing-card-body {
   min-width: 0;
+  overflow: hidden;
+}
+
+.listing-grid-list .listing-title-wrap {
+  min-width: 0;
+  flex: 1;
 }
 
 .listing-grid-list .listing-footer-row {
@@ -2384,6 +2421,7 @@ body {
   .explore-top-bar {
     flex-direction: column;
     gap: 12px;
+    padding: 16px 0 12px;
   }
 
   .explore-top-actions {
@@ -2392,7 +2430,7 @@ body {
   }
 
   .filter-toggle-btn-desktop {
-    display: inline-flex;
+    display: none;
   }
 
   .explore-body-new {
@@ -2401,17 +2439,110 @@ body {
   }
 
   .explore-filter-panel {
-    position: relative;
+    position: fixed;
+    left: 0;
     top: 0;
-    max-height: none;
+    bottom: 0;
+    width: 85vw;
+    max-width: 400px;
+    z-index: 1000;
+    transform: translateX(-100%);
+  }
+
+  .explore-filter-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .explore-filter-overlay {
+    z-index: 999;
   }
 
   .listing-grid-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .listing-card {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px;
+  }
+
+  .listing-card-body {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .listing-grid-list .listing-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .listing-grid-list .listing-icon-bubble {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+  }
+
+  .listing-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .listing-badges {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .explore-page-title {
+    font-size: 1.5rem;
+  }
+
+  .explore-page-subtitle {
+    font-size: 0.9rem;
   }
 
   .active-filters-bar {
     padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .active-filters-label {
+    font-size: 0.85rem;
+  }
+
+  .active-filters-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .active-filter-chip {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .explore-mobile-toolbar .filter-toggle-btn,
+  .explore-mobile-toolbar .view-toggle-btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+  }
+
+  .explore-mobile-toolbar .sort-select-mobile {
+    flex: 1;
+    min-width: 0;
   }
 }
 
@@ -2560,12 +2691,13 @@ body {
   display: none;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 12px;
   background: linear-gradient(135deg, #f8fafc, #ffffff);
   border: 2px solid rgba(226, 232, 240, 0.8);
   border-radius: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .filter-toggle-btn {
