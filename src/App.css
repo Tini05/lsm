@@ -2352,6 +2352,7 @@ body {
   width: 20px;
   height: 20px;
   stroke: currentColor;
+  min-width: 24;
 }
 
 .filter-sheet-scroll {
@@ -2676,6 +2677,7 @@ body {
   stroke: #475569;
   display: block;
   flex-shrink: 0;
+  min-width: 24;
 }
 
 .filter-panel-close:hover {
@@ -6570,6 +6572,7 @@ body {
   svg {
     max-width: 100%;
     height: auto;
+    min-width: 24;
   }
 
   /* Ensure text doesn't overflow */
