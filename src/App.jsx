@@ -207,9 +207,16 @@ export default function App() {
 
   /* Dashboard/UI */
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("main"); // myListings | account | allListings
+  const [selectedTab, setSelectedTabState] = useState("main"); // myListings | account | allListings
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
   const [showPostForm, setShowPostForm] = useState(false);
+
+  // Wrapper to scroll to top when tab changes
+  const setSelectedTab = useCallback((tab) => {
+    setSelectedTabState(tab);
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   /* Editing */
   const [editingListing, setEditingListing] = useState(null);
@@ -325,6 +332,23 @@ export default function App() {
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
   }, [editingListing, selectedListing]);
+
+  /* Lock body scroll when modals are open */
+  useEffect(() => {
+    const hasOpenModal = showAuthModal || showPostForm || selectedListing || editingListing || paymentModalOpen || showMapPicker || showEditMapPicker;
+    if (hasOpenModal) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`; // Prevent layout shift
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [showAuthModal, showPostForm, selectedListing, editingListing, paymentModalOpen, showMapPicker, showEditMapPicker]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
