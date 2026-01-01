@@ -5571,6 +5571,32 @@ body {
     align-items: flex-start;
   }
 
+  .my-listings-filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .my-listings-filters-left {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .my-listings-search-input {
+    width: 100%;
+    max-width: none;
+  }
+
+  .my-listings-filter-select,
+  .my-listings-sort-select {
+    width: 100%;
+  }
+
+  .my-listings-filters-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .listing-actions-compact {
     width: 100%;
   }

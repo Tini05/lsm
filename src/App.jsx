@@ -266,6 +266,12 @@ export default function App() {
   const [locFilter, setLocFilter] = useState("");
   const [sortBy, setSortBy] = useState("topRated");
   const [showMapPicker, setShowMapPicker] = useState(false);
+  
+  /* My Listings filters */
+  const [myListingsStatusFilter, setMyListingsStatusFilter] = useState("all"); // "all" | "verified" | "pending"
+  const [myListingsExpiryFilter, setMyListingsExpiryFilter] = useState("all"); // "all" | "expiring" | "expired" | "active"
+  const [myListingsSort, setMyListingsSort] = useState("newest"); // "newest" | "oldest" | "expiring" | "az"
+  const [myListingsSearch, setMyListingsSearch] = useState("");
 
   /* Favorites */
   const [favorites, setFavorites] = useState(() => {
@@ -895,16 +901,6 @@ export default function App() {
     return arr;
   }, [verifiedListings, q, catFilter, locFilter, sortBy, feedbackAverages, t]);
 
-  const myListings = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
-  const myVerifiedCount = useMemo(
-    () => myListings.filter((l) => l.status === "verified").length,
-    [myListings]
-  );
-  const myPendingCount = useMemo(
-    () => myListings.filter((l) => l.status !== "verified").length,
-    [myListings]
-  );
-
   // Helper function to calculate days until expiration
   const getDaysUntilExpiry = (expiresAt) => {
     if (!expiresAt) return null;
@@ -913,6 +909,78 @@ export default function App() {
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
     return days;
   };
+
+  const myListingsRaw = useMemo(() => listings.filter((l) => l.userId === user?.uid), [listings, user]);
+  
+  const myListings = useMemo(() => {
+    let filtered = [...myListingsRaw];
+    
+    // Status filter
+    if (myListingsStatusFilter === "verified") {
+      filtered = filtered.filter((l) => l.status === "verified");
+    } else if (myListingsStatusFilter === "pending") {
+      filtered = filtered.filter((l) => l.status !== "verified");
+    }
+    
+    // Expiry filter
+    if (myListingsExpiryFilter === "expiring") {
+      filtered = filtered.filter((l) => {
+        const days = getDaysUntilExpiry(l.expiresAt);
+        return days !== null && days > 0 && days <= 7;
+      });
+    } else if (myListingsExpiryFilter === "expired") {
+      filtered = filtered.filter((l) => {
+        const days = getDaysUntilExpiry(l.expiresAt);
+        return days !== null && days <= 0;
+      });
+    } else if (myListingsExpiryFilter === "active") {
+      filtered = filtered.filter((l) => {
+        const days = getDaysUntilExpiry(l.expiresAt);
+        return days === null || days > 7;
+      });
+    }
+    
+    // Search filter
+    if (myListingsSearch.trim()) {
+      const term = myListingsSearch.trim().toLowerCase();
+      filtered = filtered.filter(
+        (l) =>
+          (l.name || "").toLowerCase().includes(term) ||
+          (l.description || "").toLowerCase().includes(term) ||
+          (l.location || "").toLowerCase().includes(term) ||
+          (l.category || "").toLowerCase().includes(term)
+      );
+    }
+    
+    // Sort
+    if (myListingsSort === "newest") {
+      filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } else if (myListingsSort === "oldest") {
+      filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    } else if (myListingsSort === "expiring") {
+      filtered.sort((a, b) => {
+        const aDays = getDaysUntilExpiry(a.expiresAt);
+        const bDays = getDaysUntilExpiry(b.expiresAt);
+        if (aDays === null && bDays === null) return 0;
+        if (aDays === null) return 1;
+        if (bDays === null) return -1;
+        return aDays - bDays;
+      });
+    } else if (myListingsSort === "az") {
+      filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }
+    
+    return filtered;
+  }, [myListingsRaw, myListingsStatusFilter, myListingsExpiryFilter, myListingsSort, myListingsSearch]);
+  
+  const myVerifiedCount = useMemo(
+    () => myListingsRaw.filter((l) => l.status === "verified").length,
+    [myListingsRaw]
+  );
+  const myPendingCount = useMemo(
+    () => myListingsRaw.filter((l) => l.status !== "verified").length,
+    [myListingsRaw]
+  );
 
   const getFeedbackForListing = useCallback(
     (listingId) => feedbackStore[listingId]?.entries || [],
@@ -1575,7 +1643,7 @@ export default function App() {
                               </div>
                             )}
                             {(() => {
-                              const expiringSoon = myListings.filter(l => {
+                              const expiringSoon = myListingsRaw.filter(l => {
                                 const days = getDaysUntilExpiry(l.expiresAt);
                                 return days !== null && days > 0 && days <= 7;
                               }).length;
@@ -1587,7 +1655,7 @@ export default function App() {
                               ) : null;
                             })()}
                             {(() => {
-                              const totalReviews = myListings.reduce((sum, l) => {
+                              const totalReviews = myListingsRaw.reduce((sum, l) => {
                                 const stats = getListingStats(l);
                                 return sum + (stats.feedbackCount || 0);
                               }, 0);
@@ -1620,10 +1688,89 @@ export default function App() {
                           </div>
                         </div>
 
+                        {/* My Listings Filters & Sort */}
+                        {myListingsRaw.length > 0 && (
+                          <div className="my-listings-filters-bar">
+                            <div className="my-listings-filters-left">
+                              <input
+                                type="search"
+                                className="input my-listings-search-input"
+                                placeholder={t("searchPlaceholder") || "Search your listings..."}
+                                value={myListingsSearch}
+                                onChange={(e) => setMyListingsSearch(e.target.value)}
+                              />
+                              <select
+                                className="select my-listings-filter-select"
+                                value={myListingsStatusFilter}
+                                onChange={(e) => setMyListingsStatusFilter(e.target.value)}
+                              >
+                                <option value="all">{t("allStatuses") || "All statuses"}</option>
+                                <option value="verified">{t("verified")}</option>
+                                <option value="pending">{t("pending")}</option>
+                              </select>
+                              <select
+                                className="select my-listings-filter-select"
+                                value={myListingsExpiryFilter}
+                                onChange={(e) => setMyListingsExpiryFilter(e.target.value)}
+                              >
+                                <option value="all">{t("allExpiry") || "All"}</option>
+                                <option value="expiring">{t("expiringSoon") || "Expiring soon"}</option>
+                                <option value="active">{t("active") || "Active"}</option>
+                                <option value="expired">{t("expired") || "Expired"}</option>
+                              </select>
+                            </div>
+                            <div className="my-listings-filters-right">
+                              <select
+                                className="select my-listings-sort-select"
+                                value={myListingsSort}
+                                onChange={(e) => setMyListingsSort(e.target.value)}
+                              >
+                                <option value="newest">{t("sortNewest")}</option>
+                                <option value="oldest">{t("sortOldest") || "Oldest first"}</option>
+                                <option value="expiring">{t("sortExpiring")}</option>
+                                <option value="az">{t("sortAZ")}</option>
+                              </select>
+                              {(myListingsSearch || myListingsStatusFilter !== "all" || myListingsExpiryFilter !== "all") && (
+                                <button
+                                  className="btn btn-ghost small"
+                                  onClick={() => {
+                                    setMyListingsSearch("");
+                                    setMyListingsStatusFilter("all");
+                                    setMyListingsExpiryFilter("all");
+                                  }}
+                                  type="button"
+                                >
+                                  {t("clearAll") || "Clear all"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {myListings.length === 0 ? (
-                          <div className="empty">
+                          <div className="empty my-listings-empty">
                             <div className="empty-icon">📭</div>
-                            <p className="empty-text">{t("noListingsYet")}</p>
+                            <p className="empty-text">
+                              {myListingsRaw.length === 0 
+                                ? t("noListingsYet")
+                                : (myListingsSearch || myListingsStatusFilter !== "all" || myListingsExpiryFilter !== "all")
+                                  ? t("noListingsMatchFilters") || "No listings match your filters. Try adjusting your search."
+                                  : t("noListingsYet")
+                              }
+                            </p>
+                            {myListingsRaw.length > 0 && (myListingsSearch || myListingsStatusFilter !== "all" || myListingsExpiryFilter !== "all") && (
+                              <button
+                                className="btn small"
+                                onClick={() => {
+                                  setMyListingsSearch("");
+                                  setMyListingsStatusFilter("all");
+                                  setMyListingsExpiryFilter("all");
+                                }}
+                                type="button"
+                              >
+                                {t("clearFilters") || "Clear filters"}
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="listing-grid my-listings-grid responsive-grid">
