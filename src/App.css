@@ -1093,6 +1093,10 @@ body {
   border-radius: 12px;
   transition: all 0.25s ease;
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .btn:hover {
@@ -2257,13 +2261,15 @@ body {
 
 .filter-panel-close {
   background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   color: #475569;
-  font-size: 1.25rem;
+  font-size: 0;
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2272,16 +2278,36 @@ body {
   line-height: 1;
   padding: 0;
   margin: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 10;
+}
+
+.filter-panel-close svg {
+  width: 20px;
+  height: 20px;
+  stroke: #475569;
+  display: block;
+  flex-shrink: 0;
 }
 
 .filter-panel-close:hover {
   background: #e2e8f0;
-  color: #0f172a;
   border-color: #cbd5e1;
+}
+
+.filter-panel-close:hover svg {
+  stroke: #0f172a;
 }
 
 .filter-panel-close:active {
   transform: scale(0.95);
+  background: #d1d5db;
+}
+
+.filter-panel-close:active svg {
+  stroke: #0f172a;
 }
 
 .filter-sections-container {
@@ -2642,15 +2668,17 @@ body {
 
 
   .filter-panel-close {
-    width: 36px !important;
-    height: 36px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #f1f5f9 !important;
-    border: 1px solid #e2e8f0 !important;
-    font-size: 1.25rem;
+    border: 2px solid #e2e8f0 !important;
+    font-size: 0;
     color: #475569 !important;
     transition: all 0.2s ease;
     visibility: visible !important;
@@ -2660,18 +2688,35 @@ body {
     padding: 0;
     cursor: pointer;
     position: relative;
-    z-index: 2;
+    z-index: 10;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .filter-panel-close:hover,
-  .filter-panel-close:active {
+  .filter-panel-close svg {
+    width: 20px;
+    height: 20px;
+    stroke: #475569;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .filter-panel-close:hover {
     background: #e2e8f0 !important;
-    color: #0f172a !important;
     border-color: #cbd5e1 !important;
+  }
+
+  .filter-panel-close:hover svg {
+    stroke: #0f172a;
   }
 
   .filter-panel-close:active {
     transform: scale(0.95);
+    background: #d1d5db !important;
+  }
+
+  .filter-panel-close:active svg {
+    stroke: #0f172a;
   }
 
   .filter-sections-container {
@@ -6219,6 +6264,112 @@ body {
   button {
     max-width: 100%;
     box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Enhanced Touch Targets - Minimum 44x44px for accessibility */
+  button,
+  .btn,
+  .nav-chip,
+  .icon-btn,
+  .mobile-menu-btn,
+  .filter-panel-close,
+  .sidebar-btn,
+  .listing-card,
+  a[role="button"],
+  .lang-select {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Better Button Styles for Mobile */
+  .btn {
+    padding: 14px 24px;
+    font-size: 1rem;
+    min-height: 48px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Improved Form Inputs for Mobile */
+  .input,
+  .textarea,
+  .select {
+    padding: 14px 16px;
+    font-size: 1rem;
+    min-height: 52px;
+    border-radius: 12px;
+    border-width: 2px;
+  }
+
+  .input:focus,
+  .textarea:focus,
+  .select:focus {
+    border-width: 2px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  }
+
+  /* Enhanced Typography for Mobile Readability */
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.3;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Better Spacing for Mobile */
+  .container {
+    padding: 0 16px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* Improved Card Styles */
+  .listing-card {
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Smooth Scroll Behavior */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better Animation Timing */
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Filter panel specific fixes */
