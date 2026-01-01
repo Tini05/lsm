@@ -419,41 +419,80 @@ export default function App() {
   const handleChangeEmail = async (e) => {
     e.preventDefault();
     const currentUser = auth.currentUser;
-    if (!currentUser) return showMessage(t("loginRequired"), "error");
+    if (!currentUser) {
+      showMessage(t("loginRequired"), "error");
+      return;
+    }
 
-    if (!validateEmail(emailForm.newEmail)) {
+    if (!emailForm.newEmail || !validateEmail(emailForm.newEmail)) {
       showMessage(t("enterValidEmail"), "error");
       return;
     }
+    
     if (!emailForm.currentPassword) {
       showMessage(t("enterCurrentPassword"), "error");
       return;
     }
+    
     if (!currentUser.email) {
       showMessage(t("emailChangeNotAvailable"), "error");
       return;
     }
 
+    // Check if email is different
+    if (emailForm.newEmail === currentUser.email) {
+      showMessage(t("enterValidEmail") || "Please enter a different email address", "error");
+      return;
+    }
+
     setSavingEmail(true);
     try {
+      // Reauthenticate user
       const cred = EmailAuthProvider.credential(
         currentUser.email,
         emailForm.currentPassword
       );
       await reauthenticateWithCredential(currentUser, cred);
+      
+      // Update email
       await updateEmail(currentUser, emailForm.newEmail);
+      
+      // Send verification email for the new email
       try {
         await sendEmailVerification(currentUser);
-      } catch {
-        // not critical if verification email fails, email is still changed
+      } catch (verifyErr) {
+        console.warn("Verification email send failed:", verifyErr);
+        // Not critical if verification email fails, email is still changed
       }
-      await update(dbRef(db, `users/${currentUser.uid}`), { email: emailForm.newEmail });
+      
+      // Update user profile in database
+      await update(dbRef(db, `users/${currentUser.uid}`), { 
+        email: emailForm.newEmail 
+      });
+      
+      // Reload user to get updated email
       await currentUser.reload();
-      setUser(auth.currentUser);
+      
+      // Update user state
+      const updatedUser = auth.currentUser;
+      setUser(updatedUser);
+      
       showMessage(t("emailUpdateSuccess"), "success");
       setEmailForm({ newEmail: "", currentPassword: "" });
     } catch (err) {
-      showMessage(t("emailUpdateError") + " " + err.message, "error");
+      console.error("Email update error:", err);
+      let errorMessage = err.message || t("emailUpdateError");
+      
+      // Provide more helpful error messages
+      if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+        errorMessage = t("enterCurrentPassword") || "Incorrect password. Please try again.";
+      } else if (err.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already in use by another account.";
+      } else if (err.code === "auth/requires-recent-login") {
+        errorMessage = "Please log out and log back in before changing your email.";
+      }
+      
+      showMessage(errorMessage, "error");
     } finally {
       setSavingEmail(false);
     }
