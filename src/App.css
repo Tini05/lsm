@@ -2243,7 +2243,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
+  z-index: 1002; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
