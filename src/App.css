@@ -106,11 +106,31 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100; /* Lower than modals (9999-10000) */
+  z-index: 100; /* Lower than modals (9999-10000) and filter panel (99999) */
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   width: 100%;
+}
+
+/* Ensure header stays below filter panel when it's open on mobile */
+@media (max-width: 768px) {
+  .explore-filter-panel.is-open ~ .header,
+  body:has(.explore-filter-panel.is-open) .header,
+  .explore-body-new.filters-open ~ .header,
+  .explore-body-new.filters-open .header {
+    z-index: 50 !important;
+    pointer-events: none !important; /* Allow clicks to pass through to filter panel */
+  }
+  
+  .explore-filter-panel.is-open {
+    pointer-events: auto !important;
+  }
+  
+  /* Make sure filter panel is always on top */
+  .explore-filter-panel.is-open {
+    z-index: 99999 !important;
+  }
 }
 
 .header-inner {
@@ -2209,7 +2229,7 @@ body {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
   box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
-  z-index: 10001;
+  z-index: 99999 !important; /* Highest z-index - above everything including header */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2227,7 +2247,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 9999;
+  z-index: 99998 !important; /* Above header but below filter panel */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -2611,19 +2631,35 @@ body {
   }
 
   .explore-filter-panel {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    max-width: 100%;
-    z-index: 10001;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    z-index: 99999 !important; /* Highest z-index - above everything including header */
     transform: translateX(-100%);
     border-radius: 0;
     overflow: hidden;
     /* Account for safe areas on iOS */
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
+    /* Ensure it covers everything including header */
+    margin: 0 !important;
+    padding-top: 0 !important;
+    /* Force it above header */
+    isolation: isolate;
+  }
+  
+  .explore-filter-panel.is-open {
+    transform: translateX(0) !important;
+    z-index: 99999 !important;
+  }
+  
+  /* Force header below filter panel when open */
+  .explore-filter-panel.is-open ~ * .header,
+  body:has(.explore-filter-panel.is-open) .header {
+    z-index: 50 !important;
   }
 
   .explore-filter-panel.is-open {
@@ -2631,46 +2667,53 @@ body {
   }
 
   .explore-filter-overlay {
-    z-index: 10000;
+    z-index: 99998 !important; /* Above header but below filter panel */
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
+    position: fixed !important;
+    inset: 0 !important;
   }
 
   .filter-panel-inner {
-    height: 100%;
-    max-height: 100%;
-    min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS Safari fix */
-    padding: 0;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important; /* iOS Safari fix */
+    padding: 0 !important;
     overflow: hidden;
     box-sizing: border-box;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     background: #ffffff;
+    width: 100% !important;
     /* Account for safe areas on iOS */
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-top: env(safe-area-inset-top, 0) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+    margin: 0 !important;
   }
 
   .filter-panel-header {
-    padding: 16px 20px;
+    padding: 16px 20px !important;
+    padding-top: calc(16px + env(safe-area-inset-top, 0)) !important;
     background: #ffffff !important;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb !important;
     border-top: none !important;
     border-left: none !important;
     border-right: none !important;
     flex-shrink: 0;
     position: relative;
-    z-index: 1;
+    z-index: 10 !important;
     display: flex !important;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
+    width: 100% !important;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 !important;
     border-radius: 0 !important;
     overflow: visible;
     box-shadow: none;
+    /* Ensure it's visible above everything */
+    min-height: 60px;
   }
 
   .filter-panel-title {
