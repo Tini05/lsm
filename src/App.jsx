@@ -1257,6 +1257,18 @@ export default function App() {
   const Header = () => (
     <header className="header">
       <div className="header-inner">
+        <button
+          className="icon-btn mobile-menu-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label={t("menu") || "Menu"}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
         <button onClick={() => setSelectedTab("main")} className="brand">
           <div className="brand-mark">
             <div className="brand-logo-wrap">
@@ -1288,14 +1300,6 @@ export default function App() {
         </nav>
 
         <div className="header-actions">
-          <button
-            className="icon-btn mobile-menu-btn"
-            onClick={() => setSidebarOpen(true)}
-            aria-label={t("menu") || "Menu"}
-          >
-            ☰
-          </button>
-
           <select className="lang-select" value={lang} onChange={(e) => setLang(e.target.value)}>
             <option value="sq">🇦🇱 SQ</option>
             <option value="mk">🇲🇰 MK</option>
@@ -1304,13 +1308,13 @@ export default function App() {
 
           {user ? (
             <>
-              <button className="btn btn-ghost" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
+              <button className="btn btn-ghost desktop-only" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
                 {t("logout")}
               </button>
             </>
           ) : (
             <button
-              className="btn"
+              className="btn desktop-only"
               onClick={() => {
                 setShowAuthModal(true);
                 setMessage({ text: "", type: "info" });
@@ -1631,11 +1635,6 @@ export default function App() {
                 transition={{ type: "tween", duration: 0.3 }}
                 style={{ touchAction: "none", WebkitOverflowScrolling: "touch" }}
               >
-                <div className="drawer-header">
-                  <span className="drawer-title">{t("dashboard")}</span>
-                  <button className="icon-btn" onClick={() => setSidebarOpen(false)}>✕</button>
-                </div>
-
                 <Sidebar
                   t={t}
                   selected={selectedTab}
@@ -1652,6 +1651,7 @@ export default function App() {
                     setShowAuthModal(true);
                     setSidebarOpen(false);
                   }}
+                  onClose={() => setSidebarOpen(false)}
                   user={user}
                 />
               </Motion.aside>
