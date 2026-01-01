@@ -115,21 +115,17 @@ body {
 
 /* Ensure header stays below filter panel when it's open on mobile */
 @media (max-width: 768px) {
+  /* Force header below filter panel - same approach as sidebar */
   .explore-filter-panel.is-open ~ .header,
   body:has(.explore-filter-panel.is-open) .header,
   .explore-body-new.filters-open ~ .header,
   .explore-body-new.filters-open .header {
     z-index: 50 !important;
-    pointer-events: none !important; /* Allow clicks to pass through to filter panel */
   }
   
+  /* Ensure filter panel uses same z-index as sidebar */
   .explore-filter-panel.is-open {
-    pointer-events: auto !important;
-  }
-  
-  /* Make sure filter panel is always on top */
-  .explore-filter-panel.is-open {
-    z-index: 99999 !important;
+    z-index: 1001 !important;
   }
 }
 
@@ -2229,7 +2225,7 @@ body {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
   box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
-  z-index: 99999 !important; /* Highest z-index - above everything including header */
+  z-index: 1001; /* Same as sidebar - above header (100) */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2247,7 +2243,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 99998 !important; /* Above header but below filter panel */
+  z-index: 1000; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -2637,7 +2633,7 @@ body {
     bottom: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    z-index: 99999 !important; /* Highest z-index - above everything including header */
+    z-index: 1001 !important; /* Same as sidebar - above header (100) */
     transform: translateX(-100%);
     border-radius: 0;
     overflow: hidden;
@@ -2647,27 +2643,15 @@ body {
     /* Ensure it covers everything including header */
     margin: 0 !important;
     padding-top: 0 !important;
-    /* Force it above header */
-    isolation: isolate;
   }
   
   .explore-filter-panel.is-open {
     transform: translateX(0) !important;
-    z-index: 99999 !important;
-  }
-  
-  /* Force header below filter panel when open */
-  .explore-filter-panel.is-open ~ * .header,
-  body:has(.explore-filter-panel.is-open) .header {
-    z-index: 50 !important;
-  }
-
-  .explore-filter-panel.is-open {
-    transform: translateX(0);
+    z-index: 1001 !important; /* Same as sidebar */
   }
 
   .explore-filter-overlay {
-    z-index: 99998 !important; /* Above header but below filter panel */
+    z-index: 1000 !important; /* Same as sidebar overlay - above header (100) but below filter panel (1001) */
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     position: fixed !important;
