@@ -335,7 +335,7 @@ export default function App() {
 
   /* Lock body scroll when modals are open */
   useEffect(() => {
-    const hasOpenModal = showAuthModal || showPostForm || selectedListing || editingListing || paymentModalOpen || showMapPicker || showEditMapPicker;
+    const hasOpenModal = showAuthModal || showPostForm || selectedListing || editingListing || paymentModalOpen || showMapPicker || showEditMapPicker || filtersOpen;
     if (hasOpenModal) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
@@ -348,7 +348,7 @@ export default function App() {
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
     };
-  }, [showAuthModal, showPostForm, selectedListing, editingListing, paymentModalOpen, showMapPicker, showEditMapPicker]);
+  }, [showAuthModal, showPostForm, selectedListing, editingListing, paymentModalOpen, showMapPicker, showEditMapPicker, filtersOpen]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
