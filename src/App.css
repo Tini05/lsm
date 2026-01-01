@@ -6321,6 +6321,7 @@ body {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
+    margin-left: 0;
   }
 
   /* Better Button Styles for Mobile */
