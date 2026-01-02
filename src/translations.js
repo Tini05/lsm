@@ -824,6 +824,23 @@ const translations = {
     homeHowItWorksStep1: "Posto oglas me numër telefoni, qytet dhe përshkrim të shkurtër.",
     homeHowItWorksStep2: "Njerëzit të thërrasin ose të shkruajnë në Viber / WhatsApp.",
     homeHowItWorksStep3: "Ata lënë vlerësime që të tjerët të dinë kush është i besueshëm.",
+
+    // New keys added
+    commentEmptyError: "Komenti nuk mund të jetë bosh",
+    trustSafetyLane: "Korsia e Sigurisë & Besimit",
+    trustSafetyLaneDesc: "Mbani bisedat të sigurta me kontakte të verifikuara, çmime transparente dhe etiketë qyteti.",
+    localMissions: "Misione lokale",
+    localMissionsDesc: "Ndiqni udhëzimet javore për të mbajtur profilin të freskët dhe për të rritur dukshmërinë.",
+    spotlightHintHero: "Ndiqni momentumin, qëndroni të verifikuar dhe drejtoni fqinjët drejt ofertave tuaja më të mira.",
+    submitListingDesc: "Posto, verifiko kontaktin dhe publiko në pak minuta.",
+    exploreHint: "Kërko sipas kategorisë, çmimit dhe lokacionit për përputhje të shpejta.",
+    verifiedHint: "Mbani besimin lart me profile dhe plane të verifikuara.",
+    browseMarketplace: "Shfleto tregun",
+    postService: "Posto një shërbim",
+    updateListingHint: "Shto një etiketë të re ose çmim për t'u shfaqur në seksionet e kuruara.",
+    shareLinkHint: "Dërgo linkun e listimit te fqinjët dhe mblidh përshtypje.",
+    pickCityChip: "Zgjidh një qytet për t'u zbuluar më shpejt.",
+    getStartedFast: "Fillo shpejt",
 },
 
   mk: {
@@ -1242,6 +1259,23 @@ const translations = {
     homeHowItWorksStep1: "Објави оглас со телефон, град и краток опис.",
     homeHowItWorksStep2: "Луѓето те бараат или ти пишуваат на Viber / WhatsApp.",
     homeHowItWorksStep3: "Оставаат оценки за да знаат сите кому да веруваат.",
+
+    // New keys added
+    commentEmptyError: "Коментарот не може да биде празен",
+    trustSafetyLane: "Лента за Доверба и Безбедност",
+    trustSafetyLaneDesc: "Чувајте ги разговорите безбедни со верификувани контакти, транспарентни цени и ознака за град.",
+    localMissions: "Локални мисии",
+    localMissionsDesc: "Следете ги неделните насоки за да го одржите профилот свеж и да ја зголемите видливоста.",
+    spotlightHintHero: "Следете го моментумот, останете верификувани и насочете ги соседите кон вашите најдобри понуди.",
+    submitListingDesc: "Објави, верификувај контакт и публикувај за неколку минути.",
+    exploreHint: "Пребарувај по категорија, цена и локација за брзи резултати.",
+    verifiedHint: "Одржувајте ја довербата високо со верификувани профили и планови.",
+    browseMarketplace: "Разгледај го пазарот",
+    postService: "Објави услуга",
+    updateListingHint: "Додај нов таг или цена за да се појавиш во избраните делови.",
+    shareLinkHint: "Испрати го линкот до соседите и собери повратни информации.",
+    pickCityChip: "Избери град за побрзо да бидеш откриен.",
+    getStartedFast: "Започни брзо",
 },
 };
 

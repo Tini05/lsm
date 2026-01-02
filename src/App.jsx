@@ -1226,6 +1226,11 @@ export default function App() {
     const rating = Math.min(Math.max(Number(feedbackDraft.rating) || 0, 1), 5);
     const comment = (feedbackDraft.comment || "").trim();
 
+    if (!comment) {
+      showMessage(t("commentEmptyError") || "Comment cannot be empty", "error");
+      return;
+    }
+
     const entry = {
       rating,
       comment,
@@ -2832,39 +2837,38 @@ export default function App() {
               <section className="home-feature-grid">
                 <div className="card feature-card feature-card--primary">
                   <div className="feature-card__head">
-                    <p className="eyebrow subtle">{t("quickStart") || "Get started fast"}</p>
-                    <h2 className="section-title">✨ {t("heroTitle") || "Find and share trustworthy local services"}</h2>
+                    <p className="eyebrow subtle">{t("getStartedFast")}</p>
+                    <h2 className="section-title">✨ {t("heroTitle")}</h2>
                     <p className="section-subtitle-small">
-                      {t("spotlightHint") ||
-                        "Track momentum, stay verified, and guide neighbours toward your best offers without digging through menus."}
+                      {t("spotlightHintHero")}
                     </p>
                   </div>
                   <div className="feature-points">
                     <div className="feature-point">
                       <div className="feature-icon">🚀</div>
                       <div>
-                        <h4>{t("submitListing") || "Submit a listing"}</h4>
-                        <p>{t("exploreHeroSubtitle") || "Post, verify contact info, and publish in minutes."}</p>
+                        <h4>{t("submitListing")}</h4>
+                        <p>{t("submitListingDesc")}</p>
                       </div>
                     </div>
                     <div className="feature-point">
                       <div className="feature-icon">🧭</div>
                       <div>
-                        <h4>{t("explore") || "Explore"}</h4>
-                        <p>{t("allListingsHint") || "Search by category, price, and location for quick matches."}</p>
+                        <h4>{t("explore")}</h4>
+                        <p>{t("exploreHint")}</p>
                       </div>
                     </div>
                     <div className="feature-point">
                       <div className="feature-icon">🛡️</div>
                       <div>
-                        <h4>{t("verified") || "Verified"}</h4>
-                        <p>{t("heroPanelSubtitle") || "Keep trust high with verified profiles and plans."}</p>
+                        <h4>{t("verified")}</h4>
+                        <p>{t("verifiedHint")}</p>
                       </div>
                     </div>
                   </div>
                   <div className="feature-actions">
                     <button className="btn" onClick={() => setSelectedTab("allListings")}>
-                      🔍 {t("explore") || "Browse the marketplace"}
+                      🔍 {t("browseMarketplace")}
                     </button>
                     <button
                       className="btn btn-ghost"
@@ -2873,58 +2877,58 @@ export default function App() {
                         setForm((f) => ({ ...f, step: 1 }));
                       }}
                     >
-                      ➕ {t("submitListing") || "Post a service"}
+                      ➕ {t("postService")}
                     </button>
                   </div>
                 </div>
 
                 <div className="card feature-card">
                   <div className="feature-card__head">
-                    <p className="eyebrow subtle">{t("verified") || "Verified"}</p>
-                    <h3 className="section-title-small">🔒 Trust &amp; Safety lane</h3>
+                    <p className="eyebrow subtle">{t("verified")}</p>
+                    <h3 className="section-title-small">🔒 {t("trustSafetyLane")}</h3>
                     <p className="section-subtitle-small">
-                      Keep conversations secure with verified contacts, transparent pricing, and a consistent city tag.
+                      {t("trustSafetyLaneDesc")}
                     </p>
                   </div>
                   <ul className="feature-list">
-                    <li>✔️ {t("phoneVerified") || "Phone verified"}: {phoneVerifiedCount}</li>
-                    <li>✔️ {t("listingsLabel") || "Active listings"}: {activeListingCount}</li>
-                    <li>✔️ {t("categorySpotlight") || "Category spotlight"}: {featuredCategoryOrder.slice(0, 3).map((cat) => t(cat)).join(", ")}</li>
+                    <li>✔️ {t("phoneVerified")}: {phoneVerifiedCount}</li>
+                    <li>✔️ {t("listingsLabel")}: {activeListingCount}</li>
+                    <li>✔️ {t("categorySpotlight")}: {featuredCategoryOrder.slice(0, 3).map((cat) => t(cat)).join(", ")}</li>
                   </ul>
                   <div className="feature-badges">
-                    <span className="pill pill-soft">📬 {t("homeDigest") || "Live snapshot"}</span>
+                    <span className="pill pill-soft">📬 {t("homeDigest")}</span>
                     <span className="pill pill-soft">📍 {mkSpotlightCities[0]}</span>
                   </div>
                 </div>
 
                 <div className="card feature-card">
                   <div className="feature-card__head">
-                    <p className="eyebrow subtle">{t("featured") || "Featured"}</p>
-                    <h3 className="section-title-small">🧭 Local missions</h3>
+                    <p className="eyebrow subtle">{t("featured")}</p>
+                    <h3 className="section-title-small">🧭 {t("localMissions")}</h3>
                     <p className="section-subtitle-small">
-                      Rotate through weekly prompts to keep your profile fresh and boost visibility in the spotlight rail.
+                      {t("localMissionsDesc")}
                     </p>
                   </div>
                   <div className="mission-list">
                     <div className="mission-item">
                       <span className="mission-icon">🌟</span>
                       <div>
-                        <h4>{t("updateListing") || "Refresh one listing"}</h4>
-                        <p>{t("featuredHint") || "Add a new tag or price range to appear in curated lanes."}</p>
+                        <h4>{t("updateListing")}</h4>
+                        <p>{t("updateListingHint")}</p>
                       </div>
                     </div>
                     <div className="mission-item">
                       <span className="mission-icon">🤝</span>
                       <div>
-                        <h4>{t("share") || "Share"}</h4>
-                        <p>{t("shareHint") || "Send your listing link to neighbours and collect feedback."}</p>
+                        <h4>{t("share")}</h4>
+                        <p>{t("shareLinkHint")}</p>
                       </div>
                     </div>
                     <div className="mission-item">
                       <span className="mission-icon">🎯</span>
                       <div>
-                        <h4>{t("categorySpotlight") || "Category spotlight"}</h4>
-                        <p>{t("spotlightHint") || "Pick a city chip to get discovered faster."}</p>
+                        <h4>{t("categorySpotlight")}</h4>
+                        <p>{t("pickCityChip")}</p>
                       </div>
                     </div>
                   </div>
