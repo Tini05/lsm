@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Link } from "react-router-dom";
-import { CITIES_WITH_COORDS } from "./mkCities";
+import { CITIES_WITH_COORDS } from "../mkCities";
 
 // Fix for default marker paths
 const DefaultIcon = L.icon({
