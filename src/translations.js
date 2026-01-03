@@ -99,6 +99,10 @@ const translations = {
     // Filters / Search
     search: "Search",
     searchPlaceholder: "Search by name or description...",
+    darkMode: "Dark Mode",
+    lightMode: "Light Mode",
+    commentEmptyError: "Comment cannot be empty.",
+    switchToMapView: "Switch to map view",
     filterByCategory: "Filter by category",
     allCategories: "All categories",
     filterByLocation: "Filter by location",
@@ -208,10 +212,16 @@ const translations = {
 
     // Errors / Messages
     errorOccured: "An error occurred. Please try again later.",
+    errorOccurred: "An error occurred. Please try again later.",
+    enterPassword: "Please enter your password.",
     fillAllFields: "Please fill in all required fields.",
     invalidCode: "Invalid verification code.",
     networkError: "Network error. Check your connection.",
     error: "Error:",
+    loggedOut: "Logged out",
+    imageError: "Image upload failed.",
+    deleteConfirm: "Are you sure you want to delete this listing?",
+    listingDeleted: "Listing deleted.",
 
     // Listing actions
     edit: "Edit",
@@ -543,6 +553,9 @@ const translations = {
     // Filters / Search
     search: "Kërko",
     searchPlaceholder: "Kërko sipas emrit ose përshkrimit...",
+    darkMode: "Modaliteti i errët",
+    lightMode: "Modaliteti i ndritshëm",
+    commentEmptyError: "Komenti nuk mund të jetë bosh.",
     filterByCategory: "Filtro sipas kategorisë",
     allCategories: "Të gjitha kategoritë",
     filterByLocation: "Filtro sipas lokacionit",
@@ -652,10 +665,16 @@ const translations = {
 
     // Errors / Messages
     errorOccured: "Ndodhi një gabim. Ju lutemi provoni përsëri.",
+    errorOccurred: "Ndodhi një gabim. Ju lutemi provoni përsëri.",
+    enterPassword: "Ju lutemi shkruani fjalëkalimin.",
     fillAllFields: "Ju lutemi plotësoni të gjitha fushat e nevojshme.",
     invalidCode: "Kodi i verifikimit është i pasaktë.",
     networkError: "Gabim në rrjet. Kontrolloni lidhjen tuaj.",
     error: "Gabim:",
+    loggedOut: "U bë dalja",
+    imageError: "Ngarkimi i imazhit dështoi.",
+    deleteConfirm: "A jeni i sigurt që dëshironi ta fshini këtë listim?",
+    listingDeleted: "Listimi u fshi.",
 
     // Listing actions
     edit: "Ndrysho",
@@ -892,6 +911,7 @@ const translations = {
     addPhoneNumber: "Shto numër telefoni",
     switchToListView: "Kalo në pamjen listë",
     switchToGridView: "Kalo në pamjen rrjetë",
+    switchToMapView: "Kalo në pamjen e hartës",
     activeFilters: "Filtrat aktivë",
     removeFilter: "Hiq filtrin",
     hideFilters: "Fshih filtrat",
@@ -999,6 +1019,9 @@ const translations = {
     // Filters / Search
     search: "Пребарај",
     searchPlaceholder: "Барај по име или опис...",
+    darkMode: "Темен режим",
+    lightMode: "Светол режим",
+    commentEmptyError: "Коментарот не може да биде празен.",
     filterByCategory: "Филтрирај по категорија",
     allCategories: "Сите категории",
     filterByLocation: "Филтрирај по локација",

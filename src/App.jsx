@@ -28,6 +28,27 @@ import "./App.css";
 import Sidebar from "./Sidebar";
 import { TRANSLATIONS } from "./translations";
 import { MK_CITIES } from "./mkCities";
+import { compressImage } from "./utils/imageUtils";
+import ListingCard from "./components/ListingCard";
+import PostListingForm from "./components/PostListingForm";
+import Home from "./components/Home";
+import Explore from "./components/Explore";
+import Account from "./components/Account";
+import MyListings from "./components/MyListings";
+import Navbar from "./components/Navbar";
+import ListingDetails from "./components/ListingDetails";
+import AuthModal from "./components/AuthModal";
+import { Routes, Route, useNavigate, useLocation, Link, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import {
+  categories,
+  categoryIcons,
+  countryCodes,
+  currencyOptions,
+  mkSpotlightCities,
+  featuredCategories,
+  priceMap as priceMapConstant
+} from "./constants";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
@@ -37,55 +58,6 @@ const API_BASE =
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
-/* Data */
-const categories = [
-  "food", "car", "electronics", "homeRepair", "health",
-  "education", "clothing", "pets", "services",
-  "tech", "entertainment", "events", "other"
-];
-
-const categoryIcons = {
-  food: "🍔",
-  car: "🚗",
-  electronics: "💡",
-  homeRepair: "🧰",
-  health: "💅",
-  education: "🎓",
-  clothing: "👕",
-  pets: "🐾",
-  services: "💼",
-  tech: "💻",
-  entertainment: "🎮",
-  events: "🎟️",
-  other: "✨",
-};
-
-const countryCodes = [
-  { name: "MK", code: "+389" },
-  { name: "AL", code: "+355" },
-  { name: "KS", code: "+383" },
-  { name: "SR", code: "+381" },
-  { name: "GR", code: "+30" },
-  { name: "BG", code: "+359" },
-  { name: "TR", code: "+90" },
-  { name: "DE", code: "+49" },
-  { name: "US", code: "+1" },
-];
-
-const currencyOptions = ["EUR", "MKD"];
-
-const mkSpotlightCities = [
-  "Skopje",
-  "Tetovë",
-  "Gostivar",
-  "Ohër",
-  "Kumanovë",
-  "Manastir",
-  "Prilep",
-  "Kërçovë",
-];
-
-const featuredCategories = ["tech", "services", "homeRepair", "food", "electronics", "car"];
 const FEATURED_SLIDE_SIZE = 3;
 const FEATURED_MAX_ITEMS = FEATURED_SLIDE_SIZE * 3;
 
@@ -175,6 +147,16 @@ export default function App() {
     [lang]
   );
   useEffect(() => localStorage.setItem("lang", lang), [lang]);
+
+  /* Theme */
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  }, []);
 
   /* Core state */
   const [form, setForm] = useState({
@@ -350,26 +332,6 @@ export default function App() {
     };
   }, [showAuthModal, showPostForm, selectedListing, editingListing, paymentModalOpen, showMapPicker, showEditMapPicker, filtersOpen]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const listingId = params.get("listing");
-    if (listingId) {
-      setInitialListingId(listingId);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!initialListingId || !listings.length) return;
-  
-    const target = listings.find((l) => l.id === initialListingId);
-  
-    if (target && target.status === "verified") {
-      setSelectedListing(target);
-      // prevent reopening on every listings change
-      setInitialListingId(null);
-    }
-  }, [initialListingId, listings]);
-  
   /* Auth state & DB subscription */
   useEffect(() => auth.onAuthStateChanged((u) => setUser(u)), []);
   useEffect(() => {
@@ -422,7 +384,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  /* Email-link sign-in (preserved) */
+  /* Email-link sign-in */
   useEffect(() => {
     if (isSignInWithEmailLink(auth, window.location.href)) {
       let emailForSignIn = window.localStorage.getItem("emailForSignIn");
@@ -437,7 +399,6 @@ export default function App() {
           .catch((err) => showMessage(t("error") + " " + err.message, "error"));
       }
     }
-    // eslint-disable-next-line
   }, []);
 
   const handleChangeEmail = async (e) => {
@@ -463,13 +424,11 @@ export default function App() {
       return;
     }
 
-    // Check if email is different
     if (emailForm.newEmail === currentUser.email) {
       showMessage(t("enterValidEmail") || "Please enter a different email address", "error");
       return;
     }
 
-    // Check if current email is verified (some Firebase projects require this)
     if (!currentUser.emailVerified) {
       showMessage(t("verifyYourEmail") || "Please verify your current email address before changing it.", "error");
       return;
@@ -477,63 +436,38 @@ export default function App() {
 
     setSavingEmail(true);
     try {
-      // Reauthenticate user
       const cred = EmailAuthProvider.credential(
         currentUser.email,
         emailForm.currentPassword
       );
       await reauthenticateWithCredential(currentUser, cred);
       
-      // Try to update email in Firebase Auth
       try {
         await updateEmail(currentUser, emailForm.newEmail);
-        
-        // Send verification email for the new email
         try {
           await sendEmailVerification(currentUser);
         } catch (verifyErr) {
           console.warn("Verification email send failed:", verifyErr);
-          // Not critical if verification email fails, email is still changed
         }
-        
-        // Update user profile in database
         await update(dbRef(db, `users/${currentUser.uid}`), { 
           email: emailForm.newEmail 
         });
-        
-        // Reload user to get updated email
         await currentUser.reload();
-        
-        // Update user state
-        const updatedUser = auth.currentUser;
-        setUser(updatedUser);
-        
-        showMessage(t("emailUpdateSuccess") || "Email updated successfully! Please check your new email for verification.", "success");
+        setUser(auth.currentUser);
+        showMessage(t("emailUpdateSuccess") || "Email updated successfully!", "success");
         setEmailForm({ newEmail: "", currentPassword: "" });
       } catch (updateErr) {
-        // If updateEmail fails with operation-not-allowed, it's a Firebase Auth restriction
-        // The error message "Please verify the new email before changing email" is misleading
-        // This typically means email changes are restricted at the project level
         if (updateErr.code === "auth/operation-not-allowed") {
-          // Still update the database with the new email as a reference
-          // The user will need to use the new email for future logins, but Firebase Auth won't reflect it
           try {
             await update(dbRef(db, `users/${currentUser.uid}`), { 
               email: emailForm.newEmail,
               previousEmail: currentUser.email,
               emailChangeRequestedAt: Date.now()
             });
-            
-            showMessage(
-              "⚠️ Email change is restricted by Firebase. Your new email has been saved in your profile, but you'll need to sign out and sign in with your new email address. Alternatively, contact support to enable email changes in Firebase Console.",
-              "error"
-            );
+            showMessage("⚠️ Email change is restricted by Firebase. New email saved in profile.", "error");
           } catch (dbErr) {
             console.error("Database update failed:", dbErr);
-            showMessage(
-              "Email change failed. Firebase has restricted email changes. Please contact support or check Firebase Console > Authentication > Settings.",
-              "error"
-            );
+            showMessage("Email change failed.", "error");
           }
           setEmailForm({ newEmail: "", currentPassword: "" });
           return;
@@ -542,20 +476,7 @@ export default function App() {
       }
     } catch (err) {
       console.error("Email update error:", err);
-      let errorMessage = err.message || t("emailUpdateError");
-      
-      // Provide more helpful error messages
-      if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        errorMessage = t("enterCurrentPassword") || "Incorrect password. Please try again.";
-      } else if (err.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already in use by another account.";
-      } else if (err.code === "auth/requires-recent-login") {
-        errorMessage = "Please log out and log back in before changing your email.";
-      } else if (err.code === "auth/operation-not-allowed") {
-        errorMessage = "Email changes are blocked by 'Email Enumeration Protection' in Firebase. To fix: Install Google Cloud SDK, then run: gcloud identity-platform settings update --project=YOUR_PROJECT_ID --disable-email-enum. Or check Firebase Console > Authentication > Settings for email enumeration protection settings.";
-      }
-      
-      showMessage(errorMessage, "error");
+      showMessage(err.message || t("emailUpdateError"), "error");
     } finally {
       setSavingEmail(false);
     }
@@ -580,30 +501,304 @@ export default function App() {
       showMessage(t("passwordsDontMatch"), "error");
       return;
     }
-    if (!currentUser.email) {
-      showMessage(t("passwordChangeNotAvailable"), "error");
-      return;
-    }
 
     setSavingPassword(true);
     try {
       const cred = EmailAuthProvider.credential(currentUser.email, currentPassword);
       await reauthenticateWithCredential(currentUser, cred);
       await updatePassword(currentUser, newPassword);
-      await currentUser.reload();
-      setUser(auth.currentUser);
       showMessage(t("passwordUpdateSuccess"), "success");
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        repeatNewPassword: "",
-      });
+      setPasswordForm({ currentPassword: "", newPassword: "", repeatNewPassword: "" });
     } catch (err) {
-      showMessage(t("passwordUpdateError") + " " + err.message, "error");
+      console.error(err);
+      showMessage(t("passwordUpdateError"), "error");
     } finally {
       setSavingPassword(false);
     }
   };
+
+  /* Navigation Handlers */
+  const handleNavigation = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* Route-based Active Tab Logic */
+  const currentTab = useMemo(() => {
+    const path = location.pathname;
+    if (path === "/" || path === "") return "main";
+    if (path.startsWith("/explore")) return "allListings";
+    if (path.startsWith("/account")) return "account";
+    if (path.startsWith("/my-listings")) return "myListings";
+    return "";
+  }, [location.pathname]);
+
+  return (
+    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR" }}>
+      <Helmet>
+        <title>{t("appName") || "BizCall"}</title>
+        <meta name="description" content={t("appDescription") || "Local services marketplace in North Macedonia"} />
+      </Helmet>
+
+      <div className="app-container">
+        <Navbar 
+          t={t} 
+          user={user} 
+          setSidebarOpen={setSidebarOpen} 
+          setShowAuthModal={setShowAuthModal}
+          setAuthMode={setAuthMode}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+
+        <AnimatePresence>
+          {sidebarOpen && (
+            <Motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween" }}
+              className="sidebar-overlay"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Sidebar
+                t={t}
+                user={user}
+                theme={theme}
+                toggleTheme={toggleTheme}
+                selected={currentTab}
+                onSelect={(id) => {
+                  if (id === "main") handleNavigation("/");
+                  else if (id === "allListings") handleNavigation("/explore");
+                  else if (id === "account") handleNavigation("/account");
+                  else if (id === "myListings") handleNavigation("/my-listings");
+                }}
+                onClose={() => setSidebarOpen(false)}
+                onLogout={() => {
+                  signOut(auth);
+                  setSidebarOpen(false);
+                  showMessage(t("loggedOut"), "success");
+                  navigate("/");
+                }}
+                onLogin={() => {
+                  setAuthMode("login");
+                  setShowAuthModal(true);
+                  setSidebarOpen(false);
+                }}
+              />
+            </Motion.div>
+          )}
+        </AnimatePresence>
+
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={
+              <Home 
+                t={t} 
+                featuredCategories={featuredCategories}
+                categoryIcons={categoryIcons}
+                listings={listings}
+                activeFeaturedCategory={activeFeaturedCategory}
+                setActiveFeaturedCategory={setActiveFeaturedCategory}
+                featuredSlide={featuredSlide}
+                setFeaturedSlide={setFeaturedSlide}
+                FEATURED_SLIDE_SIZE={FEATURED_SLIDE_SIZE}
+                FEATURED_MAX_ITEMS={FEATURED_MAX_ITEMS}
+                chunkArray={chunkArray}
+                getDescriptionPreview={getDescriptionPreview}
+                buildLocationString={buildLocationString}
+                listingPriceLabel={listingPriceLabel} // Note: this might need adjustment as it depends on selectedListing
+                onListingClick={(l) => navigate(`/listing/${l.id}`)}
+                onCategoryClick={(cat) => navigate(`/explore?category=${cat}`)}
+                onSearch={(query) => navigate(`/explore?q=${query}`)}
+                onPostClick={() => {
+                    if(!user) {
+                        showMessage(t("loginRequired"), "error");
+                        setShowAuthModal(true);
+                    } else {
+                        setShowPostForm(true);
+                    }
+                }}
+              />
+            } />
+            
+            <Route path="/explore" element={
+              <Explore 
+                t={t}
+                listings={listings}
+                favorites={favorites}
+                toggleFav={(id) => {
+                    setFavorites(prev => {
+                        const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+                        return next;
+                    });
+                }}
+                categoryIcons={categoryIcons}
+                buildLocationString={buildLocationString}
+                getDescriptionPreview={getDescriptionPreview}
+                showMessage={showMessage}
+                onListingClick={(l) => navigate(`/listing/${l.id}`)}
+              />
+            } />
+
+            <Route path="/listing/:id" element={
+              <ListingDetails 
+                listings={listings}
+                t={t}
+                user={user}
+                feedbackStore={feedbackStore}
+                saveFeedback={handleFeedbackSubmit}
+                handleDelete={async (l) => {
+                    if (window.confirm(t("deleteConfirm"))) {
+                        try {
+                            await remove(dbRef(db, `listings/${l.id}`));
+                            showMessage(t("listingDeleted"), "success");
+                            navigate("/my-listings");
+                        } catch (e) {
+                            showMessage(t("error"), "error");
+                        }
+                    }
+                }}
+                handleEdit={(l) => {
+                    setEditingListing(l);
+                    setEditForm({ ...l });
+                    // Logic to open edit modal
+                }}
+                showMessage={showMessage}
+                buildLocationString={buildLocationString}
+                categoryIcons={categoryIcons}
+                stripDangerous={stripDangerous}
+              />
+            } />
+
+            <Route path="/account" element={
+              <Account 
+                t={t}
+                user={user}
+                userProfile={userProfile}
+                emailForm={emailForm}
+                setEmailForm={setEmailForm}
+                passwordForm={passwordForm}
+                setPasswordForm={setPasswordForm}
+                handleChangeEmail={handleChangeEmail}
+                handleChangePassword={handleChangePassword}
+                savingEmail={savingEmail}
+                savingPassword={savingPassword}
+                lang={lang}
+                setLang={setLang}
+              />
+            } />
+
+            <Route path="/my-listings" element={
+              <MyListings 
+                t={t}
+                user={user}
+                listings={listings}
+                myListingsStatusFilter={myListingsStatusFilter}
+                setMyListingsStatusFilter={setMyListingsStatusFilter}
+                myListingsExpiryFilter={myListingsExpiryFilter}
+                setMyListingsExpiryFilter={setMyListingsExpiryFilter}
+                myListingsSort={myListingsSort}
+                setMyListingsSort={setMyListingsSort}
+                myListingsSearch={myListingsSearch}
+                setMyListingsSearch={setMyListingsSearch}
+                categoryIcons={categoryIcons}
+                onListingClick={(l) => navigate(`/listing/${l.id}`)}
+                onEdit={(l) => {
+                    setEditingListing(l);
+                    setEditForm({ ...l });
+                }}
+                onDelete={async (l) => {
+                     if (window.confirm(t("deleteConfirm"))) {
+                        try {
+                            await remove(dbRef(db, `listings/${l.id}`));
+                            showMessage(t("listingDeleted"), "success");
+                        } catch (e) {
+                            showMessage(t("error"), "error");
+                        }
+                    }
+                }}
+                onExtend={(l) => {
+                    setExtendTarget(l);
+                    setPaymentModalOpen(true);
+                    setPaymentIntent({ type: 'extend', listingId: l.id });
+                }}
+              />
+            } />
+          </Routes>
+        </main>
+
+        {/* Global Modals */}
+        <AnimatePresence>
+            {showPostForm && (
+                <PostListingForm 
+                    t={t}
+                    user={user}
+                    form={form}
+                    setForm={setForm}
+                    onClose={() => setShowPostForm(false)}
+                    showMessage={showMessage}
+                    stripDangerous={stripDangerous}
+                    validatePhone={(p) => /^\+?[0-9\s]{8,15}$/.test(p)} // Simple regex for now
+                    formatOfferPrice={formatOfferPrice}
+                    handleImageUpload={(e) => {
+                         const file = e.target.files[0];
+                         if (!file) return;
+                         compressImage(file).then(base64 => {
+                             setForm(f => ({ ...f, imagePreview: base64 }));
+                         }).catch(err => showMessage(t("imageError"), "error"));
+                    }}
+                    accountPhone={userProfile?.phoneNumber || user?.phoneNumber}
+                    setSelectedTab={(tab) => {
+                        // Handle tab switch if needed, or redirect
+                        navigate("/account");
+                        setShowPostForm(false);
+                    }}
+                    handleSubmit={async (e) => {
+                        e.preventDefault();
+                        setLoading(true);
+                        try {
+                             // Create listing logic - simplified for now
+                             // In real app, this opens payment modal
+                             setPaymentIntent({ type: 'create' });
+                             setPaymentModalOpen(true);
+                        } catch(err) {
+                            showMessage(err.message, "error");
+                        } finally {
+                            setLoading(false);
+                        }
+                    }}
+                    plan={plan}
+                    setPlan={setPlan}
+                    loading={loading}
+                    paymentModalOpen={paymentModalOpen}
+                    onShowMapPicker={() => setShowMapPicker(true)}
+                />
+            )}
+            
+            {showAuthModal && (
+              <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                t={t}
+                initialMode={authMode}
+                showMessage={showMessage}
+              />
+            )}
+        </AnimatePresence>
+
+        
+        
+        {/* Toast Message */}
+        {message.text && (
+            <div className={`toast toast-${message.type}`}>
+                {message.text}
+            </div>
+        )}
+      </div>
+    </PayPalScriptProvider>
+  );
 
   const getSignupRecaptcha = () => {
     if (window.signupRecaptchaVerifier) return window.signupRecaptchaVerifier;
@@ -636,12 +831,17 @@ export default function App() {
     setForm((f) => ({ ...f, contact: accountPhone }));
   }, [accountPhone]);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setForm((f) => ({ ...f, imagePreview: ev.target?.result || null }));
-    reader.readAsDataURL(file);
+
+    try {
+      const compressedDataUrl = await compressImage(file, 800, 0.7);
+      setForm((f) => ({ ...f, imagePreview: compressedDataUrl }));
+    } catch (error) {
+      console.error("Image compression failed:", error);
+      showMessage(t("imageError"), "error");
+    }
   };
 
   async function createListingInFirebase(obj) {
@@ -1221,10 +1421,11 @@ export default function App() {
     return () => clearInterval(id);
   }, [activeFeaturedCategory, featuredSlides]);
 
-  const handleFeedbackSubmit = async (listingId) => {
+  const handleFeedbackSubmit = async (listingId, data) => {
     if (!listingId) return;
-    const rating = Math.min(Math.max(Number(feedbackDraft.rating) || 0, 1), 5);
-    const comment = (feedbackDraft.comment || "").trim();
+    // Use provided data or fall back to draft state (for backward compatibility if needed)
+    const rating = Math.min(Math.max(Number(data?.rating || feedbackDraft.rating) || 0, 1), 5);
+    const comment = (data?.comment || feedbackDraft.comment || "").trim();
 
     if (!comment) {
       showMessage(t("commentEmptyError"), "error");
@@ -1242,7 +1443,7 @@ export default function App() {
     setFeedbackSaving(true);
     try {
       await push(dbRef(db, `feedback/${listingId}`), entry);
-      setFeedbackDraft((d) => ({ ...d, comment: "" }));
+      if (!data) setFeedbackDraft((d) => ({ ...d, comment: "" })); // Only clear draft if using local state
       showMessage(t("feedbackSaved"), "success");
     } catch (error) {
       console.error(error);
@@ -1282,80 +1483,7 @@ export default function App() {
     }
   };
   
-  /* Header */
-  const Header = () => (
-    <header className="header">
-      <div className="header-inner">
-        <button
-          className="icon-btn mobile-menu-btn"
-          onClick={() => setSidebarOpen(true)}
-          aria-label={t("menu") || "Menu"}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
 
-        <button onClick={() => setSelectedTab("main")} className="brand">
-          <div className="brand-mark">
-            <div className="brand-logo-wrap">
-              <img
-                src={logo}
-                alt="BizCall logo"
-                className="brand-logo"
-              />
-            </div>
-          </div>
-          <div className="brand-text">
-            <h1 className="brand-title">BizCall</h1>
-            <p className="brand-tagline">{t("community") || "Trusted local services"}</p>
-          </div>
-        </button>
-
-        <nav className="header-nav desktop-nav" aria-label="Primary navigation">
-          {primaryNav.map((item) => (
-            <button
-              key={item.id}
-              style={{color: "#000"}}
-              className={`nav-chip ${selectedTab === item.id ? "active" : ""}`}
-              onClick={() => setSelectedTab(item.id)}
-            >
-              <span className="nav-chip-label">{item.icon} {item.label}</span>
-              {item.badge !== undefined && <span className="nav-chip-badge">{item.badge}</span>}
-            </button>
-          ))}
-        </nav>
-
-        <div className="header-actions">
-          <select className="lang-select" value={lang} onChange={(e) => setLang(e.target.value)}>
-            <option value="sq">🇦🇱 SQ</option>
-            <option value="mk">🇲🇰 MK</option>
-            <option value="en">🇬🇧 EN</option>
-          </select>
-
-          {user ? (
-            <>
-              <button className="btn btn-ghost desktop-only" onClick={async () => { await signOut(auth); showMessage(t("signedOut"), "success"); }}>
-                {t("logout")}
-              </button>
-            </>
-          ) : (
-            <button
-              className="btn desktop-only"
-              onClick={() => {
-                setShowAuthModal(true);
-                setMessage({ text: "", type: "info" });
-              }}
-            >
-              {t("login")}
-            </button>
-          )}
-        </div>
-      </div>
-    </header>
-  );
 
   const previewLocation = buildLocationString(form.locationCity, form.locationExtra);
   const editLocationPreview = editForm
@@ -1374,12 +1502,10 @@ export default function App() {
     () => [
       {
         id: "post",
-        title: t("submitListing") || "Post a listing",
-        description:
-          t("heroPanelSubtitle") ||
-          "Publish a service in minutes with contact verification and a mobile-first preview.",
+        title: t("submitListing"),
+        description: t("heroPanelSubtitle"),
         icon: "🚀",
-        cta: t("submitListing") || "Start now",
+        cta: t("submitListing"),
         onClick: () => {
           setShowPostForm(true);
           setForm((f) => ({ ...f, step: 1 }));
@@ -1387,22 +1513,18 @@ export default function App() {
       },
       {
         id: "explore",
-        title: t("explore") || "Explore listings",
-        description:
-          t("allListingsHint") ||
-          "Filter by category, city, and tags without endless scrolling or reloads.",
+        title: t("explore"),
+        description: t("allListingsHint"),
         icon: "🧭",
-        cta: t("explore") || "Browse",
+        cta: t("explore"),
         onClick: () => setSelectedTab("allListings"),
       },
       {
         id: "verify",
-        title: t("verified") || "Stay verified",
-        description:
-          t("heroPointTwo") ||
-          "Keep trust high with verified phone or email and clearly stated price ranges.",
+        title: t("verified"),
+        description: t("heroPointTwo"),
         icon: "🛡️",
-        cta: t("verifyYourEmail") || "Verify now",
+        cta: t("verifyYourEmail"),
         onClick: () => setShowAuthModal(true),
       },
     ],
@@ -1493,11 +1615,11 @@ export default function App() {
   const primaryNav = useMemo(
     () => [
       { id: "main", label: t("homepage") || "Home", icon: "🏠" },
-      { id: "allListings", label: t("explore") || "Explore", icon: "🧭", badge: listings.length },
+      { id: "allListings", label: t("explore"), icon: "🧭", badge: listings.length },
       ...(user
         ? [
-            { id: "myListings", label: t("myListings") || "My listings", icon: "📂", badge: myListingsRaw.length },
-            { id: "account", label: t("account") || "Account", icon: "👤" },
+            { id: "myListings", label: t("myListings"), icon: "📂", badge: myListingsRaw.length },
+            { id: "account", label: t("account"), icon: "👤" },
           ]
         : []),
     ],
@@ -2638,131 +2760,25 @@ export default function App() {
                             {filtered.length > 0 ? (
                               <div className={`listing-grid-${viewMode}`}>
                               {filtered.map((l) => (
-                                <article
+                                <ListingCard
                                   key={l.id}
-                                  className="listing-card explore-card-modern"
-                                  onClick={() => {
-                                    setSelectedListing(l);
+                                  l={l}
+                                  t={t}
+                                  categoryIcons={categoryIcons}
+                                  favorites={favorites}
+                                  toggleFav={toggleFav}
+                                  handleShareListing={handleShareListing}
+                                  getDescriptionPreview={getDescriptionPreview}
+                                  getListingStats={getListingStats}
+                                  onSelect={(listing) => {
+                                    setSelectedListing(listing);
                                     const url = new URL(window.location.href);
-                                    url.searchParams.set("listing", l.id);
+                                    url.searchParams.set("listing", listing.id);
                                     window.history.replaceState({}, "", url.toString());
                                   }}
-                                >
-                                  <header className="listing-header listing-header-dense">
-                                    <div className="listing-title-wrap">
-                                      <div className="listing-title-row">
-                                        <span className="listing-icon-bubble">
-                                          {categoryIcons[l.category] || "🏷️"}
-                                        </span>
-                                        <div>
-                                          <h3 className="listing-title">{l.name}</h3>
-                                          <div className="listing-meta pill-row-tight">
-                                            <span className="pill pill-category">{t(l.category) || l.category}</span>
-                                            <span className="pill pill-location">📍 {l.location}</span>
-                                            {l.expiresAt && (
-                                              <span className="pill pill-ghost subtle-pill">
-                                                ⏱️ {new Date(l.expiresAt).toLocaleDateString()}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="listing-badges dense-badges">
-                                      {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
-                                      <span className="badge verified">✓ {t("verified")}</span>
-                                    </div>
-                                  </header>
-
-                                  <div className="listing-card-body">
-                                    <p className="listing-description listing-description-clamp listing-description-preview">
-                                      {getDescriptionPreview(l.description, 180)}
-                                    </p>
-
-                                    {(() => {
-                                      const stats = getListingStats(l);
-                                      return (
-                                        <div className="listing-stats spaced">
-                                          <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
-                                          <span className="stat-chip">💬 {stats.feedbackCount}</span>
-                                          <span className="stat-chip subtle">🔥 {stats.engagement}</span>
-                                          {l.tags && (
-                                            <span className="pill pill-tags">
-                                              {l.tags.split(",")[0]?.trim()}
-                                              {l.tags.split(",").length > 1 ? " +" : ""}
-                                            </span>
-                                          )}
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-
-                                  <div
-                                    className="listing-footer-row"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className="listing-footer-left">
-                                      {l.contact && (
-                                        <span className="pill pill-contact ghost-pill">
-                                          📞 {l.contact}
-                                        </span>
-                                      )}
-                                      {l.socialLink && (
-                                        <span className="pill pill-ghost subtle-pill">
-                                          🔗 {t("websiteLabel")}
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    <div className="listing-actions compact">
-                                      <button
-                                        className="icon-btn"
-                                        type="button"
-                                        onClick={() => window.open(`tel:${l.contact}`)}
-                                      >
-                                        📞
-                                      </button>
-                                      <button
-                                        className="icon-btn"
-                                        type="button"
-                                        onClick={() =>
-                                          window.open(
-                                            `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
-                                              l.name || ""
-                                            )}`
-                                          )
-                                        }
-                                      >
-                                        ✉️
-                                      </button>
-                                      <button
-                                        className="icon-btn"
-                                        type="button"
-                                        onClick={() => {
-                                          navigator.clipboard?.writeText(l.contact || "");
-                                          showMessage(t("copied"), "success");
-                                        }}
-                                      >
-                                        📋
-                                      </button>
-                                      <button
-                                        className="icon-btn"
-                                        type="button"
-                                        onClick={() => handleShareListing(l)}
-                                      >
-                                        🔗
-                                      </button>
-                                      <button
-                                        className="icon-btn"
-                                        type="button"
-                                        onClick={() => toggleFav(l.id)}
-                                      >
-                                        {favorites.includes(l.id) ? "★" : "☆"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                </article>
+                                  viewMode={viewMode}
+                                  showMessage={showMessage}
+                                />
                               ))}
 
                               </div>
@@ -4535,11 +4551,11 @@ export default function App() {
                         <div className="hero-left">
                           <div className="hero-icon-bubble">{categoryIcons[selectedListing.category] || "🏷️"}</div>
                           <div>
-                            <p className="eyebrow">{t("listing") || "Listing"}</p>
+                            <p className="eyebrow">{t("listing")}</p>
                             <h3 className="hero-title">{selectedListing.name}</h3>
                             <div className="chip-row">
                               <span className="pill">{t(selectedListing.category) || selectedListing.category}</span>
-                              <span className="pill pill-soft">{selectedListing.location || (t("unspecified") || "Unspecified")}</span>
+                              <span className="pill pill-soft">{selectedListing.location || t("unspecified")}</span>
                             </div>
                           </div>
                         </div>

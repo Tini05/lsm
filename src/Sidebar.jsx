@@ -1,4 +1,4 @@
-const Sidebar = ({ t, selected, onSelect, onLogout, onLogin, onClose, user }) => {
+const Sidebar = ({ t, selected, onSelect, onLogout, onLogin, onClose, user, theme, toggleTheme }) => {
   const navItems = [
     { id: "main", label: t("homepage") || "Home", icon: "🏠" },
     ...(user ? [
@@ -43,6 +43,15 @@ const Sidebar = ({ t, selected, onSelect, onLogout, onLogin, onClose, user }) =>
             )}
           </button>
         ))}
+        
+        {/* Theme Toggle in Sidebar */}
+        <button
+          className="sidebar-btn"
+          onClick={toggleTheme}
+        >
+          <span className="sidebar-icon">{theme === "light" ? "🌙" : "☀️"}</span>
+          <span className="sidebar-label">{theme === "light" ? t("darkMode") : t("lightMode")}</span>
+        </button>
       </div>
 
       <div className="sidebar-footer">
