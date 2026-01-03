@@ -39,7 +39,7 @@ import Navbar from "./components/Navbar";
 import ListingDetails from "./components/ListingDetails";
 import AuthModal from "./components/AuthModal";
 import { Routes, Route, useNavigate, useLocation, Link, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import {
   categories,
   categoryIcons,
@@ -535,6 +535,7 @@ export default function App() {
   }, [location.pathname]);
 
   return (
+    <HelmetProvider>
     <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "EUR" }}>
       <Helmet>
         <title>{t("appName") || "BizCall"}</title>
@@ -798,6 +799,7 @@ export default function App() {
         )}
       </div>
     </PayPalScriptProvider>
+    </HelmetProvider>
   );
 
   const getSignupRecaptcha = () => {
