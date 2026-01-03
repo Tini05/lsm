@@ -181,6 +181,10 @@ export default function App() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "info" });
+  const showMessage = (text, type = "info") => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage({ text: "", type: "info" }), 5000);
+  };
   const [listings, setListings] = useState([]);
   const [user, setUser] = useState(null);
   const [selectedListing, setSelectedListing] = useState(null);
@@ -821,10 +825,6 @@ export default function App() {
 
   
   /* Helpers */
-  const showMessage = (text, type = "info") => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: "", type: "info" }), 5000);
-  };
   const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   const validatePhone = (s) => !!s && s.replace(/\D/g, "").length >= 8 && s.replace(/\D/g, "").length <= 16;
 
