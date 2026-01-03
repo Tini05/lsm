@@ -356,6 +356,8 @@ const translations = {
     emailChangeNotAvailable: "Email change is not available for this account.",
     emailUpdateSuccess: "Email updated successfully.",
     emailUpdateError: "Could not update email.",
+    emailChangeRestricted: "Email change is restricted by Firebase. New email saved in profile.",
+    emailChangeFailed: "Email change failed.",
 
     passwordTooShort: "Password must be at least 6 characters.",
     passwordsDontMatch: "New passwords do not match.",
@@ -811,6 +813,8 @@ const translations = {
       "Ndryshimi i email-it nuk është i disponueshëm për këtë llogari.",
     emailUpdateSuccess: "Email-i u përditësua me sukses.",
     emailUpdateError: "Nuk u arrit të përditësohet email-i.",
+    emailChangeRestricted: "Ndryshimi i email-it është i kufizuar nga Firebase. Email-i i ri u ruajt në profil.",
+    emailChangeFailed: "Ndryshimi i email-it dështoi.",
 
     passwordTooShort: "Fjalëkalimi duhet të ketë të paktën 6 karaktere.",
     passwordsDontMatch: "Fjalëkalimet e reja nuk përputhen.",
@@ -1275,6 +1279,8 @@ const translations = {
       "Промена на е-пошта не е достапна за оваа сметка.",
     emailUpdateSuccess: "Е-поштата е успешно ажурирана.",
     emailUpdateError: "Не успеавме да ја ажурираме е-поштата.",
+    emailChangeRestricted: "Промената на е-поштата е ограничена од Firebase. Новата е-пошта е зачувана во профилот.",
+    emailChangeFailed: "Промената на е-поштата не успеа.",
 
     passwordTooShort: "Лозинката мора да има најмалку 6 знаци.",
     passwordsDontMatch: "Новите лозинки не се совпаѓаат.",

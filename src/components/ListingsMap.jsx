@@ -16,7 +16,7 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-export default function ListingsMap({ listings = [], t }) {
+export default function ListingsMap({ listings = [] }) {
   const defaultCenter = [41.6, 21.7];
   const zoom = 8;
 

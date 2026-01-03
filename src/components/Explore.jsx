@@ -123,10 +123,10 @@ const Explore = ({
             <button
               type="button"
               className="btn btn-ghost view-toggle-btn"
-              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              title={viewMode === "grid" ? t("switchToListView") : t("switchToGridView")}
+              onClick={toggleViewMode}
+              title={getViewTitle()}
             >
-              {viewMode === "grid" ? "☰" : "⊞"}
+              {getViewIcon()}
             </button>
             <button
               type="button"
@@ -224,9 +224,10 @@ const Explore = ({
           <button
             type="button"
             className="btn btn-ghost view-toggle-btn"
-            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+            onClick={toggleViewMode}
+            title={getViewTitle()}
           >
-            {viewMode === "grid" ? "☰" : "⊞"}
+            {getViewIcon()}
           </button>
         </div>
 
@@ -369,7 +370,7 @@ const Explore = ({
 
           <div className="explore-results-area">
             {viewMode === "map" ? (
-               <ListingsMap listings={filtered} t={t} />
+               <ListingsMap listings={filtered} />
             ) : filtered.length > 0 ? (
               <div className={`listing-grid-${viewMode}`}>
                 {filtered.map((l) => (
@@ -384,7 +385,6 @@ const Explore = ({
                     getDescriptionPreview={getDescriptionPreview}
                     getListingStats={getListingStats}
                     onSelect={onSelect}
-                    viewMode={viewMode}
                     showMessage={showMessage}
                   />
                 ))}

@@ -464,10 +464,10 @@ export default function App() {
               previousEmail: currentUser.email,
               emailChangeRequestedAt: Date.now()
             });
-            showMessage("⚠️ Email change is restricted by Firebase. New email saved in profile.", "error");
+            showMessage(t("emailChangeRestricted"), "error");
           } catch (dbErr) {
             console.error("Database update failed:", dbErr);
-            showMessage("Email change failed.", "error");
+            showMessage(t("emailChangeFailed"), "error");
           }
           setEmailForm({ newEmail: "", currentPassword: "" });
           return;
@@ -1156,9 +1156,9 @@ export default function App() {
   };
 
   const confirmDelete = async (id) => {
-    if (!window.confirm("Delete this listing?")) return;
+    if (!window.confirm(t("deleteConfirm"))) return;
     await deleteListing(id);
-    showMessage("Listing deleted", "success");
+    showMessage(t("listingDeleted"), "success");
   };
 
   /* Derived data */
@@ -4469,7 +4469,7 @@ export default function App() {
                       onClick={async () => {
                         try {
                           const u = auth.currentUser;
-                          if (!u) return showMessage("Not signed in.", "error");
+                          if (!u) return showMessage(t("loginRequired"), "error");
                           await sendEmailVerification(u);
                           showMessage(t("emailLinkSent"), "success");
                         } catch (err) {

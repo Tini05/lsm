@@ -11,7 +11,7 @@ const ListingCard = ({
   getDescriptionPreview,
   getListingStats,
   onSelect,
-  viewMode = "grid"
+  showMessage
 }) => {
   const stats = getListingStats(l);
   
