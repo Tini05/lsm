@@ -1428,7 +1428,7 @@ export default function App() {
     return () => clearInterval(id);
   }, [activeFeaturedCategory, featuredSlides]);
 
-  const handleFeedbackSubmit = async (listingId, data) => {
+  async function handleFeedbackSubmit(listingId, data) {
     if (!listingId) return;
     // Use provided data or fall back to draft state (for backward compatibility if needed)
     const rating = Math.min(Math.max(Number(data?.rating || feedbackDraft.rating) || 0, 1), 5);
@@ -1458,7 +1458,7 @@ export default function App() {
     } finally {
       setFeedbackSaving(false);
     }
-  };
+  }
 
   const handleShareListing = (listing) => {
     const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
