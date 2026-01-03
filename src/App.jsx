@@ -606,7 +606,6 @@ export default function App() {
                 listings={listings}
                 activeFeaturedCategory={activeFeaturedCategory}
                 mkSpotlightCities={mkSpotlightCities}
-                featuredCategoryOrder={featuredCategoryOrder}
                 activeListingCount={activeListingCount}
                 phoneVerifiedCount={phoneVerifiedCount}
                 setActiveFeaturedCategory={setActiveFeaturedCategory}
