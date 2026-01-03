@@ -3363,28 +3363,24 @@ export default function App() {
                       style={{ marginTop: "5%", height: "fit-content" }}
                     >
                       <h2 className="section-title">
-                        {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                        {t("whyTrustUs")}
                       </h2>
                       <ul className="trust-list">
                         <li>
                           ✅{" "}
-                          {t("trustPoint1") ||
-                            "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                          {t("trustPoint1")}
                         </li>
                         <li>
                           ✅{" "}
-                          {t("trustPoint2") ||
-                            "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                          {t("trustPoint2")}
                         </li>
                         <li>
                           ✅{" "}
-                          {t("trustPoint3") ||
-                            "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                          {t("trustPoint3")}
                         </li>
                         <li>
                           ✅{" "}
-                          {t("trustPoint4") ||
-                            "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                          {t("trustPoint4")}
                         </li>
                       </ul>
                     </section>
@@ -3392,28 +3388,24 @@ export default function App() {
                 ) : (
                   <section className="card trust-section" style={{ height: "fit-content" }}>
                     <h2 className="section-title">
-                      {t("whyTrustUs") || "Pse Tregu Lokal i Ndihmës?"}
+                      {t("whyTrustUs")}
                     </h2>
                     <ul className="trust-list">
                       <li>
                         ✅{" "}
-                        {t("trustPoint1") ||
-                          "Të gjitha listimet kontrollohen manualisht para se të verifikohen."}
+                        {t("trustPoint1")}
                       </li>
                       <li>
                         ✅{" "}
-                        {t("trustPoint2") ||
-                          "Kontakt direkt me bizneset, pa komisione apo tarifa të fshehta."}
+                        {t("trustPoint2")}
                       </li>
                       <li>
                         ✅{" "}
-                        {t("trustPoint3") ||
-                          "Ndërtuar për qytetet e Maqedonisë, me fokus në biznese lokale."}
+                        {t("trustPoint3")}
                       </li>
                       <li>
                         ✅{" "}
-                        {t("trustPoint4") ||
-                          "Mundësi raportimi për listime të dyshimta dhe abuzime."}
+                        {t("trustPoint4")}
                       </li>
                     </ul>
                   </section>
@@ -3443,7 +3435,7 @@ export default function App() {
               >
                 <div className="modal-header">
                   <h3 className="modal-title">
-                    {t("chooseOnMap") || "Choose location on map"}
+                    {t("chooseOnMap")}
                   </h3>
                   <button
                     className="icon-btn"
@@ -3459,7 +3451,7 @@ export default function App() {
                     onSelectCity={(cityName) => {
                       setForm((f) => ({ ...f, locationCity: cityName }));
                       showMessage(
-                        `${t("locationSetTo") || "Location set to"} ${cityName}`,
+                        `${t("locationSetTo")} ${cityName}`,
                         "success"
                       );
                       setShowMapPicker(false);
@@ -3490,7 +3482,7 @@ export default function App() {
               >
                 <div className="modal-header">
                   <h3 className="modal-title">
-                    {t("chooseOnMap") || "Choose location on map"}
+                    {t("chooseOnMap")}
                   </h3>
                   <button
                     className="icon-btn"
@@ -3506,7 +3498,7 @@ export default function App() {
                     onSelectCity={(cityName) => {
                       setEditForm((f) => ({ ...f, locationCity: cityName }));
                       showMessage(
-                        `${t("locationSetTo") || "Location set to"} ${cityName}`,
+                        `${t("locationSetTo")} ${cityName}`,
                         "success"
                       );
                       setShowEditMapPicker(false);
@@ -3612,7 +3604,7 @@ export default function App() {
                           })
                         }
                       >
-                        <option value="">{t("selectCity") || "Select city"}</option>
+                        <option value="">{t("selectCity")}</option>
                         {MK_CITIES.map((city) => (
                           <option key={city} value={city}>
                             {city}
@@ -3622,7 +3614,7 @@ export default function App() {
 
                       <input
                         className="input"
-                        placeholder={t("locationExtra") || "Town / village / neighborhood"}
+                        placeholder={t("locationExtra")}
                         value={editForm.locationExtra || ""}
                         onChange={(e) => {
                           const extra = stripDangerous(e.target.value).slice(0, 100);
@@ -4437,7 +4429,7 @@ export default function App() {
                 exit={{ y: 20, opacity: 0 }}
               >
                 <div className="modal-header">
-                  <h3 className="modal-title">{t("verifyYourEmail") || "Verify your email"}</h3>
+                  <h3 className="modal-title">{t("verifyYourEmail")}</h3>
                   <button className="icon-btn" onClick={() => setPostSignupVerifyOpen(false)}>
                     ✕
                   </button>
@@ -4445,8 +4437,7 @@ export default function App() {
         
                 <div className="modal-body">
                   <p className="auth-subtitle">
-                    {t("verifyEmailHint") ||
-                      "We sent a verification link to your email. You can keep browsing, but you must verify before you can submit listings."}
+                    {t("verifyEmailHint")}
                   </p>
         
                   <div className="verify-actions">
@@ -4457,13 +4448,13 @@ export default function App() {
                           const u = auth.currentUser;
                           if (!u) return showMessage("Not signed in.", "error");
                           await sendEmailVerification(u);
-                          showMessage(t("emailLinkSent") || "Verification email sent.", "success");
+                          showMessage(t("emailLinkSent"), "success");
                         } catch (err) {
                           showMessage(err.message, "error");
                         }
                       }}
                     >
-                      {t("resendEmail") || "Resend verification email"}
+                      {t("resendEmail")}
                     </button>
         
                     <button
@@ -4473,11 +4464,11 @@ export default function App() {
                           // Force-refresh the user object to reflect verification
                           await auth.currentUser?.reload();
                           if (auth.currentUser?.emailVerified) {
-                            showMessage(t("emailVerified") || "Email verified!", "success");
+                            showMessage(t("emailVerified"), "success");
                             setPostSignupVerifyOpen(false);
                           } else {
                             showMessage(
-                              t("notVerifiedYet") || "Still not verified. Check your inbox/spam and click the link.",
+                              t("notVerifiedYet"),
                               "error"
                             );
                           }
@@ -4486,20 +4477,19 @@ export default function App() {
                         }
                       }}
                     >
-                      {t("iVerified") || "I verified, refresh"}
+                      {t("iVerified")}
                     </button>
         
                     <button
                       className="btn btn-ghost full-width"
                       onClick={() => setPostSignupVerifyOpen(false)}
                     >
-                      {t("verifyLater") || "Verify later"}
+                      {t("verifyLater")}
                     </button>
                   </div>
         
                   <div className="verify-footnote">
-                    {t("verifyFootnote") ||
-                      "Tip: If you don’t see the email, check Spam/Promotions. The sender is Firebase."}
+                    {t("verifyFootnote")}
                   </div>
                 </div>
               </Motion.div>
@@ -4708,15 +4698,15 @@ export default function App() {
                   <div className="feedback-section">
                     <div className="feedback-header">
                       <div>
-                        <p className="eyebrow">{t("reputation") || "Reputation"}</p>
-                        <h4>{t("communityFeedback") || "Community feedback"}</h4>
-                        <p className="small-muted">{t("cloudFeedbackNote") || "Ratings and comments are stored securely so everyone can see them."}</p>
+                        <p className="eyebrow">{t("reputation")}</p>
+                        <h4>{t("communityFeedback")}</h4>
+                        <p className="small-muted">{t("cloudFeedbackNote")}</p>
                       </div>
                       <div className="feedback-summary">
                         <div className="score-circle">{feedbackStats.avg ?? "–"}</div>
                         <div>
-                          <p className="summary-label">{feedbackStats.count || 0} {t("reviews") || "reviews"}</p>
-                          <p className="small-muted">{t("averageRating") || "Average rating"}</p>
+                          <p className="summary-label">{feedbackStats.count || 0} {t("reviews")}</p>
+                          <p className="small-muted">{t("averageRating")}</p>
                         </div>
                       </div>
                     </div>
@@ -4724,7 +4714,7 @@ export default function App() {
                     <div className="feedback-grid">
                       <div className="feedback-form-card">
                         <div className="rating-input-row">
-                          <label>{t("ratingLabel") || "Your rating"}</label>
+                          <label>{t("ratingLabel")}</label>
                           <input
                             type="range"
                             min="1"
@@ -4739,7 +4729,7 @@ export default function App() {
                           className="feedback-textarea"
                           rows={3}
                           value={feedbackDraft.comment}
-                          placeholder={t("commentPlaceholderDetailed") || "Share your experience or expectation"}
+                          placeholder={t("commentPlaceholderDetailed")}
                           onChange={(e) => setFeedbackDraft((d) => ({ ...d, comment: e.target.value }))}
                         />
                         <div className="feedback-form-actions">
@@ -4749,8 +4739,8 @@ export default function App() {
                             disabled={feedbackSaving}
                           >
                             {feedbackSaving
-                              ? `⏳ ${t("saving") || "Saving..."}`
-                              : `💾 ${t("saveFeedback") || "Save feedback"}`}
+                              ? `⏳ ${t("saving")}`
+                              : `💾 ${t("saveFeedback")}`}
                           </button>
                           <span className="small-muted">{t("recentFeedback")}: {feedbackStats.count}</span>
                         </div>
@@ -4758,12 +4748,12 @@ export default function App() {
 
                       <div className="feedback-list-card">
                         <div className="feedback-list-header">
-                          <p className="sidebar-title">{t("recentFeedback") || "Recent feedback"}</p>
+                          <p className="sidebar-title">{t("recentFeedback")}</p>
                           <span className="pill pill-soft">⭐ {feedbackStats.avg ?? "–"} / 5</span>
                         </div>
                         <div className="feedback-scroll">
                           {feedbackStats.entries.length === 0 ? (
-                            <p className="small-muted">{t("noFeedback") || "No feedback yet"}</p>
+                            <p className="small-muted">{t("noFeedback")}</p>
                           ) : (
                             feedbackStats.entries.map((entry, idx) => (
                               <div className="feedback-item" key={idx}>

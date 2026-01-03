@@ -1211,6 +1211,7 @@ const translations = {
     coverImage: "Насловна слика",
 
     // NEW: Sharing & trust
+    preview: "Преглед",
     share: "Сподели",
     shareText: "Споделено од Локален пазар за поддршка",
     shareCopied: "Линкот од огласот е копиран ✅",
