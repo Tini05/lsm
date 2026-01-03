@@ -1424,7 +1424,7 @@ export default function App() {
     const comment = (data?.comment || feedbackDraft.comment || "").trim();
 
     if (!comment) {
-      showMessage(t("commentEmptyError"), "error");
+      showMessage(t("commentEmptyError") || "Comment cannot be empty", "error");
       return;
     }
 
@@ -1439,11 +1439,16 @@ export default function App() {
     setFeedbackSaving(true);
     try {
       await push(dbRef(db, `feedback/${listingId}`), entry);
+<<<<<<< HEAD
       if (!data) setFeedbackDraft((d) => ({ ...d, comment: "" })); // Only clear draft if using local state
       showMessage(t("feedbackSaved"), "success");
+=======
+      setFeedbackDraft((d) => ({ ...d, comment: "" }));
+      showMessage(t("feedbackSaved") || "Saved", "success");
+>>>>>>> parent of 7c99dbd (update translations)
     } catch (error) {
       console.error(error);
-      showMessage(t("feedbackSaveError"), "error");
+      showMessage(t("feedbackSaveError") || "Could not save feedback", "error");
     } finally {
       setFeedbackSaving(false);
     }
@@ -1452,13 +1457,13 @@ export default function App() {
   const handleShareListing = (listing) => {
     const url = `${window.location.origin}?listing=${encodeURIComponent(listing.id)}`;
     const text = `${listing.name || ""} • ${listing.location || ""} – ${
-      t("shareText")
+      t("shareText") || "BizCall"
     }`;
 
     if (navigator.share) {
       navigator
         .share({
-          title: listing.name || t("appName"),
+          title: listing.name || t("appName") || "Listing",
           text,
           url,
         })
@@ -2127,7 +2132,7 @@ export default function App() {
                                     <button
                                       className="btn btn-ghost small icon-only"
                                       onClick={() => window.open(`tel:${l.contact}`)}
-                                      title={t("call")}
+                                      title={t("call") || "Call"}
                                     >
                                       📞
                                     </button>
@@ -2140,7 +2145,7 @@ export default function App() {
                                           )}`
                                         )
                                       }
-                                      title={t("emailAction")}
+                                      title={t("emailAction") || "Email"}
                                     >
                                       ✉️
                                     </button>
@@ -2150,7 +2155,7 @@ export default function App() {
                                         navigator.clipboard?.writeText(l.contact || "");
                                         showMessage(t("copied"), "success");
                                       }}
-                                      title={t("copy")}
+                                      title={t("copy") || "Copy contact"}
                                     >
                                       📋
                                     </button>
@@ -2158,14 +2163,14 @@ export default function App() {
                                       className="btn btn-ghost small icon-only"
                                       type="button"
                                       onClick={() => handleShareListing(l)}
-                                      title={t("share")}
+                                      title={t("share") || "Share"}
                                     >
                                       🔗
                                     </button>
                                     <button
                                       className="btn btn-ghost small icon-only btn-delete"
                                       onClick={() => confirmDelete(l.id)}
-                                      title={t("del")}
+                                      title={t("del") || "Delete"}
                                     >
                                       🗑️
                                     </button>
@@ -2184,9 +2189,9 @@ export default function App() {
                         {/* Account Header */}
                         <div className="account-header-section">
                           <div className="account-header-content">
-                            <h2 className="account-page-title">👤 {t("account")}</h2>
+                            <h2 className="account-page-title">👤 {t("account") || "Account"}</h2>
                             <p className="account-page-subtitle">
-                              {t("accountSubtitle")}
+                              {t("accountSubtitle") || "Manage your login status, verification and security settings."}
                             </p>
                           </div>
                           <div className="account-header-actions">
@@ -2211,18 +2216,18 @@ export default function App() {
                               },
                               { 
                                 icon: "⭐", 
-                                label: t("favorites"), 
+                                label: t("favorites") || "Favorites", 
                                 value: favorites.length, 
                                 hint: t("reputation"),
                                 color: "yellow"
                               },
                               { 
                                 icon: "📅", 
-                                label: t("memberSince"), 
+                                label: t("accountSince") || "Member since", 
                                 value: user?.metadata?.creationTime
                                   ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
                                   : "—",
-                                hint: t("accountSince"),
+                                hint: t("accountSince") || "Account created",
                                 color: "purple"
                               },
                             ].map((stat) => (
@@ -2242,8 +2247,8 @@ export default function App() {
                             {/* Profile Information Card */}
                             <div className="card account-card-enhanced">
                               <div className="account-card-header">
-                                <h3 className="account-card-title">📋 {t("profileInfo")}</h3>
-                                <p className="account-card-subtitle">{t("accountDetails")}</p>
+                                <h3 className="account-card-title">📋 {t("profile") || "Profile Information"}</h3>
+                                <p className="account-card-subtitle">{t("accountTitle") || "Your account details"}</p>
                               </div>
                               
                               <div className="account-info-list">
@@ -2266,7 +2271,7 @@ export default function App() {
                                     <p className="account-info-label">{t("phoneNumber")}</p>
                                     <p className="account-info-value">
                                       {accountPhone || (
-                                        <span className="account-info-placeholder">{t("addPhoneNumber")}</span>
+                                        <span className="account-info-placeholder">{t("addPhoneInAccount") || "Add phone number"}</span>
                                       )}
                                     </p>
                                   </div>
@@ -2329,7 +2334,7 @@ export default function App() {
                             {/* Quick Links Card */}
                             <div className="card account-card-enhanced account-quick-links">
                               <div className="account-card-header">
-                                <h3 className="account-card-title">⚡ {t("quickActions")}</h3>
+                                <h3 className="account-card-title">⚡ {t("quickActions") || "Quick Actions"}</h3>
                               </div>
                               <div className="account-quick-links-list">
                                 <button 
@@ -2339,7 +2344,7 @@ export default function App() {
                                   <span className="quick-link-icon">📁</span>
                                   <div className="quick-link-content">
                                     <p className="quick-link-title">{t("myListings")}</p>
-                                    <p className="quick-link-subtitle">{myListingsRaw.length} {t("listingsLabel")}</p>
+                                    <p className="quick-link-subtitle">{myListingsRaw.length} {t("listingsLabel") || "listings"}</p>
                                   </div>
                                   <span className="quick-link-arrow">→</span>
                                 </button>
@@ -2350,7 +2355,7 @@ export default function App() {
                                   <span className="quick-link-icon">🔍</span>
                                   <div className="quick-link-content">
                                     <p className="quick-link-title">{t("explore")}</p>
-                                    <p className="quick-link-subtitle">{t("browseListingsHint")}</p>
+                                    <p className="quick-link-subtitle">{t("allListingsHint") || "Browse all listings"}</p>
                                   </div>
                                   <span className="quick-link-arrow">→</span>
                                 </button>
@@ -2361,7 +2366,7 @@ export default function App() {
                                   <span className="quick-link-icon">➕</span>
                                   <div className="quick-link-content">
                                     <p className="quick-link-title">{t("submitListing")}</p>
-                                    <p className="quick-link-subtitle">{t("createListingHint")}</p>
+                                    <p className="quick-link-subtitle">{t("postingReadyHint") || "Create a new listing"}</p>
                                   </div>
                                   <span className="quick-link-arrow">→</span>
                                 </button>
@@ -2374,14 +2379,14 @@ export default function App() {
                             <div className="card account-card-enhanced account-security-section">
                               <div className="account-card-header">
                                 <h3 className="account-card-title">🔒 {t("securitySettings")}</h3>
-                                <p className="account-card-subtitle">{t("securitySettingsText")}</p>
+                                <p className="account-card-subtitle">{t("securitySettingsText") || "Update your email and password to keep your account safe."}</p>
                               </div>
 
                               {/* Change Email Form */}
                               <div className="account-form-section">
                                 <div className="account-form-section-header">
                                   <h4 className="account-form-section-title">✉️ {t("changeEmail")}</h4>
-                                  <p className="account-form-section-desc">{t("updateEmailDesc")}</p>
+                                  <p className="account-form-section-desc">{t("emailLabel") || "Update your email address"}</p>
                                 </div>
                                 <form className="account-form-enhanced" onSubmit={handleChangeEmail}>
                                   <div className="account-form-field">
@@ -2476,11 +2481,11 @@ export default function App() {
                         {/* Simplified Header */}
                         <div className="explore-top-bar">
                           <div className="explore-header-content">
-                            <h2 className="explore-page-title">🔍 {t("explore")}</h2>
+                            <h2 className="explore-page-title">🔍 {t("explore") || "Explore Listings"}</h2>
                             <p className="explore-page-subtitle">
                               {filtered.length === 0 
-                                ? t("noListingsFound")
-                                : `${filtered.length} ${filtered.length === 1 ? t("listing") : t("listingsLabel")} ${t("resultsLabel") || "available"}`
+                                ? t("noListingsFound") || "No listings found. Try adjusting your filters."
+                                : `${filtered.length} ${filtered.length === 1 ? t("listing") || "listing" : t("listingsLabel") || "listings"} available`
                               }
                             </p>
                           </div>
@@ -2489,7 +2494,7 @@ export default function App() {
                               type="button"
                               className="btn btn-ghost view-toggle-btn"
                               onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                              title={viewMode === "grid" ? t("switchToListView") : t("switchToGridView")}
+                              title={viewMode === "grid" ? t("switchToListView") || "Switch to list view" : t("switchToGridView") || "Switch to grid view"}
                             >
                               {viewMode === "grid" ? "☰" : "⊞"}
                             </button>
@@ -2500,7 +2505,7 @@ export default function App() {
                               aria-expanded={filtersOpen}
                             >
                               {filtersOpen ? "✕ " : "🔍 "}
-                              {t("filters")}
+                              {t("filters") || "Filters"}
                             </button>
                           </div>
                         </div>
@@ -2508,7 +2513,7 @@ export default function App() {
                         {/* Active Filters Bar */}
                         {(q || catFilter || locFilter) && (
                           <div className="active-filters-bar">
-                            <span className="active-filters-label">{t("activeFilters")}:</span>
+                            <span className="active-filters-label">{t("activeFilters") || "Active filters"}:</span>
                             <div className="active-filters-chips">
                               {q && (
                                 <span className="active-filter-chip">
@@ -2517,7 +2522,7 @@ export default function App() {
                                     type="button"
                                     className="filter-chip-remove"
                                     onClick={() => setQ("")}
-                                    aria-label={t("removeFilter")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
                                   >
                                     ✕
                                   </button>
@@ -2530,7 +2535,7 @@ export default function App() {
                                     type="button"
                                     className="filter-chip-remove"
                                     onClick={() => setCatFilter("")}
-                                    aria-label={t("removeFilter")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
                                   >
                                     ✕
                                   </button>
@@ -2543,7 +2548,7 @@ export default function App() {
                                     type="button"
                                     className="filter-chip-remove"
                                     onClick={() => setLocFilter("")}
-                                    aria-label={t("removeFilter")}
+                                    aria-label={t("removeFilter") || "Remove filter"}
                                   >
                                     ✕
                                   </button>
@@ -2559,7 +2564,7 @@ export default function App() {
                                   setSortBy("topRated");
                                 }}
                               >
-                                {t("clearAll")}
+                                {t("clearAll") || "Clear all"}
                               </button>
                             </div>
                           </div>
@@ -2574,14 +2579,14 @@ export default function App() {
                             aria-expanded={filtersOpen}
                           >
                             {filtersOpen ? "✕ " : "🔍 "}
-                            {filtersOpen ? t("hideFilters") : t("showFilters")}
+                            {filtersOpen ? t("hideFilters") || "Hide filters" : t("showFilters") || "Show filters"}
                           </button>
                           <select
                             className="select sort-select-mobile"
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
                           >
-                            <option value="topRated">{t("sortTopRated")}</option>
+                            <option value="topRated">{t("sortTopRated") || "Highest rated"}</option>
                             <option value="newest">{t("sortNewest")}</option>
                             <option value="expiring">{t("sortExpiring")}</option>
                             <option value="az">{t("sortAZ")}</option>
@@ -2602,7 +2607,7 @@ export default function App() {
                               <div 
                                 className="filter-sheet-backdrop"
                                 onClick={() => setFiltersOpen(false)}
-                                aria-label={t("closeFilters")}
+                                aria-label={t("closeFilters") || "Close filters"}
                               />
                               <div className="filter-sheet-wrapper">
                                 <div className="filter-sheet-handle" onClick={() => setFiltersOpen(false)}>
@@ -2613,15 +2618,15 @@ export default function App() {
                                     <div className="filter-sheet-header-left">
                                       <div className="filter-sheet-icon">🔍</div>
                                       <div>
-                                        <h2 className="filter-sheet-title">{t("filters")}</h2>
-                                        <p className="filter-sheet-subtitle">{t("filterSubtitle")}</p>
+                                        <h2 className="filter-sheet-title">{t("filters") || "Filters"}</h2>
+                                        <p className="filter-sheet-subtitle">{t("filterSubtitle") || "Refine your search"}</p>
                                       </div>
                                     </div>
                                     <button
                                       type="button"
                                       className="filter-sheet-close"
                                       onClick={() => setFiltersOpen(false)}
-                                      aria-label={t("closeFilters")}
+                                      aria-label={t("closeFilters") || "Close filters"}
                                     >
                                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ minWidth: "24" }}>
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2634,7 +2639,7 @@ export default function App() {
                                     <div className="filter-group">
                                       <div className="filter-group-header">
                                         <span className="filter-group-icon">🔎</span>
-                                        <span className="filter-group-title">{t("search")}</span>
+                                        <span className="filter-group-title">{t("search") || "Search"}</span>
                                       </div>
                                       <div className="filter-group-content">
                                         <div className="filter-search-box">
@@ -2645,7 +2650,7 @@ export default function App() {
                                           <input
                                             type="search"
                                             className="filter-search-input"
-                                            placeholder={t("searchPlaceholder")}
+                                            placeholder={t("searchPlaceholder") || "Search by name or description..."}
                                             value={q}
                                             onChange={(e) => setQ(e.target.value)}
                                           />
@@ -2654,7 +2659,7 @@ export default function App() {
                                               type="button"
                                               className="filter-search-clear"
                                               onClick={() => setQ("")}
-                                              aria-label={t("clearSearch")}
+                                              aria-label={t("clearSearch") || "Clear search"}
                                             >
                                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ minWidth: "24" }}>
                                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2669,7 +2674,7 @@ export default function App() {
                                     <div className="filter-group">
                                       <div className="filter-group-header">
                                         <span className="filter-group-icon">📂</span>
-                                        <span className="filter-group-title">{t("category")}</span>
+                                        <span className="filter-group-title">{t("category") || "Category"}</span>
                                       </div>
                                       <div className="filter-group-content">
                                         <div className="filter-options-grid">
@@ -2702,7 +2707,7 @@ export default function App() {
                                     <div className="filter-group">
                                       <div className="filter-group-header">
                                         <span className="filter-group-icon">📍</span>
-                                        <span className="filter-group-title">{t("location")}</span>
+                                        <span className="filter-group-title">{t("location") || "Location"}</span>
                                       </div>
                                       <div className="filter-group-content">
                                         <div className="filter-select-wrapper">
@@ -2711,7 +2716,7 @@ export default function App() {
                                             value={locFilter}
                                             onChange={(e) => setLocFilter(e.target.value)}
                                           >
-                                            <option value="">{t("allLocations")}</option>
+                                            <option value="">{t("allLocations") || "All locations"}</option>
                                             {allLocations.map((l) => (
                                               <option key={l} value={l}>{l}</option>
                                             ))}
@@ -2726,7 +2731,7 @@ export default function App() {
                                     <div className="filter-group">
                                       <div className="filter-group-header">
                                         <span className="filter-group-icon">🔄</span>
-                                        <span className="filter-group-title">{t("sortBy")}</span>
+                                        <span className="filter-group-title">{t("sortBy") || "Sort by"}</span>
                                       </div>
                                       <div className="filter-group-content">
                                         <div className="filter-select-wrapper">
@@ -2735,10 +2740,10 @@ export default function App() {
                                             value={sortBy}
                                             onChange={(e) => setSortBy(e.target.value)}
                                           >
-                                            <option value="topRated">⭐ {t("sortTopRated")}</option>
-                                            <option value="newest">🆕 {t("sortNewest")}</option>
-                                            <option value="expiring">⏰ {t("sortExpiring")}</option>
-                                            <option value="az">🔤 {t("sortAZ")}</option>
+                                            <option value="topRated">⭐ {t("sortTopRated") || "Highest rated"}</option>
+                                            <option value="newest">🆕 {t("sortNewest") || "Newest first"}</option>
+                                            <option value="expiring">⏰ {t("sortExpiring") || "Expiring soon"}</option>
+                                            <option value="az">🔤 {t("sortAZ") || "A to Z"}</option>
                                           </select>
                                           <svg className="filter-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                             <polyline points="6 9 12 15 18 9"></polyline>
@@ -2772,20 +2777,139 @@ export default function App() {
                                     url.searchParams.set("listing", listing.id);
                                     window.history.replaceState({}, "", url.toString());
                                   }}
+<<<<<<< HEAD
                                   viewMode={viewMode}
                                   showMessage={showMessage}
                                 />
+=======
+                                >
+                                  <header className="listing-header listing-header-dense">
+                                    <div className="listing-title-wrap">
+                                      <div className="listing-title-row">
+                                        <span className="listing-icon-bubble">
+                                          {categoryIcons[l.category] || "🏷️"}
+                                        </span>
+                                        <div>
+                                          <h3 className="listing-title">{l.name}</h3>
+                                          <div className="listing-meta pill-row-tight">
+                                            <span className="pill pill-category">{t(l.category) || l.category}</span>
+                                            <span className="pill pill-location">📍 {l.location}</span>
+                                            {l.expiresAt && (
+                                              <span className="pill pill-ghost subtle-pill">
+                                                ⏱️ {new Date(l.expiresAt).toLocaleDateString()}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="listing-badges dense-badges">
+                                      {l.offerprice && <span className="pill pill-price">{l.offerprice}</span>}
+                                      <span className="badge verified">✓ {t("verified")}</span>
+                                    </div>
+                                  </header>
+
+                                  <div className="listing-card-body">
+                                    <p className="listing-description listing-description-clamp listing-description-preview">
+                                      {getDescriptionPreview(l.description, 180)}
+                                    </p>
+
+                                    {(() => {
+                                      const stats = getListingStats(l);
+                                      return (
+                                        <div className="listing-stats spaced">
+                                          <span className="stat-chip rating">⭐ {Number(stats.avgRating || 0).toFixed(1)}</span>
+                                          <span className="stat-chip">💬 {stats.feedbackCount}</span>
+                                          <span className="stat-chip subtle">🔥 {stats.engagement}</span>
+                                          {l.tags && (
+                                            <span className="pill pill-tags">
+                                              {l.tags.split(",")[0]?.trim()}
+                                              {l.tags.split(",").length > 1 ? " +" : ""}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  <div
+                                    className="listing-footer-row"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="listing-footer-left">
+                                      {l.contact && (
+                                        <span className="pill pill-contact ghost-pill">
+                                          📞 {l.contact}
+                                        </span>
+                                      )}
+                                      {l.socialLink && (
+                                        <span className="pill pill-ghost subtle-pill">
+                                          🔗 {t("websiteLabel") || "Link"}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="listing-actions compact">
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => window.open(`tel:${l.contact}`)}
+                                      >
+                                        📞
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() =>
+                                          window.open(
+                                            `mailto:${l.userEmail || ""}?subject=Regarding%20${encodeURIComponent(
+                                              l.name || ""
+                                            )}`
+                                          )
+                                        }
+                                      >
+                                        ✉️
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard?.writeText(l.contact || "");
+                                          showMessage(t("copied"), "success");
+                                        }}
+                                      >
+                                        📋
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => handleShareListing(l)}
+                                      >
+                                        🔗
+                                      </button>
+                                      <button
+                                        className="icon-btn"
+                                        type="button"
+                                        onClick={() => toggleFav(l.id)}
+                                      >
+                                        {favorites.includes(l.id) ? "★" : "☆"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </article>
+>>>>>>> parent of 7c99dbd (update translations)
                               ))}
 
                               </div>
                             ) : (
                               <div className="explore-empty-state">
                                 <div className="empty-state-icon">🔍</div>
-                                <h3 className="empty-state-title">{t("noListingsFound")}</h3>
+                                <h3 className="empty-state-title">{t("noListingsFound") || "No listings found"}</h3>
                                 <p className="empty-state-text">
                                   {q || catFilter || locFilter 
-                                    ? t("tryDifferentFilters")
-                                    : t("noListingsAvailable")
+                                    ? t("tryDifferentFilters") || "Try adjusting your search or filters to find more listings."
+                                    : t("noListingsAvailable") || "There are currently no listings available."
                                   }
                                 </p>
                                 {(q || catFilter || locFilter) && (
@@ -2797,7 +2921,7 @@ export default function App() {
                                       setLocFilter("");
                                     }}
                                   >
-                                    {t("clearFilters")}
+                                    {t("clearFilters") || "Clear all filters"}
                                   </button>
                                 )}
                               </div>
@@ -4789,7 +4913,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="footer">
-          <p>© 2024 {t("appName")} • {t("bizCall")}</p>
+          <p>© 2024 {t("appName")} • BizCall</p>
         </footer>
         <div id="recaptcha-signup" style={{ display: "none" }} />
         <div id="recaptcha-container" style={{ display: "none" }} />
