@@ -727,6 +727,11 @@ export default function App() {
                 }}
               />
             } />
+            <Route path="*" element={
+              <div className="page">
+                <h2 style={{padding:16}}>{t("notFound") || "Not Found"}</h2>
+              </div>
+            } />
           </Routes>
         </main>
 
