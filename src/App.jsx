@@ -600,34 +600,20 @@ export default function App() {
           <Routes>
             <Route path="/" element={
               <Home 
-                t={t} 
+                t={t}
+                user={user}
+                setShowPostForm={setShowPostForm}
+                setForm={setForm}
+                setShowAuthModal={setShowAuthModal}
+                phoneVerifiedCount={phoneVerifiedCount}
+                activeListingCount={activeListingCount}
+                featuredCategoryOrder={featuredCategoryOrder}
+                mkSpotlightCities={mkSpotlightCities}
                 featuredCategories={featuredCategories}
                 categoryIcons={categoryIcons}
-                listings={listings}
-                activeFeaturedCategory={activeFeaturedCategory}
-                mkSpotlightCities={mkSpotlightCities}
-                activeListingCount={activeListingCount}
-                phoneVerifiedCount={phoneVerifiedCount}
-                setActiveFeaturedCategory={setActiveFeaturedCategory}
-                featuredSlide={featuredSlide}
-                setFeaturedSlide={setFeaturedSlide}
-                FEATURED_SLIDE_SIZE={FEATURED_SLIDE_SIZE}
-                FEATURED_MAX_ITEMS={FEATURED_MAX_ITEMS}
-                chunkArray={chunkArray}
-                getDescriptionPreview={getDescriptionPreview}
-                buildLocationString={buildLocationString}
-                listingPriceLabel={listingPriceLabel} // Note: this might need adjustment as it depends on selectedListing
-                onListingClick={(l) => navigate(`/listing/${l.id}`)}
-                onCategoryClick={(cat) => navigate(`/explore?category=${cat}`)}
-                onSearch={(query) => navigate(`/explore?q=${query}`)}
-                onPostClick={() => {
-                    if(!user) {
-                        showMessage(t("loginRequired"), "error");
-                        setShowAuthModal(true);
-                    } else {
-                        setShowPostForm(true);
-                    }
-                }}
+                setCatFilter={setCatFilter}
+                setLocFilter={setLocFilter}
+                navigate={navigate}
               />
             } />
             
@@ -635,6 +621,15 @@ export default function App() {
               <Explore 
                 t={t}
                 listings={listings}
+                categories={categories}
+                q={q}
+                setQ={setQ}
+                catFilter={catFilter}
+                setCatFilter={setCatFilter}
+                locFilter={locFilter}
+                setLocFilter={setLocFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
                 favorites={favorites}
                 toggleFav={(id) => {
                     setFavorites(prev => {
@@ -643,10 +638,10 @@ export default function App() {
                     });
                 }}
                 categoryIcons={categoryIcons}
-                buildLocationString={buildLocationString}
                 getDescriptionPreview={getDescriptionPreview}
+                getListingStats={getListingStats}
+                onSelect={(l) => navigate(`/listing/${l.id}`)}
                 showMessage={showMessage}
-                onListingClick={(l) => navigate(`/listing/${l.id}`)}
               />
             } />
 
@@ -685,24 +680,24 @@ export default function App() {
                 t={t}
                 user={user}
                 userProfile={userProfile}
+                myListingsCount={myListingsRaw.length}
+                handleChangeEmail={handleChangeEmail}
                 emailForm={emailForm}
                 setEmailForm={setEmailForm}
+                savingEmail={savingEmail}
+                handleChangePassword={handleChangePassword}
                 passwordForm={passwordForm}
                 setPasswordForm={setPasswordForm}
-                handleChangeEmail={handleChangeEmail}
-                handleChangePassword={handleChangePassword}
-                savingEmail={savingEmail}
                 savingPassword={savingPassword}
-                lang={lang}
-                setLang={setLang}
+                setShowPostForm={setShowPostForm}
+                navigate={navigate}
               />
             } />
 
             <Route path="/my-listings" element={
               <MyListings 
                 t={t}
-                user={user}
-                listings={listings}
+                myListingsRaw={myListingsRaw}
                 myListingsStatusFilter={myListingsStatusFilter}
                 setMyListingsStatusFilter={setMyListingsStatusFilter}
                 myListingsExpiryFilter={myListingsExpiryFilter}
@@ -711,27 +706,18 @@ export default function App() {
                 setMyListingsSort={setMyListingsSort}
                 myListingsSearch={myListingsSearch}
                 setMyListingsSearch={setMyListingsSearch}
-                categoryIcons={categoryIcons}
-                onListingClick={(l) => navigate(`/listing/${l.id}`)}
-                onEdit={(l) => {
-                    setEditingListing(l);
-                    setEditForm({ ...l });
-                }}
-                onDelete={async (l) => {
-                     if (window.confirm(t("deleteConfirm"))) {
-                        try {
-                            await remove(dbRef(db, `listings/${l.id}`));
-                            showMessage(t("listingDeleted"), "success");
-                        } catch (e) {
-                            showMessage(t("error"), "error");
-                        }
-                    }
-                }}
-                onExtend={(l) => {
-                    setExtendTarget(l);
-                    setPaymentModalOpen(true);
-                    setPaymentIntent({ type: 'extend', listingId: l.id });
-                }}
+                handleShareListing={handleShareListing}
+                setExtendTarget={setExtendTarget}
+                setExtendPlan={setExtendPlan}
+                setPaymentModalOpen={setPaymentModalOpen}
+                setPaymentIntent={setPaymentIntent}
+                setEditingListing={setEditingListing}
+                setEditForm={setEditForm}
+                deleteListing={deleteListing}
+                myVerifiedCount={myVerifiedCount}
+                myPendingCount={myPendingCount}
+                priceMap={priceMap}
+                showMessage={showMessage}
               />
             } />
             <Route path="*" element={
